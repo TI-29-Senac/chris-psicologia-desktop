@@ -1,27 +1,40 @@
 import Database from 'better-sqlite3';
-import { app } from 'electron';
 import path from 'node:path';
+import fs from 'node:fs';
 
-const dbPath = path.join(app.getPath('userData'), 'clinica.db');
-const db = new Database(dbPath, { verbose: console.log });
+let db = null;
 
-export function initDatabase() {
-  db.pragma('journal_mode = WAL');
+export function initDatabase(dbSourcePath, dbTargetPath) {
+    if (db) return db;
 
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS usuarios (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      uuid TEXT, 
-      nome TEXT NOT NULL,
-      idade INTEGER,
-      sync_status INTEGER DEFAULT 0, -- 0 = Pendente, 1 = Sincronizado
-      criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-      atualizado_em DATETIME,
-      excluido_em DATETIME -- Se estiver preenchido, o registro foi "deletado"
-    );
-  `);
-  
-  console.log('Banco de dados inicializado em:', dbPath);
+    const dbExists = fs.existsSync(dbTargetPath);
+
+    if (!dbExists) {
+        console.log(`[DB INIT] Banco não encontrado em ${dbTargetPath}. Copiando o arquivo fonte...`);
+        try {
+            const dir = path.dirname(dbTargetPath);
+            if (!fs.existsSync(dir)) {
+                fs.mkdirSync(dir, { recursive: true });
+            }
+            
+            fs.copyFileSync(dbSourcePath, dbTargetPath);
+            console.log("[DB INIT] Banco de dados copiado com sucesso.");
+        } catch (error) {
+            console.error("[DB INIT] Erro ao copiar o banco de dados:", error);
+        }
+    } else {
+        console.log(`[DB INIT] Banco de dados encontrado em ${dbTargetPath}. Abrindo...`);
+    }
+
+    db = new Database(dbTargetPath);
+    db.pragma('journal_mode = WAL');
+
+    return db;
 }
 
-export default db;
+export default function getDb() {
+    if (!db) {
+        throw new Error("Banco de dados não inicializado. Chame initDatabase() em main.js.");
+    }
+    return db;
+}
