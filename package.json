@@ -1,7 +1,0 @@
-{
-  "dependencies": {
-    "bcrypt": "^6.0.0",
-    "better-sqlite3": "^12.5.0",
-    "sweetalert2": "^11.26.3"
-  }
-}

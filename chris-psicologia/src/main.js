@@ -4,7 +4,6 @@ import started from 'electron-squirrel-startup';
 import AuthController from './Main/Controllers/AuthController.js';
 import { initDatabase } from './Main/Database/db.js';
 
-initDatabase(); 
 
 const authController = new AuthController();
 
