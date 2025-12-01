@@ -1,5 +1,5 @@
 import Usuarios from '../Models/Usuarios.js';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 class AuthController {
     constructor() {

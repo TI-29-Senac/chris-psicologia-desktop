@@ -1,8 +1,106 @@
+:root {
+  /* Paleta de Cores baseada na identidade Chris Psicologia */
+  --primary-color: #7A9E7E; /* Verde Sálvia (calmo e profissional) */
+  --primary-hover: #5F7A62;
+  --background-color: #F9F7F2; /* Bege/Off-white muito suave */
+  --surface-color: #FFFFFF;    /* Branco para o cartão de login */
+  --text-color: #4A4A4A;       /* Cinza escuro para leitura confortável */
+  --text-muted: #888888;
+  --border-color: #E0E0E0;
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
 body {
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial,
-    sans-serif;
-  margin: auto;
-  max-width: 38rem;
-  padding: 2rem;
+  font-family: 'Segoe UI', 'Roboto', Helvetica, Arial, sans-serif;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh; /* Ocupa toda a altura da tela */
+}
+
+/* O container principal do Login */
+.container {
+  background-color: var(--surface-color);
+  padding: 3rem;
+  border-radius: 16px; /* Bordas arredondadas modernas */
+  box-shadow: var(--shadow);
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid rgba(0,0,0,0.02);
+}
+
+h2 {
+  color: var(--primary-color);
+  font-weight: 600;
+  margin-bottom: 2rem;
+  font-size: 1.8rem;
+  text-align: center;
+}
+
+form {
+  width: 100%;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+input {
+  width: 100%;
+  padding: 12px 15px;
+  margin-bottom: 1.5rem; /* Espaço entre os campos */
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 1rem;
+  background-color: #FAFAFA;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  color: var(--text-color);
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  background-color: #fff;
+  box-shadow: 0 0 0 4px rgba(122, 158, 126, 0.2); /* Glow verde suave */
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 0.5rem;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--primary-color);
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+button:hover {
+  background-color: var(--primary-hover);
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+/* Estilo opcional para a Logo se você adicioná-la */
+.logo {
+  max-width: 120px;
+  margin-bottom: 1..5rem;
 }
