@@ -1,7 +1,7 @@
 // src/Renderer_front/Services/Rotas.js
 
 // AJUSTE AQUI: Mudamos 'agendamentos' para 'agendamento' (singular)
-import AgendamentoView from '../Views/Agendamento/Agendamento.js'; 
+import AgendamentoView from '../Views/Agendamento/AgendamentoView.js'; 
 
 class Rotas {
     constructor() {

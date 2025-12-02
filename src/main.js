@@ -28,6 +28,7 @@ const createWindow = () => {
     },
   });
 
+  // Configuração do Vite (Padrão do template Electron Forge + Vite)
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
   } else {
@@ -44,7 +45,15 @@ app.whenReady().then(() => {
     }
   });
 
-  // --- SUAS ROTAS DE AGENDAMENTO ---
+  // ==========================================================
+  // --- SUAS ROTAS DE AGENDAMENTO (IPC HANDLERS) ---
+  // ==========================================================
+
+  // [CORREÇÃO] O Handler que faltava agora está no lugar certo!
+  ipcMain.handle("agendamentos:get-form-data", async () => {
+    console.log("Main: Buscando dados auxiliares (Pacientes/Profissionais)...");
+    return await controllerAgendamento.getDadosAuxiliares();
+  });
 
   // 1. Listar
   ipcMain.handle("agendamentos:listar", async () => {
@@ -55,6 +64,7 @@ app.whenReady().then(() => {
   // 2. Cadastrar
   ipcMain.handle("agendamentos:cadastrar", async (event, agendamento) => {
     console.log("Main: Recebendo cadastro", agendamento);
+    // Nota: Certifique-se que no AgendamentoController o método se chama 'cadastrar' mesmo
     const resultado = await controllerAgendamento.cadastrar(agendamento);
     return resultado;
   })
@@ -77,7 +87,7 @@ app.whenReady().then(() => {
     return await controllerAgendamento.removerAgendamento(id);
   })
 
-  // --- Tema (Opcional, mantive pois é útil) ---
+  // --- Tema ---
   ipcMain.handle('dark-mode:toggle', () => {
     if (nativeTheme.shouldUseDarkColors) {
       nativeTheme.themeSource = 'light'
@@ -93,9 +103,5 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
-
-  ipcMain.handle("agendamentos:get-form-data", async () => {
-    return await controllerAgendamento.getDadosAuxiliares();
-  });
-  
+  // [CORREÇÃO] Removi o handler daqui. Nada deve ser registrado aqui.
 });
