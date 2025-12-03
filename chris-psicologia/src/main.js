@@ -1,6 +1,7 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
+import PagamentoController from './Main/Controllers/PagamentoController.js'; // Ajuste o caminho
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -28,6 +29,7 @@ const createWindow = () => {
   mainWindow.webContents.openDevTools();
 };
 
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -42,6 +44,13 @@ app.whenReady().then(() => {
     }
   });
 });
+
+// Em algum lugar no seu main.js, após a criação da janela
+ipcMain.handle('pagamento:processar', async (event, dadosDoPagamento) => {
+  const resultado = await PagamentoController.processarPagamento(dadosDoPagamento);
+  return resultado;
+});
+
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits

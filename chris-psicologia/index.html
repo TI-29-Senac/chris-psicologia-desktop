@@ -2,31 +2,34 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>Pagamento - Chris Psicologia</title>
+    <title>Dashboard - Chris Psicologia</title>
     <!-- Fontes e Ícones -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Questrial&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="/src/pagamento.css">
+    <link rel="stylesheet" href="./src/dashboard.css">
+    <link rel="stylesheet" href="./src/Renderer/Views/Pagamento/pagamento.css">
 
   </head>
   <body>
     
     <!-- Cabeçalho (Mantendo a consistência) -->
     <header>
-      <div class="logo-container">
-        <div class="logo-symbol">Ψ</div>
-        <div class="logo-text">
-          <h1>CHRIS PSICOLOGIA</h1>
-          <span>PSICÓLOGO</span>
+      <a href="index.html" class="logo-link">
+        <div class="logo-container">
+          <div class="logo-symbol">Ψ</div>
+          <div class="logo-text">
+            <h1>CHRIS PSICOLOGIA</h1>
+            <span>PSICÓLOGO</span>
+          </div>
         </div>
-      </div>
+      </a>
 
       <nav class="desktop-nav">
-        <button class="nav-btn">Usuários</button>
-        <button class="nav-btn">Agendamentos</button>
-        <button class="nav-btn">Pagamentos</button>
+        <a href="#" class="nav-btn">Usuários</a>
+        <a href="#" class="nav-btn">Agendamentos</a>
+        <a href="./src/Renderer/Views/Pagamento/pagamento.html" class="nav-btn">Pagamentos</a>
       </nav>
 
       <div class="user-menu">
@@ -44,88 +47,49 @@
       <nav class="modal-nav">
         <a href="#" class="modal-link">Agendamentos</a>
         <a href="#" class="modal-link">Usuários</a>
-        <a href="#" class="modal-link active-link">Pagamentos</a>
+        <a href="./src/Renderer/Views/Pagamento/pagamento.html" class="modal-link">Pagamentos</a>
       </nav>
     </div>
     <div id="overlay" class="overlay"></div>
 
-    <!-- Área Principal de Pagamento -->
+    <!-- Área Principal do Dashboard -->
     <main>
-      <div class="payment-container">
-        
-        <!-- Resumo do Pedido -->
-        <div class="order-summary">
-          <h3>Resumo do Agendamento</h3>
-          <div class="summary-item">
-            <span>Serviço:</span>
-            <strong>Terapia Individual (Online)</strong>
-          </div>
-          <div class="summary-item">
-            <span>Profissional:</span>
-            <strong>Dr. Chris</strong>
-          </div>
-          <div class="summary-item">
-            <span>Data:</span>
-            <strong>12/12/2023 às 14:00</strong>
-          </div>
-          <div class="total-divider"></div>
-          <div class="summary-total">
-            <span>Total:</span>
-            <strong>R$ 150,00</strong>
-          </div>
-        </div>
+      <div class="dashboard-container">
+        <h2>Bem-vindo, Dr. Chris!</h2>
+        <p class="subtitle">Este é o seu painel de controle. Aqui você pode gerenciar seus agendamentos, pacientes e pagamentos.</p>
 
-        <!-- Opções de Pagamento -->
-        <div class="payment-methods">
-          <h3>Forma de Pagamento</h3>
+        <div class="dashboard-cards">
           
-          <div class="tabs">
-            <button class="tab-btn active" onclick="switchMethod('credit')">
-              <i class="fa-regular fa-credit-card"></i> Cartão de Crédito
-            </button>
-            <button class="tab-btn" onclick="switchMethod('pix')">
-              <i class="fa-brands fa-pix"></i> PIX
-            </button>
+          <div class="card">
+            <div class="card-icon">
+              <i class="fa-solid fa-calendar-days"></i>
+            </div>
+            <div class="card-content">
+              <h3>Próximos Agendamentos</h3>
+              <p>Você tem <strong>3</strong> agendamentos para hoje.</p>
+              <a href="#">Ver agenda completa</a>
+            </div>
           </div>
 
-          <!-- Formulário Cartão -->
-          <form id="credit-form" class="payment-form active-form">
-            <div class="input-group">
-              <label>Número do Cartão</label>
-              <input type="text" placeholder="0000 0000 0000 0000">
+          <div class="card">
+            <div class="card-icon">
+              <i class="fa-solid fa-users"></i>
             </div>
-            
-            <div class="input-group">
-              <label>Nome do Titular</label>
-              <input type="text" placeholder="Como impresso no cartão">
+            <div class="card-content">
+              <h3>Pacientes Ativos</h3>
+              <p><strong>25</strong> pacientes ativos este mês.</p>
+              <a href="#">Gerenciar pacientes</a>
             </div>
+          </div>
 
-            <div class="row">
-              <div class="input-group">
-                <label>Validade</label>
-                <input type="text" placeholder="MM/AA">
-              </div>
-              <div class="input-group">
-                <label>CVV</label>
-                <input type="text" placeholder="123">
-              </div>
+          <div class="card">
+            <div class="card-icon">
+              <i class="fa-solid fa-hand-holding-dollar"></i>
             </div>
-
-            <button type="button" class="confirm-btn">Confirmar Pagamento</button>
-          </form>
-
-          <!-- Área PIX (Inicialmente oculta) -->
-          <div id="pix-area" class="payment-form hidden-form">
-            <div class="pix-content">
-              <div class="qr-placeholder">
-                <i class="fa-solid fa-qrcode"></i>
-              </div>
-              <p>Escaneie o QR Code acima ou copie o código abaixo para pagar.</p>
-              <div class="copy-paste">
-                <input type="text" value="00020126580014BR.GOV.BCB.PIX0136..." readonly>
-                <button><i class="fa-regular fa-copy"></i></button>
-              </div>
-              <button type="button" class="confirm-btn">Já realizei o pagamento</button>
+            <div class="card-content">
+              <h3>Pagamentos Pendentes</h3>
+              <p><strong>2</strong> pagamentos aguardando confirmação.</p>
+              <a href="./src/Renderer/Views/Pagamento/pagamento.html">Ir para Pagamentos</a>
             </div>
           </div>
 
@@ -135,9 +99,12 @@
 
     <!-- Rodapé -->
     <footer>
-      <p>Pagamento seguro e criptografado. Seus dados estão protegidos.</p>
+      <p>Painel administrativo Chris Psicologia. Todos os direitos reservados.</p>
     </footer>
 
-    <script src="/src/pagamento.js"></script>
+    <script type="module" src="./src/Renderer/Services/PagamentoServices.js"></script>
+    <script src="./src/Renderer/Services/HeaderServices.js"></script>
+
+    
   </body>
 </html>
