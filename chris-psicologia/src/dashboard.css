@@ -3,21 +3,23 @@
   max-width: 1200px;
   margin: 2rem auto;
   padding: 2rem;
-  background-color: #fff;
+  background-color: #faf6ee;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
 .dashboard-container h2 {
   font-size: 2rem;
-  color: #333;
+  color: #5D6D68;
   margin-bottom: 0.5rem;
+  font-family: questrial, sans-serif;
 }
 
 .subtitle {
-  color: #666;
+  color: #5D6D68;
   margin-bottom: 2rem;
   font-size: 1.1rem;
+  font-family: questrial, sans-serif;
 }
 
 .dashboard-cards {
@@ -27,13 +29,13 @@
 }
 
 .card {
-  background-color: #f9f9f9;
+  background-color: #ffffff;
   border-radius: 8px;
   padding: 1.5rem;
   display: flex;
   align-items: center;
   gap: 1.5rem;
-  border-left: 5px solid #007bff;
+  border-left: 5px solid #5D6D68;
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
@@ -44,24 +46,27 @@
 
 .card-icon {
   font-size: 2.5rem;
-  color: #007bff;
+  color: #5D6D68;
 }
 
 .card-content h3 {
   margin: 0 0 0.5rem 0;
   font-size: 1.2rem;
-  color: #333;
+  color: #5D6D68;
+  font-family: questrial, sans-serif;
 }
 
 .card-content p {
   margin: 0 0 1rem 0;
-  color: #555;
+  color: #5D6D68;
+  font-family: questrial, sans-serif;
 }
 
 .card-content a {
-  color: #007bff;
+  color: #5D6D68;
   text-decoration: none;
   font-weight: bold;
+  font-family: questrial, sans-serif;
 }
 
 .card-content a:hover {
