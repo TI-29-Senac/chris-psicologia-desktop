@@ -52,111 +52,58 @@
       </aside>
 
       <main class="main-content">
-        
         <header class="top-bar">
           <div class="page-title">
-            <h2>Pagamentos</h2>
-            <p>Gerencie transações e confirme pagamentos.</p>
+            <h2>Gestão Financeira</h2>
+            <p>Histórico de transações via Stripe</p>
           </div>
           <div class="user-profile">
             <span>Dr. Chris</span>
-            <div class="avatar">
-              <i class="fa-regular fa-circle-user"></i>
-            </div>
+            <div class="avatar"><i class="fa-regular fa-circle-user"></i></div>
           </div>
         </header>
 
-        <div class="payment-wrapper">
-          <div class="payment-container">
+        <div class="payment-dashboard">
+          <div class="summary-cards">
+            <div class="card-metric">
+              <span>Total Recebido (Mês)</span>
+              <h3>R$ --,--</h3>
+            </div>
+            <div class="card-metric">
+              <span>Transações</span>
+              <h3 id="total-transacoes">0</h3>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <div class="table-header">
+              <h3>Últimas Transações</h3>
+              <button class="refresh-btn" id="btn-atualizar"><i class="fa-solid fa-sync"></i> Atualizar</button>
+            </div>
             
-            <div class="order-summary">
-              <h3>Resumo do Agendamento</h3>
-              <div class="summary-item">
-                <span>Serviço:</span>
-                <strong>Terapia Individual (Online)</strong>
-              </div>
-              <div class="summary-item">
-                <span>Profissional:</span>
-                <strong>Dr. Chris</strong>
-              </div>
-              <div class="summary-item">
-                <span>Data:</span>
-                <strong>12/12/2023 às 14:00</strong>
-              </div>
-              <div class="total-divider"></div>
-              <div class="summary-total">
-                <span>Total:</span>
-                <strong>R$ 150,00</strong>
-              </div>
-            </div>
-
-            <div class="payment-methods">
-              <h3>Forma de Pagamento</h3>
-              
-              <div class="tabs">
-                <button class="tab-btn active" data-method="credit">
-                  <i class="fa-regular fa-credit-card"></i> Cartão de Crédito
-                </button>
-                <button class="tab-btn" data-method="pix">
-                  <i class="fa-brands fa-pix"></i> PIX
-                </button>
-              </div>
-
-              <form id="credit-form" class="payment-form active-form">
-                <div class="input-group">
-                  <label>Número do Cartão</label>
-                  <input type="text" placeholder="0000 0000 0000 0000">
-                </div>
-                
-                <div class="input-group">
-                  <label>Nome do Titular</label>
-                  <input type="text" placeholder="Como impresso no cartão">
-                </div>
-
-                <div class="row">
-                  <div class="input-group">
-                    <label>Validade</label>
-                    <input type="text" placeholder="MM/AA">
-                  </div>
-                  <div class="input-group">
-                    <label>CVV</label>
-                    <input type="text" placeholder="123">
-                  </div>
-                </div>
-
-                <button type="button" class="confirm-btn">Confirmar Pagamento</button>
-              </form>
-
-              <div id="pix-area" class="payment-form hidden-form">
-                <div class="pix-content">
-                  <div class="qr-placeholder">
-                    <i class="fa-solid fa-qrcode"></i>
-                  </div>
-                  <p>Escaneie o QR Code acima ou copie o código abaixo para pagar.</p>
-                  <div class="copy-paste">
-                    <input type="text" value="00020126580014BR.GOV.BCB.PIX0136..." readonly>
-                    <button><i class="fa-regular fa-copy"></i></button>
-                  </div>
-                  <button type="button" class="confirm-btn">Já realizei o pagamento</button>
-                </div>
-              </div>
-
-            </div>
+            <table class="transaction-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>ID</th>
+                  <th>Cliente (Email)</th>
+                  <th>Método</th>
+                  <th>Valor</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="lista-pagamentos">
+                <tr>
+                  <td colspan="6" style="text-align: center;">Carregando dados do Stripe...</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </main>
     </div>
 
     <script type="module" src="../../Services/PagamentoServices.js"></script>
-    <script>
-        // Inicializa o serviço manualmente já que é um módulo
-        import { PagamentoServices } from '../../Services/PagamentoServices.js';
-        // Ou se o seu PagamentoServices.js já faz o auto-start ou exporta um objeto global, mantenha como estava.
-        // Baseado no seu arquivo anterior, ele era um IIFE que retornava um objeto, mas estava em type="module".
-        // Se for module, você precisa importar. Se for script normal, ele roda direto.
-        // Vou manter simples: Se o seu PagamentoServices.js roda automaticamente ou expõe globalmente, ok.
-    </script>
-    <script src="../../Services/PagamentoServices.js"></script>
 
   </body>
 </html>

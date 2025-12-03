@@ -5,5 +5,5 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('electronAPI', {
   // A View (Renderer) vai chamar esta função
   processarPagamento: (dados) => ipcRenderer.invoke('pagamento:processar', dados),
+  listarPagamentos: () => ipcRenderer.invoke('pagamento:listar'),
 });
-

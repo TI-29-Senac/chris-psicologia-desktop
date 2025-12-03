@@ -1,92 +1,62 @@
 const PagamentoServices = (() => {
-  let state = {};
-  let elements = {};
-  let listeners = []; // Armazena os listeners para poder removê-los depois
+  const tbody = document.getElementById('lista-pagamentos');
+  const btnAtualizar = document.getElementById('btn-atualizar');
+  const totalTransacoesEl = document.getElementById('total-transacoes');
 
-  const renderPaymentMethod = () => {
-    if (!elements.creditForm) return; // Garante que os elementos existem
-    const isCredit = state.activePaymentMethod === 'credit';
+  const carregarDados = async () => {
+    // 1. Mostrar loading
+    if(tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">Atualizando...</td></tr>';
 
-    elements.creditForm.classList.toggle('active-form', isCredit);
-    elements.creditForm.classList.toggle('hidden-form', !isCredit);
-    elements.pixArea.classList.toggle('active-form', !isCredit);
-    elements.pixArea.classList.toggle('hidden-form', isCredit);
+    // 2. Pedir dados ao Backend (que pede ao Stripe)
+    const resultado = await window.electronAPI.listarPagamentos();
 
-    elements.creditBtns.forEach(btn => btn.classList.toggle('active', isCredit));
-    elements.pixBtns.forEach(btn => btn.classList.toggle('active', !isCredit));
+    // 3. Renderizar
+    if (tbody) tbody.innerHTML = ''; // Limpa
+
+    if (resultado.success && resultado.data.length > 0) {
+      if(totalTransacoesEl) totalTransacoesEl.innerText = resultado.data.length;
+
+      resultado.data.forEach(item => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${item.data}</td>
+          <td><small style="opacity: 0.7">${item.id}</small></td>
+          <td>${item.email}</td>
+          <td style="text-transform: capitalize;">${item.metodo}</td>
+          <td>R$ ${item.valor.replace('.', ',')}</td>
+          <td><span class="badge ${item.status}">${traduzirStatus(item.status)}</span></td>
+        `;
+        tbody.appendChild(row);
+      });
+    } else {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Nenhuma transação encontrada no Stripe (Modo Teste).</td></tr>';
+    }
   };
 
-  const controller = {
-    switchPaymentMethod: (method) => {
-      if (state.activePaymentMethod !== method) {
-        state.activePaymentMethod = method;
-        renderPaymentMethod();
-      }
-    },
-    handleConfirm: async () => {
-      const dadosPagamento = {
-        valor: 150.00, // Exemplo
-        metodo: state.activePaymentMethod,
-      };
-      const resultado = await window.electronAPI.processarPagamento(dadosPagamento);
-      alert(resultado.message);
-    },
+  const traduzirStatus = (status) => {
+    const mapa = {
+      'succeeded': 'Aprovado',
+      'pending': 'Pendente',
+      'failed': 'Falhou'
+    };
+    return mapa[status] || status;
   };
-
-  // Função para adicionar um event listener e guardá-lo para remoção futura
-  function addManagedListener(element, event, handler) {
-    element.addEventListener(event, handler);
-    listeners.push({ element, event, handler });
-  }
 
   return {
-    // Inicia a lógica da página
     start: () => {
-      // 1. Encontra os elementos na DOM
-      elements = {
-        creditForm: document.getElementById('credit-form'),
-        pixArea: document.getElementById('pix-area'),
-        confirmBtn: document.querySelector('.confirm-btn'),
-        creditBtns: document.querySelectorAll('.tab-btn[data-method="credit"]'),
-        pixBtns: document.querySelectorAll('.tab-btn[data-method="pix"]'),
-      };
-
-      // Se os elementos principais não existem, não faz nada
-      if (!elements.creditForm || !elements.pixArea) {
-        console.warn("Elementos do formulário de pagamento não encontrados. O serviço não será iniciado.");
-        return;
+      console.log("Gestão Financeira Iniciada");
+      carregarDados();
+      
+      if(btnAtualizar) {
+        btnAtualizar.addEventListener('click', carregarDados);
       }
-
-      // 2. Reseta o estado
-      state = {
-        activePaymentMethod: 'credit',
-      };
-
-      // 3. Adiciona os event listeners de forma gerenciada
-      elements.creditBtns.forEach(btn => {
-        addManagedListener(btn, 'click', () => controller.switchPaymentMethod('credit'));
-      });
-      elements.pixBtns.forEach(btn => {
-        addManagedListener(btn, 'click', () => controller.switchPaymentMethod('pix'));
-      });
-
-      if (elements.confirmBtn) {
-        addManagedListener(elements.confirmBtn, 'click', controller.handleConfirm);
-      }
-
-      // 4. Renderiza o estado inicial
-      renderPaymentMethod();
-      console.log("Serviço de Pagamento INICIADO.");
-    },
-
-    // Para a lógica e limpa os listeners
-    stop: () => {
-      listeners.forEach(({ element, event, handler }) => {
-        element.removeEventListener(event, handler);
-      });
-      listeners = []; // Limpa o array de listeners
-      elements = {}; // Limpa as referências aos elementos
-      console.log("Serviço de Pagamento PARADO.");
-    },
+    }
   };
 })();
+
+// Auto-inicialização para facilitar
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', PagamentoServices.start);
+} else {
+    PagamentoServices.start();
+}
