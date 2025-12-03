@@ -1,110 +1,108 @@
 <!doctype html>
-<html>
+<html lang="pt-br">
   <head>
     <meta charset="UTF-8" />
     <title>Dashboard - Chris Psicologia</title>
-    <!-- Fontes e Ícones -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Questrial&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <link rel="stylesheet" href="./src/dashboard.css">
-    <link rel="stylesheet" href="./src/Renderer/Views/Pagamento/pagamento.css">
-
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
   <body>
     
-    <!-- Cabeçalho (Mantendo a consistência) -->
-    <header>
-      <a href="index.html" class="logo-link">
-        <div class="logo-container">
+    <div class="app-layout">
+      
+      <aside class="sidebar">
+        <div class="brand">
           <div class="logo-symbol">Ψ</div>
           <div class="logo-text">
-            <h1>CHRIS PSICOLOGIA</h1>
-            <span>PSICÓLOGO</span>
+            <h1>CHRIS</h1>
+            <span>PSICOLOGIA</span>
           </div>
         </div>
-      </a>
 
-      <nav class="desktop-nav">
-        <a href="#" class="nav-btn">Usuários</a>
-        <a href="#" class="nav-btn">Agendamentos</a>
-        <a href="./src/Renderer/Views/Pagamento/pagamento.html" class="nav-btn">Pagamentos</a>
-      </nav>
+        <nav class="sidebar-nav">
+          <a href="#" class="menu-item active">
+            <i class="fa-solid fa-chart-pie"></i>
+            <span>Visão Geral</span>
+          </a>
+          <a href="#" class="menu-item">
+            <i class="fa-solid fa-users"></i>
+            <span>Usuários</span>
+          </a>
+          <a href="#" class="menu-item">
+            <i class="fa-solid fa-calendar-days"></i>
+            <span>Agendamentos</span>
+          </a>
+          <a href="./src/Renderer/Views/Pagamento/pagamento.html" class="menu-item">
+            <i class="fa-solid fa-hand-holding-dollar"></i>
+            <span>Pagamentos</span>
+          </a>
+        </nav>
 
-      <div class="user-menu">
-        <i class="fa-regular fa-circle-user profile-icon"></i>
-        <div id="menu-trigger" class="menu-trigger">
-          <span>Menu</span>
-          <i class="fa-solid fa-ellipsis"></i>
+        <div class="sidebar-footer">
+          <a href="#" class="logout-btn">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> Sair
+          </a>
         </div>
-      </div>
-    </header>
+      </aside>
 
-    <!-- Modal Lateral -->
-    <div id="side-modal" class="side-modal">
-      <button id="close-modal" class="close-btn">&times;</button>
-      <nav class="modal-nav">
-        <a href="#" class="modal-link">Agendamentos</a>
-        <a href="#" class="modal-link">Usuários</a>
-        <a href="./src/Renderer/Views/Pagamento/pagamento.html" class="modal-link">Pagamentos</a>
-      </nav>
-    </div>
-    <div id="overlay" class="overlay"></div>
+      <main class="main-content">
+        
+        <header class="top-bar">
+          <div class="page-title">
+            <h2>Dashboard Administrativo</h2>
+            <p>Bem-vindo de volta, Dr. Chris!</p>
+          </div>
+          <div class="user-profile">
+            <span>Dr. Chris</span>
+            <div class="avatar">
+              <i class="fa-regular fa-circle-user"></i>
+            </div>
+          </div>
+        </header>
 
-    <!-- Área Principal do Dashboard -->
-    <main>
-      <div class="dashboard-container">
-        <h2>Bem-vindo, Dr. Chris!</h2>
-        <p class="subtitle">Este é o seu painel de controle. Aqui você pode gerenciar seus agendamentos, pacientes e pagamentos.</p>
-
-        <div class="dashboard-cards">
+        <div class="charts-grid">
           
-          <div class="card">
-            <div class="card-icon">
-              <i class="fa-solid fa-calendar-days"></i>
+          <div class="chart-card large">
+            <div class="chart-header">
+              <h3>Fluxo de Agendamentos</h3>
+              <select class="chart-filter">
+                <option>Esta Semana</option>
+                <option>Este Mês</option>
+              </select>
             </div>
-            <div class="card-content">
-              <h3>Próximos Agendamentos</h3>
-              <p>Você tem <strong>3</strong> agendamentos para hoje.</p>
-              <a href="#">Ver agenda completa</a>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-icon">
-              <i class="fa-solid fa-users"></i>
-            </div>
-            <div class="card-content">
-              <h3>Pacientes Ativos</h3>
-              <p><strong>25</strong> pacientes ativos este mês.</p>
-              <a href="#">Gerenciar pacientes</a>
+            <div class="canvas-container">
+              <canvas id="appointmentsChart"></canvas>
             </div>
           </div>
 
-          <div class="card">
-            <div class="card-icon">
-              <i class="fa-solid fa-hand-holding-dollar"></i>
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3>Status dos Pacientes</h3>
             </div>
-            <div class="card-content">
-              <h3>Pagamentos Pendentes</h3>
-              <p><strong>2</strong> pagamentos aguardando confirmação.</p>
-              <a href="./src/Renderer/Views/Pagamento/pagamento.html">Ir para Pagamentos</a>
+            <div class="canvas-container">
+              <canvas id="usersChart"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3>Receita Mensal</h3>
+            </div>
+            <div class="canvas-container">
+              <canvas id="financeChart"></canvas>
             </div>
           </div>
 
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
 
-    <!-- Rodapé -->
-    <footer>
-      <p>Painel administrativo Chris Psicologia. Todos os direitos reservados.</p>
-    </footer>
-
-    <script type="module" src="./src/Renderer/Services/PagamentoServices.js"></script>
-    <script src="./src/Renderer/Services/HeaderServices.js"></script>
-
-    
+    <script src="./src/dashboard.js"></script> 
   </body>
 </html>

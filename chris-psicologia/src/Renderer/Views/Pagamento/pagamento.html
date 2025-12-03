@@ -1,147 +1,161 @@
 <!doctype html>
-<html>
+<html lang="pt-br">
   <head>
     <meta charset="UTF-8" />
     <title>Pagamento - Chris Psicologia</title>
-    <!-- Fontes e Ícones -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Questrial&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="pagamento.css">
+    
     <link rel="stylesheet" href="../../../dashboard.css">
+    <link rel="stylesheet" href="pagamento.css">
 
   </head>
   <body>
     
-    <!-- Cabeçalho (Mantendo a consistência) -->
-    <header>
-      <a href="../../../../index.html" class="logo-link">
-        <div class="logo-container">
+    <div class="app-layout">
+      
+      <aside class="sidebar">
+        <div class="brand">
           <div class="logo-symbol">Ψ</div>
           <div class="logo-text">
-            <h1>CHRIS PSICOLOGIA</h1>
-            <span>PSICÓLOGO</span>
+            <h1>CHRIS</h1>
+            <span>PSICOLOGIA</span>
           </div>
         </div>
-      </a>
 
-      <nav class="desktop-nav">
-        <a href="#" class="nav-btn">Usuários</a>
-        <a href="#" class="nav-btn">Agendamentos</a>
-        <a href="pagamento.html" class="nav-btn active">Pagamentos</a>
-      </nav>
+        <nav class="sidebar-nav">
+          <a href="../../../../index.html" class="menu-item">
+            <i class="fa-solid fa-chart-pie"></i>
+            <span>Visão Geral</span>
+          </a>
+          <a href="#" class="menu-item">
+            <i class="fa-solid fa-users"></i>
+            <span>Usuários</span>
+          </a>
+          <a href="#" class="menu-item">
+            <i class="fa-solid fa-calendar-days"></i>
+            <span>Agendamentos</span>
+          </a>
+          <a href="#" class="menu-item active">
+            <i class="fa-solid fa-hand-holding-dollar"></i>
+            <span>Pagamentos</span>
+          </a>
+        </nav>
 
-      <div class="user-menu">
-        <i class="fa-regular fa-circle-user profile-icon"></i>
-        <div id="menu-trigger" class="menu-trigger">
-          <span>Menu</span>
-          <i class="fa-solid fa-ellipsis"></i>
+        <div class="sidebar-footer">
+          <a href="#" class="logout-btn">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> Sair
+          </a>
         </div>
-      </div>
-    </header>
+      </aside>
 
-    <!-- Modal Lateral -->
-    <div id="side-modal" class="side-modal">
-      <button id="close-modal" class="close-btn">&times;</button>
-      <nav class="modal-nav">
-        <a href="#" class="modal-link">Agendamentos</a>
-        <a href="#" class="modal-link">Usuários</a>
-        <a href="pagamento.html" class="modal-link active-link">Pagamentos</a>
-      </nav>
-    </div>
-    <div id="overlay" class="overlay"></div>
-
-    <!-- Área Principal de Pagamento -->
-    <main>
-      <div class="payment-container">
+      <main class="main-content">
         
-        <!-- Resumo do Pedido -->
-        <div class="order-summary">
-          <h3>Resumo do Agendamento</h3>
-          <div class="summary-item">
-            <span>Serviço:</span>
-            <strong>Terapia Individual (Online)</strong>
+        <header class="top-bar">
+          <div class="page-title">
+            <h2>Pagamentos</h2>
+            <p>Gerencie transações e confirme pagamentos.</p>
           </div>
-          <div class="summary-item">
-            <span>Profissional:</span>
-            <strong>Dr. Chris</strong>
-          </div>
-          <div class="summary-item">
-            <span>Data:</span>
-            <strong>12/12/2023 às 14:00</strong>
-          </div>
-          <div class="total-divider"></div>
-          <div class="summary-total">
-            <span>Total:</span>
-            <strong>R$ 150,00</strong>
-          </div>
-        </div>
-
-        <!-- Opções de Pagamento -->
-        <div class="payment-methods">
-          <h3>Forma de Pagamento</h3>
-          
-          <div class="tabs">
-            <button class="tab-btn active" onclick="switchMethod('credit')">
-              <i class="fa-regular fa-credit-card"></i> Cartão de Crédito
-            </button>
-            <button class="tab-btn" onclick="switchMethod('pix')">
-              <i class="fa-brands fa-pix"></i> PIX
-            </button>
-          </div>
-
-          <!-- Formulário Cartão -->
-          <form id="credit-form" class="payment-form active-form">
-            <div class="input-group">
-              <label>Número do Cartão</label>
-              <input type="text" placeholder="0000 0000 0000 0000">
+          <div class="user-profile">
+            <span>Dr. Chris</span>
+            <div class="avatar">
+              <i class="fa-regular fa-circle-user"></i>
             </div>
+          </div>
+        </header>
+
+        <div class="payment-wrapper">
+          <div class="payment-container">
             
-            <div class="input-group">
-              <label>Nome do Titular</label>
-              <input type="text" placeholder="Como impresso no cartão">
+            <div class="order-summary">
+              <h3>Resumo do Agendamento</h3>
+              <div class="summary-item">
+                <span>Serviço:</span>
+                <strong>Terapia Individual (Online)</strong>
+              </div>
+              <div class="summary-item">
+                <span>Profissional:</span>
+                <strong>Dr. Chris</strong>
+              </div>
+              <div class="summary-item">
+                <span>Data:</span>
+                <strong>12/12/2023 às 14:00</strong>
+              </div>
+              <div class="total-divider"></div>
+              <div class="summary-total">
+                <span>Total:</span>
+                <strong>R$ 150,00</strong>
+              </div>
             </div>
 
-            <div class="row">
-              <div class="input-group">
-                <label>Validade</label>
-                <input type="text" placeholder="MM/AA">
+            <div class="payment-methods">
+              <h3>Forma de Pagamento</h3>
+              
+              <div class="tabs">
+                <button class="tab-btn active" data-method="credit">
+                  <i class="fa-regular fa-credit-card"></i> Cartão de Crédito
+                </button>
+                <button class="tab-btn" data-method="pix">
+                  <i class="fa-brands fa-pix"></i> PIX
+                </button>
               </div>
-              <div class="input-group">
-                <label>CVV</label>
-                <input type="text" placeholder="123">
-              </div>
-            </div>
 
-            <button type="button" class="confirm-btn">Confirmar Pagamento</button>
-          </form>
+              <form id="credit-form" class="payment-form active-form">
+                <div class="input-group">
+                  <label>Número do Cartão</label>
+                  <input type="text" placeholder="0000 0000 0000 0000">
+                </div>
+                
+                <div class="input-group">
+                  <label>Nome do Titular</label>
+                  <input type="text" placeholder="Como impresso no cartão">
+                </div>
 
-          <!-- Área PIX (Inicialmente oculta) -->
-          <div id="pix-area" class="payment-form hidden-form">
-            <div class="pix-content">
-              <div class="qr-placeholder">
-                <i class="fa-solid fa-qrcode"></i>
+                <div class="row">
+                  <div class="input-group">
+                    <label>Validade</label>
+                    <input type="text" placeholder="MM/AA">
+                  </div>
+                  <div class="input-group">
+                    <label>CVV</label>
+                    <input type="text" placeholder="123">
+                  </div>
+                </div>
+
+                <button type="button" class="confirm-btn">Confirmar Pagamento</button>
+              </form>
+
+              <div id="pix-area" class="payment-form hidden-form">
+                <div class="pix-content">
+                  <div class="qr-placeholder">
+                    <i class="fa-solid fa-qrcode"></i>
+                  </div>
+                  <p>Escaneie o QR Code acima ou copie o código abaixo para pagar.</p>
+                  <div class="copy-paste">
+                    <input type="text" value="00020126580014BR.GOV.BCB.PIX0136..." readonly>
+                    <button><i class="fa-regular fa-copy"></i></button>
+                  </div>
+                  <button type="button" class="confirm-btn">Já realizei o pagamento</button>
+                </div>
               </div>
-              <p>Escaneie o QR Code acima ou copie o código abaixo para pagar.</p>
-              <div class="copy-paste">
-                <input type="text" value="00020126580014BR.GOV.BCB.PIX0136..." readonly>
-                <button><i class="fa-regular fa-copy"></i></button>
-              </div>
-              <button type="button" class="confirm-btn">Já realizei o pagamento</button>
+
             </div>
           </div>
-
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
 
-    <!-- Rodapé -->
-    <footer>
-      <p>Pagamento seguro e criptografado. Seus dados estão protegidos.</p>
-    </footer>
-
-    <script src="../../Services/HeaderServices.js"></script>
+    <script type="module" src="../../Services/PagamentoServices.js"></script>
+    <script>
+        // Inicializa o serviço manualmente já que é um módulo
+        import { PagamentoServices } from '../../Services/PagamentoServices.js';
+        // Ou se o seu PagamentoServices.js já faz o auto-start ou exporta um objeto global, mantenha como estava.
+        // Baseado no seu arquivo anterior, ele era um IIFE que retornava um objeto, mas estava em type="module".
+        // Se for module, você precisa importar. Se for script normal, ele roda direto.
+        // Vou manter simples: Se o seu PagamentoServices.js roda automaticamente ou expõe globalmente, ok.
+    </script>
     <script src="../../Services/PagamentoServices.js"></script>
 
   </body>
