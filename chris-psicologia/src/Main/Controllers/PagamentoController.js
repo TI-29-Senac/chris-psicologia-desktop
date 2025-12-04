@@ -30,4 +30,4 @@ const PagamentoController = {
   }
 };
 
-module.exports = PagamentoController;
+export default PagamentoController;
