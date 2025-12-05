@@ -1,10 +1,4 @@
-agendamento.css
- 
-/* src/Renderer/Views/Agendamento/agendamento.css */
- 
-/* =========================================
-   1. Variáveis de Cor e Fonte (Identidade Visual)
-   ========================================= */
+
 :root {
     --color-primary: #7C8F88;       /* Verde Sage do Dashboard */
     --color-primary-dark: #5f706a;  /* Verde mais escuro para hover */
