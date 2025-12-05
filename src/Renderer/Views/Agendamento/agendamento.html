@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Agendamentos</title>
+    
+    <link rel="stylesheet" href="agendamento.css">
+</head>
+<body>
+
+    <h2>Gestão de Agendamentos</h2>
+
+    <div class="card">
+        <h3 id="titulo-form">Novo Agendamento</h3>
+        
+        <input type="hidden" id="input-id">
+
+        <div class="form-group">
+            <label for="select-paciente">Paciente</label>
+            <select id="select-paciente" class="form-control">
+                </select>
+            <small id="aviso-paciente" class="small-text" style="display: none;">
+                O paciente não pode ser alterado durante a edição.
+            </small>
+        </div>
+
+        <div class="form-group">
+            <label for="select-profissional">Profissional</label>
+            <select id="select-profissional" class="form-control">
+                </select>
+        </div>
+
+        <div class="form-group">
+            <label>Data e Horário</label>
+            <div style="display: flex; gap: 15px;">
+                <input type="date" id="input-dia" class="form-control" style="flex: 1;">
+                
+                <select id="select-hora" class="form-control" style="width: 180px;">
+                    <option value="">Horário...</option>
+                    <optgroup label="Manhã">
+                        <option value="08:00">08:00 - 09:00</option>
+                        <option value="09:00">09:00 - 10:00</option>
+                        <option value="10:00">10:00 - 11:00</option>
+                        <option value="11:00">11:00 - 12:00</option>
+                    </optgroup>
+                    <optgroup label="Tarde">
+                        <option value="13:00">13:00 - 14:00</option>
+                        <option value="14:00">14:00 - 15:00</option>
+                        <option value="15:00">15:00 - 16:00</option>
+                        <option value="16:00">16:00 - 17:00</option>
+                        <option value="17:00">17:00 - 18:00</option>
+                    </optgroup>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button id="btn-salvar" class="btn btn-primary">Agendar</button>
+            <button id="btn-cancelar" class="btn btn-secondary" style="display: none;">Cancelar</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Agendamentos Recentes</h3>
+        
+        <div style="overflow-x: auto;">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Data/Hora</th>
+                        <th style="width: 25%;">Paciente</th>
+                        <th style="width: 25%;">Profissional</th>
+                        <th style="width: 15%;" class="text-center">Status</th>
+                        <th style="width: 15%;" class="text-center">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="lista-agendamentos">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module" src="agendamento.js"></script>
+
+</body>
+</html>

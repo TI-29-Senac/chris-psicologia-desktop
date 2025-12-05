@@ -1,11 +1,93 @@
 <!doctype html>
-<html>
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <title>Agendamentos - Chris Psicologia</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Início - Chris Psicologia</title>
+    
+    <!-- Estilo Básico para o Menu (Tema Verde/Creme) -->
+    <style>
+      :root {
+        --color-primary: #7C8F88;
+        --color-bg-main: #F8F6F0;
+        --color-text: #444;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: var(--color-bg-main);
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+
+      .menu-card {
+        background: white;
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        text-align: center;
+        width: 100%;
+        max-width: 400px;
+      }
+
+      h1 {
+        color: var(--color-primary);
+        margin-bottom: 10px;
+      }
+
+      p {
+        color: #888;
+        margin-bottom: 30px;
+      }
+
+      /* Estilo do Botão */
+      .btn-menu {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        padding: 15px;
+        background-color: var(--color-primary);
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        margin-bottom: 15px;
+        transition: transform 0.2s, background-color 0.2s;
+        box-sizing: border-box; /* Garante que o padding não estoure a largura */
+      }
+
+      .btn-menu:hover {
+        background-color: #5f706a;
+        transform: translateY(-2px);
+      }
+
+      .icon { font-size: 1.2rem; }
+    </style>
   </head>
   <body>
-    <div id="app"></div>
+    
+    <div class="menu-card">
+      <h1>Chris Psicologia</h1>
+      <p>Selecione um módulo para começar</p>
+
+      <!-- BOTÃO DE ACESSO AO AGENDAMENTO -->
+      <!-- O caminho deve apontar para onde movemos o arquivo -->
+      <a href="src/Renderer/Views/Agendamento/agendamento.html" class="btn-menu">
+        <span class="icon">📅</span> 
+        Gestão de Agendamentos
+      </a>
+
+      <!-- Exemplo de botão futuro (desabilitado visualmente) -->
+      <a href="#" class="btn-menu" style="background-color: #e0e0e0; color: #555; pointer-events: none;">
+        <span class="icon">👥</span> 
+        Usuários (Em breve)
+      </a>
+    </div>
     
     <script type="module" src="/src/renderer.js"></script>
   </body>

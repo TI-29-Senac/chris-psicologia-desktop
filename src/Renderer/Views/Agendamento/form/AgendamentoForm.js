@@ -1,28 +1,30 @@
+// src/Renderer/Views/Agendamento/form/AgendamentoForm.js
+
 const html = `
-    <div class="form-box" style="border: 1px solid #ccc; padding: 15px; background: #fff;">
+    <div class="card">
         <h3 id="titulo-form">Novo Agendamento</h3>
         
         <input type="hidden" id="input-id">
 
-        <div style="margin-bottom: 10px;">
-            <label>Paciente:</label>
-            <select id="select-paciente" style="width: 100%; padding: 5px;"></select>
-            <small id="aviso-paciente" style="color: #666; display: none; font-size: 0.8em; margin-top: 2px;">
+        <div class="form-group">
+            <label for="select-paciente">Paciente</label>
+            <select id="select-paciente" class="form-control"></select>
+            <small id="aviso-paciente" class="small-text" style="display: none;">
                 O paciente não pode ser alterado na edição.
             </small>
         </div>
 
-        <div style="margin-bottom: 10px;">
-            <label>Profissional:</label>
-            <select id="select-profissional" style="width: 100%; padding: 5px;"></select>
+        <div class="form-group">
+            <label for="select-profissional">Profissional</label>
+            <select id="select-profissional" class="form-control"></select>
         </div>
 
-        <div style="margin-bottom: 15px;">
-            <label>Data e Horário:</label>
-            <div style="display: flex; gap: 10px;">
-                <input type="date" id="input-dia" style="flex: 1; padding: 5px;">
+        <div class="form-group">
+            <label>Data e Horário</label>
+            <div style="display: flex; gap: 15px;">
+                <input type="date" id="input-dia" class="form-control" style="flex: 1;">
                 
-                <select id="select-hora" style="width: 140px; padding: 5px;">
+                <select id="select-hora" class="form-control" style="width: 180px;">
                     <option value="">Horário...</option>
                     <optgroup label="Manhã">
                         <option value="08:00">08:00 - 09:00</option>
@@ -41,11 +43,11 @@ const html = `
             </div>
         </div>
 
-        <div style="display: flex; gap: 10px;">
-            <button id="btn-salvar" style="flex: 1; padding: 10px; background: #4CAF50; color: white; border: none; cursor: pointer;">
+        <div class="form-actions">
+            <button id="btn-salvar" class="btn btn-primary">
                 Agendar
             </button>
-            <button id="btn-cancelar" style="display: none; padding: 10px; background: #f44336; color: white; border: none; cursor: pointer;">
+            <button id="btn-cancelar" class="btn btn-secondary" style="display: none;">
                 Cancelar
             </button>
         </div>
@@ -53,18 +55,21 @@ const html = `
 `;
 
 async function init() {
-    // Captura elementos
+    // 1. CAPTURA OS ELEMENTOS CERTOS (DIA e HORA separados)
     const selectPaciente = document.getElementById('select-paciente');
     const selectProfissional = document.getElementById('select-profissional');
+    
+    // ATENÇÃO AQUI: Capturando os IDs novos que definimos no HTML acima
     const inputDia = document.getElementById('input-dia');
     const selectHora = document.getElementById('select-hora');
+    
     const inputId = document.getElementById('input-id');
     const btnSalvar = document.getElementById('btn-salvar');
     const btnCancelar = document.getElementById('btn-cancelar');
     const tituloForm = document.getElementById('titulo-form');
     const avisoPaciente = document.getElementById('aviso-paciente');
 
-    // Carrega Selects Iniciais
+    // Carrega Selects
     if(window.api && window.api.getDadosFormulario) {
         try {
             const dados = await window.api.getDadosFormulario();
@@ -83,35 +88,38 @@ async function init() {
     window.preencherFormularioParaEdicao = async (id) => {
         try {
             const agendamento = await window.api.buscarAgendamentoPorId(id);
-            if(agendamento && agendamento.data_agendamento) {
+            if(agendamento) {
                 inputId.value = agendamento.id_agendamento;
+                
+                // Preenche valores
                 selectPaciente.value = agendamento.id_usuario;
                 selectProfissional.value = agendamento.id_profissional;
                 
-                // Quebra a data (ISO String: "2023-10-25T14:00:00.000Z") em Dia e Hora
-                const dataObj = new Date(agendamento.data_agendamento);
-                
-                // Extrai o Dia (YYYY-MM-DD)
-                // Usamos toLocaleDateString com cuidado ou split se o banco salvou em ISO puro
-                // Ajuste simples para fuso horário local:
-                const offset = dataObj.getTimezoneOffset() * 60000;
-                const localDate = new Date(dataObj.getTime() - offset);
-                inputDia.value = localDate.toISOString().split('T')[0];
+                // LÓGICA DE DATA E HORA SEPARADAS
+                if(agendamento.data_agendamento) {
+                    const dataObj = new Date(agendamento.data_agendamento);
+                    
+                    // Ajuste de fuso para pegar o dia correto localmente
+                    const offset = dataObj.getTimezoneOffset() * 60000;
+                    const localDate = new Date(dataObj.getTime() - offset);
+                    
+                    // Preenche o input type="date" (YYYY-MM-DD)
+                    inputDia.value = localDate.toISOString().split('T')[0];
 
-                // Extrai a Hora (HH:00)
-                const hora = String(localDate.getHours()).padStart(2, '0');
-                selectHora.value = `${hora}:00`; 
-
-                // Bloqueia Paciente
-                selectPaciente.disabled = true;
-                selectPaciente.style.backgroundColor = "#e9ecef";
-                avisoPaciente.style.display = "block";
+                    // Preenche o select type="time" (HH:00)
+                    const hora = String(localDate.getHours()).padStart(2, '0');
+                    selectHora.value = `${hora}:00`; 
+                }
 
                 // UI Edição
-                tituloForm.innerText = "Remarcar / Trocar Profissional";
+                selectPaciente.disabled = true;
+                avisoPaciente.style.display = "block";
+                tituloForm.innerText = "Editar Agendamento";
                 btnSalvar.innerText = "Salvar Alterações";
-                btnSalvar.style.background = "#2196F3";
                 btnCancelar.style.display = "block";
+                
+                // Rola para cima suavemente
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         } catch (error) {
             console.error("Erro na edição", error);
@@ -123,16 +131,14 @@ async function init() {
         inputId.value = '';
         selectPaciente.value = '';
         selectProfissional.value = '';
-        inputDia.value = '';
-        selectHora.value = '';
+        inputDia.value = '';   // Limpa dia
+        selectHora.value = ''; // Limpa hora
         
-        selectPaciente.disabled = false;
-        selectPaciente.style.backgroundColor = "white";
+        selectPaciente.disabled = false; 
         avisoPaciente.style.display = "none";
 
         tituloForm.innerText = "Novo Agendamento";
         btnSalvar.innerText = "Agendar";
-        btnSalvar.style.background = "#4CAF50";
         btnCancelar.style.display = "none";
     }
 
@@ -140,27 +146,27 @@ async function init() {
 
     // --- SALVAR ---
     btnSalvar.addEventListener('click', async () => {
-        // Validação Simples
+        // Validação: Verifica se DIA e HORA estão preenchidos
         if(!inputDia.value || !selectHora.value || !selectProfissional.value) {
             return alert("Preencha Profissional, Data e Horário!");
         }
 
-        // Validação de Fim de Semana (Ainda necessária pois o input type="date" permite sábado)
-        // Dica: new Date("2023-10-25T00:00") pega o dia correto independente de fuso para checar dia da semana
-        const dataCheck = new Date(inputDia.value + "T00:00:00");
+        // Validação de Fim de Semana
+        // Adiciona um horário fixo apenas para checar o dia da semana corretamente
+        const dataCheck = new Date(inputDia.value + "T12:00:00");
         const diaSemana = dataCheck.getDay();
         if(diaSemana === 0 || diaSemana === 6) {
             return alert("A clínica não funciona aos finais de semana!");
         }
 
-        // MONTAGEM DA DATA FINAL PARA O BANCO (YYYY-MM-DD + T + HH:MM)
+        // MONTA A DATA FINAL PARA O BANCO (YYYY-MM-DD + T + HH:MM)
         const dataFinal = `${inputDia.value}T${selectHora.value}`;
 
         const id = inputId.value;
         const dados = {
             id_usuario: selectPaciente.value,
             id_profissional: selectProfissional.value,
-            data_agendamento: dataFinal // Envia no formato que o banco já espera
+            data_agendamento: dataFinal
         };
 
         let res;
@@ -173,7 +179,7 @@ async function init() {
         }
         
         if (res.success) {
-            alert(id ? 'Agendamento remarcado!' : 'Agendamento criado!');
+            alert(id ? 'Agendamento atualizado!' : 'Agendamento criado!');
             limparFormulario();
             if (window.atualizarListaAgendamentos) window.atualizarListaAgendamentos();
         } else {

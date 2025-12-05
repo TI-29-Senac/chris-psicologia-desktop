@@ -1,0 +1,242 @@
+/* src/Renderer/Views/Agendamento/agendamento.css */
+
+/* =========================================
+   1. Variáveis de Cor e Fonte (Identidade Visual)
+   ========================================= */
+:root {
+    --color-primary: #7C8F88;       /* Verde Sage do Dashboard */
+    --color-primary-dark: #5f706a;  /* Verde mais escuro para hover */
+    --color-bg-main: #F8F6F0;       /* Creme Claro (Fundo da tela) */
+    --color-bg-card: #ffffff;       /* Branco (Fundo dos cards) */
+    
+    --color-text-dark: #444444;     /* Texto Principal */
+    --color-text-muted: #888888;    /* Texto Secundário */
+    
+    --color-danger: #e57373;        /* Vermelho suave (Excluir/Cancelar) */
+    --color-success: #81c784;       /* Verde suave (Status Agendado) */
+    --color-edit: #64b5f6;          /* Azul suave (Editar) */
+    
+    --border-radius: 12px;          /* Arredondamento padrão */
+    --box-shadow: 0 4px 15px rgba(0,0,0,0.05); /* Sombra elegante */
+    --font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* =========================================
+   2. Reset e Corpo da Página
+   ========================================= */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--color-bg-main); /* Fundo Creme */
+    color: var(--color-text-dark);
+    line-height: 1.6;
+    padding: 40px; /* Espaço ao redor da tela */
+}
+
+h2 {
+    color: var(--color-primary-dark);
+    margin-bottom: 30px;
+    font-weight: 700;
+}
+
+h3 {
+    color: var(--color-text-dark);
+    font-weight: 600;
+    margin-bottom: 20px;
+    font-size: 1.2rem;
+}
+
+/* =========================================
+   3. Cards (Os blocos brancos)
+   ========================================= */
+.card {
+    background: var(--color-bg-card);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    padding: 30px;
+    margin-bottom: 30px;
+    border: 1px solid rgba(0,0,0,0.02); /* Borda sutil */
+}
+
+/* =========================================
+   4. Formulário
+   ========================================= */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--color-primary);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 15px;
+    font-size: 1rem;
+    color: #333;
+    background-color: #fcfcfc;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+/* Efeito ao clicar no campo */
+.form-control:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(124, 143, 136, 0.2); /* Aura verde */
+}
+
+/* Campo desabilitado (na edição) */
+.form-control:disabled {
+    background-color: #f0f2f5;
+    color: #999;
+    cursor: not-allowed;
+}
+
+.small-text {
+    font-size: 0.85em;
+    color: var(--color-text-muted);
+    margin-top: 5px;
+    display: block;
+}
+
+/* =========================================
+   5. Botões
+   ========================================= */
+.form-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.btn {
+    flex: 1; /* Faz os botões ocuparem larguras iguais */
+    padding: 12px 20px;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+    text-align: center;
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+/* Botão Principal (Verde Sage) */
+.btn-primary {
+    background-color: var(--color-primary);
+    color: white;
+}
+.btn-primary:hover {
+    background-color: var(--color-primary-dark);
+}
+
+/* Botão Secundário (Cinza/Neutro) */
+.btn-secondary {
+    background-color: #e0e0e0;
+    color: #333;
+}
+.btn-secondary:hover {
+    background-color: #d0d0d0;
+}
+
+/* =========================================
+   6. Tabela de Listagem
+   ========================================= */
+.table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+/* Cabeçalho */
+.table th {
+    background-color: var(--color-primary); /* Verde Sage */
+    color: white;
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+/* Arredonda os cantos do cabeçalho */
+.table th:first-child { border-top-left-radius: var(--border-radius); }
+.table th:last-child { border-top-right-radius: var(--border-radius); }
+
+/* Linhas */
+.table td {
+    padding: 15px;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+    color: var(--color-text-dark);
+}
+
+/* Hover na linha */
+.table tr:hover td {
+    background-color: rgba(124, 143, 136, 0.05); /* Verde muito clarinho */
+}
+
+/* Data e Hora na tabela */
+.date-display {
+    font-weight: 600;
+    color: var(--color-text-dark);
+}
+.time-display {
+    font-size: 0.85em;
+    color: var(--color-text-muted);
+}
+
+/* Badges (Etiquetas de Status) */
+.status-badge {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.status-agendado {
+    background-color: rgba(129, 199, 132, 0.2);
+    color: #2e7d32;
+}
+.status-cancelado {
+    background-color: rgba(229, 115, 115, 0.2);
+    color: #c62828;
+}
+
+/* Botões de Ação (Ícones) */
+.action-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    margin: 0 2px;
+    transition: background-color 0.2s;
+}
+.action-btn:hover {
+    background-color: #f5f5f5;
+}
+
+.btn-edit { color: var(--color-edit); }
+.btn-cancel { color: orange; }
+.btn-delete { color: var(--color-danger); }
+
+.text-center { text-align: center; }
