@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Início - Chris Psicologia</title>
     
-    <!-- Estilo Básico para o Menu (Tema Verde/Creme) -->
     <style>
       :root {
         --color-primary: #7C8F88;
@@ -58,7 +57,7 @@
         font-weight: 600;
         margin-bottom: 15px;
         transition: transform 0.2s, background-color 0.2s;
-        box-sizing: border-box; /* Garante que o padding não estoure a largura */
+        box-sizing: border-box;
       }
 
       .btn-menu:hover {
@@ -75,20 +74,16 @@
       <h1>Chris Psicologia</h1>
       <p>Selecione um módulo para começar</p>
 
-      <!-- BOTÃO DE ACESSO AO AGENDAMENTO -->
-      <!-- O caminho deve apontar para onde movemos o arquivo -->
       <a href="src/Renderer/Views/Agendamento/agendamento.html" class="btn-menu">
         <span class="icon">📅</span> 
         Gestão de Agendamentos
       </a>
 
-      <!-- Exemplo de botão futuro (desabilitado visualmente) -->
-      <a href="#" class="btn-menu" style="background-color: #e0e0e0; color: #555; pointer-events: none;">
+      <a href="src/Renderer/Views/Cadastro/cadastro.html" class="btn-menu">
         <span class="icon">👥</span> 
-        Usuários (Em breve)
+        Cadastrar Usuários 
       </a>
     </div>
     
-    <script type="module" src="/src/renderer.js"></script>
-  </body>
+    </body>
 </html>

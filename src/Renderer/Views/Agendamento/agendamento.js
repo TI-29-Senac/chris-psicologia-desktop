@@ -102,6 +102,7 @@ function adicionarEventosLista() {
 
 // --- LÓGICA DO FORMULÁRIO (SALVAR) ---
 btnSalvar.addEventListener('click', async () => {
+    // Nota: Mesmo disabled, o .value pega o valor selecionado via JS
     if(!inputDia.value || !selectHora.value || !selectProfissional.value) {
         return alert("Preencha todos os campos!");
     }
@@ -153,9 +154,13 @@ async function preencherEdicao(id) {
         selectHora.value = String(localDate.getHours()).padStart(2, '0') + ":00";
     }
 
-    // Bloqueios visuais
+    // --- BLOQUEIOS VISUAIS (ATUALIZADO) ---
     selectPaciente.disabled = true;
+    selectProfissional.disabled = true; // Bloqueia a troca de médico na edição
+    
     avisoPaciente.style.display = "block";
+    avisoPaciente.innerText = "Modo Edição: Não é permitido alterar Paciente ou Profissional."; // Mensagem mais clara
+    
     tituloForm.innerText = "Editar Agendamento";
     btnSalvar.innerText = "Salvar Alterações";
     btnCancelar.style.display = "block";
@@ -168,8 +173,14 @@ function limparFormulario() {
     selectProfissional.value = '';
     inputDia.value = '';
     selectHora.value = '';
+    
+    // --- LIBERA OS CAMPOS (ATUALIZADO) ---
     selectPaciente.disabled = false;
+    selectProfissional.disabled = false; // Libera o médico para novos cadastros
+    
     avisoPaciente.style.display = "none";
+    avisoPaciente.innerText = ""; // Limpa o texto do aviso
+    
     tituloForm.innerText = "Novo Agendamento";
     btnSalvar.innerText = "Agendar";
     btnCancelar.style.display = "none";
