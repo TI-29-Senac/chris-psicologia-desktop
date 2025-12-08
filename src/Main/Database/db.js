@@ -3,37 +3,38 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import { app } from 'electron';
 
-// Define o caminho do banco (salva na pasta de dados do usuário para não perder ao fechar)
 const dbPath = path.join(app.getPath('userData'), 'clinica.db');
 const db = new Database(dbPath, { verbose: console.log });
 
 export function initDatabase() {
-    // 1. Cria Tabela de Usuários (Pacientes e Profissionais)
+    // 1. Tabela de Usuários (Base para todos)
     db.exec(`
         CREATE TABLE IF NOT EXISTS usuario (
             id_usuario INTEGER PRIMARY KEY AUTOINCREMENT,
             nome_usuario TEXT NOT NULL,
-            email TEXT,
-            senha TEXT,
+            email TEXT UNIQUE NOT NULL,
+            senha TEXT NOT NULL,
             tipo_usuario TEXT NOT NULL -- 'cliente' ou 'profissional'
         );
     `);
 
-    // 2. Cria Tabela de Profissionais (Extensão do usuário)
+    // 2. Tabela de Profissionais (Extensão)
+    // ADICIONEI: especialidade e valor_consulta
     db.exec(`
         CREATE TABLE IF NOT EXISTS profissional (
             id_profissional INTEGER PRIMARY KEY AUTOINCREMENT,
             id_usuario INTEGER NOT NULL,
-            registro_profissional TEXT,
-            FOREIGN KEY(id_usuario) REFERENCES usuario(id_usuario)
+            especialidade TEXT,
+            valor_consulta REAL,
+            FOREIGN KEY(id_usuario) REFERENCES usuario(id_usuario) ON DELETE CASCADE
         );
     `);
 
-    // 3. Cria Tabela de Agendamentos
+    // 3. Tabela de Agendamentos
     db.exec(`
         CREATE TABLE IF NOT EXISTS agendamento (
             id_agendamento INTEGER PRIMARY KEY AUTOINCREMENT,
-            id_usuario INTEGER NOT NULL, -- O Paciente
+            id_usuario INTEGER NOT NULL,
             id_profissional INTEGER NOT NULL,
             data_agendamento DATETIME NOT NULL,
             status_consulta TEXT DEFAULT 'Agendado',
@@ -42,40 +43,7 @@ export function initDatabase() {
         );
     `);
 
-    console.log("Banco de dados inicializado em:", dbPath);
-    
-    // CHAMA A FUNÇÃO DE POPULAR DADOS FALSOS
-    seedDatabase();
-}
-
-// --- FUNÇÃO PARA CRIAR DADOS DE TESTE ---
-function seedDatabase() {
-    // Verifica se já existe algum usuário. Se tiver, não faz nada.
-    const row = db.prepare('SELECT count(*) as count FROM usuario').get();
-    
-    if (row.count === 0) {
-        console.log("--- POPULANDO BANCO DE DADOS COM DADOS DE TESTE ---");
-
-        // 1. Criar Pacientes
-        const insertUser = db.prepare("INSERT INTO usuario (nome_usuario, tipo_usuario) VALUES (?, ?)");
-        
-        insertUser.run('Maria da Silva', 'cliente');
-        insertUser.run('João Souza', 'cliente');
-        insertUser.run('Ana Pereira', 'cliente');
-
-        // 2. Criar Profissionais (Precisa criar o Usuario antes, depois vincular na tabela profissional)
-        
-        // Dr. House
-        const infoHouse = insertUser.run('Dr. Gregory House', 'profissional');
-        const insertProf = db.prepare("INSERT INTO profissional (id_usuario, registro_profissional) VALUES (?, ?)");
-        insertProf.run(infoHouse.lastInsertRowid, 'CRM-12345');
-
-        // Dra. Grey
-        const infoGrey = insertUser.run('Dra. Meredith Grey', 'profissional');
-        insertProf.run(infoGrey.lastInsertRowid, 'CRM-67890');
-
-        console.log("--- DADOS DE TESTE CRIADOS COM SUCESSO ---");
-    }
+    console.log("Banco inicializado em:", dbPath);
 }
 
 export default db;

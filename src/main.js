@@ -4,6 +4,7 @@ import started from 'electron-squirrel-startup';
 
 // --- SEUS IMPORTS ---
 import AgendamentoController from './Main/Controllers/AgendamentoController.js';
+import UsuarioController from './Main/Controllers/UsuarioController.js';
 import { initDatabase } from './Main/Database/db.js';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -11,16 +12,17 @@ if (started) {
   app.quit();
 }
 
-// --- INSTÂNCIA DO SEU CONTROLADOR ---
+// --- INSTÂNCIA DOS SEUS CONTROLADORES ---
 const controllerAgendamento = new AgendamentoController();
+const controllerUsuario = new UsuarioController(); // <--- Faltava instanciar isso
 
-// Inicializa o banco (cria a tabela se não existir)
+// Inicializa o banco (cria as tabelas se não existirem)
 initDatabase();
 
 const createWindow = () => {
   const mainWindow = new BrowserWindow({
     width: 1200,
-    height: 600,
+    height: 700,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -28,7 +30,7 @@ const createWindow = () => {
     },
   });
 
-  // Configuração do Vite (Padrão do template Electron Forge + Vite)
+  // Configuração do Vite
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
   } else {
@@ -37,6 +39,18 @@ const createWindow = () => {
 };
 
 app.whenReady().then(() => {
+  
+  // ==========================================================
+  // --- INICIALIZAÇÃO DOS CONTROLADORES ---
+  // ==========================================================
+  // Aqui chamamos o método .init() que criamos dentro das classes.
+  // Eles registram automaticamente todos os ipcMain.handle()
+  
+  controllerAgendamento.init();
+  controllerUsuario.init(); // <--- Isso habilita o cadastro de usuários!
+
+  console.log("Main: Controladores inicializados.");
+
   createWindow();
 
   app.on('activate', () => {
@@ -45,49 +59,7 @@ app.whenReady().then(() => {
     }
   });
 
-  // ==========================================================
-  // --- SUAS ROTAS DE AGENDAMENTO (IPC HANDLERS) ---
-  // ==========================================================
-
-  // [CORREÇÃO] O Handler que faltava agora está no lugar certo!
-  ipcMain.handle("agendamentos:get-form-data", async () => {
-    console.log("Main: Buscando dados auxiliares (Pacientes/Profissionais)...");
-    return await controllerAgendamento.getDadosAuxiliares();
-  });
-
-  // 1. Listar
-  ipcMain.handle("agendamentos:listar", async () => {
-    console.log("Main: Chamando listar agendamentos");
-    return await controllerAgendamento.listar();
-  })
-
-  // 2. Cadastrar
-  ipcMain.handle("agendamentos:cadastrar", async (event, agendamento) => {
-    console.log("Main: Recebendo cadastro", agendamento);
-    // Nota: Certifique-se que no AgendamentoController o método se chama 'cadastrar' mesmo
-    const resultado = await controllerAgendamento.cadastrar(agendamento);
-    return resultado;
-  })
-
-  // 3. Editar
-  ipcMain.handle("agendamentos:editar", async (event, agendamento) => {
-    console.log("Main: Editando agendamento", agendamento);
-    const resultado = await controllerAgendamento.atualizarAgendamento(agendamento);
-    return resultado;
-  })
-
-  // 4. Buscar por ID
-  ipcMain.handle("agendamentos:buscarPorId", async (event, id) => {
-    return await controllerAgendamento.buscarAgendamentoPorId(id);
-  })
-
-  // 5. Remover
-  ipcMain.handle("agendamentos:remover", async (event, id) => {
-    console.log("Main: Removendo ID", id);
-    return await controllerAgendamento.removerAgendamento(id);
-  })
-
-  // --- Tema ---
+  // --- Tema (Handler avulso, pode ficar aqui) ---
   ipcMain.handle('dark-mode:toggle', () => {
     if (nativeTheme.shouldUseDarkColors) {
       nativeTheme.themeSource = 'light'
@@ -103,5 +75,4 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
-  // [CORREÇÃO] Removi o handler daqui. Nada deve ser registrado aqui.
 });
