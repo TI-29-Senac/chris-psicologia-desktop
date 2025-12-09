@@ -4,60 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestão de Agendamentos</title>
-   
+    
     <link rel="stylesheet" href="agendamento.css">
-    <link rel="stylesheet" href="../../../dashboard.css">
+    
 </head>
 <body>
 
-
-    <div class="app-layout">
-      
-      <aside class="sidebar">
-        <div class="brand">
-          <div class="logo-symbol">Ψ</div>
-          <div class="logo-text">
-            <h1>CHRIS</h1>
-            <span>PSICOLOGIA</span>
-          </div>
-        </div>
-
-        <nav class="sidebar-nav">
-          <a href="../../../../index.html" class="menu-item">
-  <i class="fa-solid fa-chart-pie"></i>
-  <span>Visão Geral</span>
-</a>
-
-<a href="#" class="menu-item">
-  <i class="fa-solid fa-users"></i>
-  <span>Usuários</span>
-</a>
-
-<a href="#" class="menu-item active">
-  <i class="fa-solid fa-calendar-days"></i>
-  <span>Agendamentos</span>
-</a>
-
-<a href="../Pagamento/pagamento.html" class="menu-item">
-  <i class="fa-solid fa-hand-holding-dollar"></i>
-  <span>Pagamentos</span>
-</a>
-        </nav>
-
-        <div class="sidebar-footer">
-          <a href="#" class="logout-btn">
-            <i class="fa-solid fa-arrow-right-from-bracket"></i> Sair
-          </a>
-        </div>
-      </aside>
-
     <h2>Gestão de Agendamentos</h2>
- 
+
     <div class="card">
         <h3 id="titulo-form">Novo Agendamento</h3>
-       
+        
         <input type="hidden" id="input-id">
- 
+
         <div class="form-group">
             <label for="select-paciente">Paciente</label>
             <select id="select-paciente" class="form-control">
@@ -66,18 +25,18 @@
                 O paciente não pode ser alterado durante a edição.
             </small>
         </div>
- 
+
         <div class="form-group">
             <label for="select-profissional">Profissional</label>
             <select id="select-profissional" class="form-control">
                 </select>
         </div>
- 
+
         <div class="form-group">
             <label>Data e Horário</label>
             <div style="display: flex; gap: 15px;">
                 <input type="date" id="input-dia" class="form-control" style="flex: 1;">
-               
+                
                 <select id="select-hora" class="form-control" style="width: 180px;">
                     <option value="">Horário...</option>
                     <optgroup label="Manhã">
@@ -96,16 +55,16 @@
                 </select>
             </div>
         </div>
- 
+
         <div class="form-actions">
             <button id="btn-salvar" class="btn btn-primary">Agendar</button>
             <button id="btn-cancelar" class="btn btn-secondary" style="display: none;">Cancelar</button>
         </div>
     </div>
- 
+
     <div class="card">
         <h3>Agendamentos Recentes</h3>
-       
+        
         <div style="overflow-x: auto;">
             <table class="table">
                 <thead>
@@ -120,10 +79,12 @@
                 <tbody id="lista-agendamentos">
                     </tbody>
             </table>
+            <a href="../../../../index.html" class="link-voltar">Voltar ao Início</a>
         </div>
+
     </div>
- 
+
     <script type="module" src="agendamento.js"></script>
- 
+
 </body>
 </html>

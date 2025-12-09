@@ -14,8 +14,7 @@ const listaEl = document.getElementById('lista-agendamentos');
 
 // --- INICIALIZAÇÃO ---
 async function init() {
-    // CORREÇÃO: Mudado de window.api para window.electronAPI para consistência com o preload
-    if (!window.electronAPI) return console.error("API Electron não encontrada");
+    if (!window.api) return console.error("API Electron não encontrada");
 
     await carregarSelects();
     await carregarTabela();
@@ -24,8 +23,7 @@ async function init() {
 // --- FUNÇÕES DE CARREGAMENTO ---
 async function carregarSelects() {
     try {
-        // CORREÇÃO: window.electronAPI
-        const dados = await window.electronAPI.getDadosFormulario();
+        const dados = await window.api.getDadosFormulario();
         if (dados.pacientes) {
             selectPaciente.innerHTML = '<option value="">Selecione...</option>' + 
                 dados.pacientes.map(p => `<option value="${p.id_usuario}">${p.nome_usuario}</option>`).join('');
@@ -39,8 +37,7 @@ async function carregarSelects() {
 
 async function carregarTabela() {
     try {
-        // CORREÇÃO: window.electronAPI
-        const agendamentos = await window.electronAPI.listarAgendamentos();
+        const agendamentos = await window.api.listarAgendamentos();
         
         if(agendamentos.length === 0) {
             listaEl.innerHTML = "<tr><td colspan='5' class='text-center' style='padding:30px'>Nenhum agendamento encontrado.</td></tr>";
@@ -86,8 +83,7 @@ function adicionarEventosLista() {
         btn.addEventListener('click', async (e) => {
             const id = e.target.closest('button').dataset.id;
             if(confirm('Deseja desmarcar esta consulta?')) {
-                // CORREÇÃO: window.electronAPI
-                await window.electronAPI.cancelarAgendamento(id);
+                await window.api.cancelarAgendamento(id);
                 carregarTabela();
             }
         });
@@ -97,8 +93,7 @@ function adicionarEventosLista() {
         btn.addEventListener('click', async (e) => {
             const id = e.target.closest('button').dataset.id;
             if(confirm('Tem certeza que deseja apagar?')) {
-                // CORREÇÃO: window.electronAPI
-                await window.electronAPI.removerAgendamento(id);
+                await window.api.removerAgendamento(id);
                 carregarTabela();
             }
         });
@@ -107,6 +102,7 @@ function adicionarEventosLista() {
 
 // --- LÓGICA DO FORMULÁRIO (SALVAR) ---
 btnSalvar.addEventListener('click', async () => {
+    // Nota: Mesmo disabled, o .value pega o valor selecionado via JS
     if(!inputDia.value || !selectHora.value || !selectProfissional.value) {
         return alert("Preencha todos os campos!");
     }
@@ -126,12 +122,10 @@ btnSalvar.addEventListener('click', async () => {
 
     if (id) {
         dados.id_agendamento = id;
-        // CORREÇÃO: window.electronAPI
-        res = await window.electronAPI.editarAgendamento(dados);
+        res = await window.api.editarAgendamento(dados);
     } else {
         if(!dados.id_usuario) return alert("Selecione o Paciente!");
-        // CORREÇÃO: window.electronAPI
-        res = await window.electronAPI.cadastrarAgendamento(dados);
+        res = await window.api.cadastrarAgendamento(dados);
     }
     
     if (res.success) {
@@ -145,8 +139,7 @@ btnSalvar.addEventListener('click', async () => {
 
 // --- FUNÇÕES AUXILIARES ---
 async function preencherEdicao(id) {
-    // CORREÇÃO: window.electronAPI
-    const agendamento = await window.electronAPI.buscarAgendamentoPorId(id);
+    const agendamento = await window.api.buscarAgendamentoPorId(id);
     if(!agendamento) return;
 
     inputId.value = agendamento.id_agendamento;
@@ -161,9 +154,13 @@ async function preencherEdicao(id) {
         selectHora.value = String(localDate.getHours()).padStart(2, '0') + ":00";
     }
 
-    // Bloqueios visuais
+    // --- BLOQUEIOS VISUAIS (ATUALIZADO) ---
     selectPaciente.disabled = true;
+    selectProfissional.disabled = true; // Bloqueia a troca de médico na edição
+    
     avisoPaciente.style.display = "block";
+    avisoPaciente.innerText = "Modo Edição: Não é permitido alterar Paciente ou Profissional."; // Mensagem mais clara
+    
     tituloForm.innerText = "Editar Agendamento";
     btnSalvar.innerText = "Salvar Alterações";
     btnCancelar.style.display = "block";
@@ -176,8 +173,14 @@ function limparFormulario() {
     selectProfissional.value = '';
     inputDia.value = '';
     selectHora.value = '';
+    
+    // --- LIBERA OS CAMPOS (ATUALIZADO) ---
     selectPaciente.disabled = false;
+    selectProfissional.disabled = false; // Libera o médico para novos cadastros
+    
     avisoPaciente.style.display = "none";
+    avisoPaciente.innerText = ""; // Limpa o texto do aviso
+    
     tituloForm.innerText = "Novo Agendamento";
     btnSalvar.innerText = "Agendar";
     btnCancelar.style.display = "none";

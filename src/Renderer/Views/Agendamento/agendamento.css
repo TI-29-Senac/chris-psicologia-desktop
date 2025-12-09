@@ -1,56 +1,75 @@
-/* Mantenha as variáveis se quiser sobrescrever algo específico, 
-   mas o body precisa ser limpo para o layout funcionar */
+/* src/Renderer/Views/Agendamento/agendamento.css */
 
+/* =========================================
+   1. Variáveis de Cor e Fonte (Identidade Visual)
+   ========================================= */
 :root {
-    /* Cores auxiliares específicas desta tela */
-    --color-danger: #e57373;
-    --color-success: #81c784;
-    --color-edit: #64b5f6;
-    --border-radius: 12px;
-    --box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    --color-primary: #7C8F88;       /* Verde Sage do Dashboard */
+    --color-primary-dark: #5f706a;  /* Verde mais escuro para hover */
+    --color-bg-main: #F8F6F0;       /* Creme Claro (Fundo da tela) */
+    --color-bg-card: #ffffff;       /* Branco (Fundo dos cards) */
+    
+    --color-text-dark: #444444;     /* Texto Principal */
+    --color-text-muted: #888888;    /* Texto Secundário */
+    
+    --color-danger: #e57373;        /* Vermelho suave (Excluir/Cancelar) */
+    --color-success: #81c784;       /* Verde suave (Status Agendado) */
+    --color-edit: #64b5f6;          /* Azul suave (Editar) */
+    
+    --border-radius: 12px;          /* Arredondamento padrão */
+    --box-shadow: 0 4px 15px rgba(0,0,0,0.05); /* Sombra elegante */
+    --font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
-/* --- CORREÇÃO IMPORTANTE --- */
-/* Removemos padding e background do body, pois o dashboard.css 
-   e a estrutura <main class="main-content"> já cuidam disso */
+/* =========================================
+   2. Reset e Corpo da Página
+   ========================================= */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
 body {
-    font-family: 'Questrial', sans-serif; /* Consistência com dashboard */
-    /* background-color e padding REMOVIDOS para não quebrar a sidebar */
+    font-family: var(--font-family);
+    background-color: var(--color-bg-main); /* Fundo Creme */
+    color: var(--color-text-dark);
+    line-height: 1.6;
+    padding: 40px; /* Espaço ao redor da tela */
 }
 
 h2 {
-    color: #5D6D68; /* var(--color-dark-green) */
+    color: var(--color-primary-dark);
     margin-bottom: 30px;
     font-weight: 700;
 }
 
-/* Ajuste dos Cards para ficarem iguais ao dashboard */
-.card {
-    background: #ffffff;
-    border-radius: 16px; /* Arredondamento maior igual ao dashboard */
-    box-shadow: var(--box-shadow);
-    padding: 30px;
-    margin-bottom: 30px;
-    border: none; /* Remove borda sólida antiga */
-}
-
-/* ... (Mantenha o restante dos estilos de formulário e tabela) ... */
- 
 h3 {
     color: var(--color-text-dark);
     font-weight: 600;
     margin-bottom: 20px;
     font-size: 1.2rem;
 }
- 
- 
+
+/* =========================================
+   3. Cards (Os blocos brancos)
+   ========================================= */
+.card {
+    background: var(--color-bg-card);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    padding: 30px;
+    margin-bottom: 30px;
+    border: 1px solid rgba(0,0,0,0.02); /* Borda sutil */
+}
+
 /* =========================================
    4. Formulário
    ========================================= */
 .form-group {
     margin-bottom: 20px;
 }
- 
+
 .form-group label {
     display: block;
     margin-bottom: 8px;
@@ -60,7 +79,7 @@ h3 {
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
- 
+
 .form-control {
     width: 100%;
     padding: 12px 15px;
@@ -72,7 +91,7 @@ h3 {
     transition: all 0.3s ease;
     font-family: inherit;
 }
- 
+
 /* Efeito ao clicar no campo */
 .form-control:focus {
     outline: none;
@@ -80,21 +99,21 @@ h3 {
     background-color: #fff;
     box-shadow: 0 0 0 3px rgba(124, 143, 136, 0.2); /* Aura verde */
 }
- 
+
 /* Campo desabilitado (na edição) */
 .form-control:disabled {
     background-color: #f0f2f5;
     color: #999;
     cursor: not-allowed;
 }
- 
+
 .small-text {
     font-size: 0.85em;
     color: var(--color-text-muted);
     margin-top: 5px;
     display: block;
 }
- 
+
 /* =========================================
    5. Botões
    ========================================= */
@@ -103,7 +122,7 @@ h3 {
     gap: 15px;
     margin-top: 30px;
 }
- 
+
 .btn {
     flex: 1; /* Faz os botões ocuparem larguras iguais */
     padding: 12px 20px;
@@ -115,11 +134,11 @@ h3 {
     transition: background-color 0.2s, transform 0.1s;
     text-align: center;
 }
- 
+
 .btn:active {
     transform: scale(0.98);
 }
- 
+
 /* Botão Principal (Verde Sage) */
 .btn-primary {
     background-color: var(--color-primary);
@@ -128,7 +147,7 @@ h3 {
 .btn-primary:hover {
     background-color: var(--color-primary-dark);
 }
- 
+
 /* Botão Secundário (Cinza/Neutro) */
 .btn-secondary {
     background-color: #e0e0e0;
@@ -137,7 +156,7 @@ h3 {
 .btn-secondary:hover {
     background-color: #d0d0d0;
 }
- 
+
 /* =========================================
    6. Tabela de Listagem
    ========================================= */
@@ -146,7 +165,7 @@ h3 {
     border-collapse: separate;
     border-spacing: 0;
 }
- 
+
 /* Cabeçalho */
 .table th {
     background-color: var(--color-primary); /* Verde Sage */
@@ -159,7 +178,7 @@ h3 {
 /* Arredonda os cantos do cabeçalho */
 .table th:first-child { border-top-left-radius: var(--border-radius); }
 .table th:last-child { border-top-right-radius: var(--border-radius); }
- 
+
 /* Linhas */
 .table td {
     padding: 15px;
@@ -167,12 +186,12 @@ h3 {
     vertical-align: middle;
     color: var(--color-text-dark);
 }
- 
+
 /* Hover na linha */
 .table tr:hover td {
     background-color: rgba(124, 143, 136, 0.05); /* Verde muito clarinho */
 }
- 
+
 /* Data e Hora na tabela */
 .date-display {
     font-weight: 600;
@@ -182,7 +201,7 @@ h3 {
     font-size: 0.85em;
     color: var(--color-text-muted);
 }
- 
+
 /* Badges (Etiquetas de Status) */
 .status-badge {
     display: inline-block;
@@ -200,7 +219,7 @@ h3 {
     background-color: rgba(229, 115, 115, 0.2);
     color: #c62828;
 }
- 
+
 /* Botões de Ação (Ícones) */
 .action-btn {
     background: none;
@@ -212,12 +231,26 @@ h3 {
     margin: 0 2px;
     transition: background-color 0.2s;
 }
+
+.link-voltar {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+    color: #888;
+    text-decoration: none;
+    font-size: 0.9em;
+}
+
+.link-voltar:hover {
+    color: var(--color-primary);
+}
+
 .action-btn:hover {
     background-color: #f5f5f5;
 }
- 
+
 .btn-edit { color: var(--color-edit); }
 .btn-cancel { color: orange; }
 .btn-delete { color: var(--color-danger); }
- 
+
 .text-center { text-align: center; }
