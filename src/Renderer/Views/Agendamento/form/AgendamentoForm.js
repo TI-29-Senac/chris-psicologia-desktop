@@ -72,7 +72,7 @@ async function init() {
     // Carrega Selects
     if(window.api && window.api.getDadosFormulario) {
         try {
-            const dados = await window.api.getDadosFormulario();
+            const dados = await window.electronAPI.getDadosFormulario();
             if (dados.pacientes) {
                 selectPaciente.innerHTML = '<option value="">Selecione...</option>' + 
                     dados.pacientes.map(p => `<option value="${p.id_usuario}">${p.nome_usuario}</option>`).join('');

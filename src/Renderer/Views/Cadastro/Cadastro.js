@@ -62,7 +62,7 @@ document.getElementById('btn-salvar').addEventListener('click', async () => {
 
     try {
         // Envia para o Backend (UsuarioController)
-        const res = await window.api.cadastrarUsuario(dados);
+        const res = await window.electronAPI.cadastrarUsuario(dados);
 
         if (res.success) {
             alert("Usuário cadastrado com sucesso!");

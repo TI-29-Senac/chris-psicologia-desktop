@@ -1,45 +1,27 @@
 /* src/Renderer/Views/Agendamento/agendamento.css */
 
 /* =========================================
-   1. Variáveis de Cor e Fonte (Identidade Visual)
+   1. Variáveis Locais (Herda do root global se necessário)
    ========================================= */
 :root {
-    --color-primary: #7C8F88;       /* Verde Sage do Dashboard */
-    --color-primary-dark: #5f706a;  /* Verde mais escuro para hover */
-    --color-bg-main: #F8F6F0;       /* Creme Claro (Fundo da tela) */
-    --color-bg-card: #ffffff;       /* Branco (Fundo dos cards) */
+    /* Cores herdadas ou específicas desta view */
+    --color-text-dark: #444444;
+    --color-text-muted: #888888;
     
-    --color-text-dark: #444444;     /* Texto Principal */
-    --color-text-muted: #888888;    /* Texto Secundário */
+    --color-danger: #e57373;
+    --color-success: #81c784;
+    --color-edit: #64b5f6;
     
-    --color-danger: #e57373;        /* Vermelho suave (Excluir/Cancelar) */
-    --color-success: #81c784;       /* Verde suave (Status Agendado) */
-    --color-edit: #64b5f6;          /* Azul suave (Editar) */
-    
-    --border-radius: 12px;          /* Arredondamento padrão */
-    --box-shadow: 0 4px 15px rgba(0,0,0,0.05); /* Sombra elegante */
-    --font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --border-radius: 12px;
+    --box-shadow: 0 4px 15px rgba(0,0,0,0.05);
 }
 
-/* =========================================
-   2. Reset e Corpo da Página
-   ========================================= */
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-body {
-    font-family: var(--font-family);
-    background-color: var(--color-bg-main); /* Fundo Creme */
-    color: var(--color-text-dark);
-    line-height: 1.6;
-    padding: 40px; /* Espaço ao redor da tela */
-}
+/* IMPORTANTE: Não estilize o 'body' aqui. 
+   O dashboard.css já cuida do layout principal (sidebar + main).
+*/
 
 h2 {
-    color: var(--color-primary-dark);
+    color: var(--color-dark-green); /* Usa variável do dashboard.css */
     margin-bottom: 30px;
     font-weight: 700;
 }
@@ -52,15 +34,15 @@ h3 {
 }
 
 /* =========================================
-   3. Cards (Os blocos brancos)
+   3. Cards
    ========================================= */
 .card {
-    background: var(--color-bg-card);
+    background: #ffffff;
     border-radius: var(--border-radius);
     box-shadow: var(--box-shadow);
     padding: 30px;
     margin-bottom: 30px;
-    border: 1px solid rgba(0,0,0,0.02); /* Borda sutil */
+    border: 1px solid rgba(0,0,0,0.02);
 }
 
 /* =========================================
@@ -74,7 +56,7 @@ h3 {
     display: block;
     margin-bottom: 8px;
     font-weight: 600;
-    color: var(--color-primary);
+    color: var(--color-dark-green);
     font-size: 0.9rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -92,15 +74,13 @@ h3 {
     font-family: inherit;
 }
 
-/* Efeito ao clicar no campo */
 .form-control:focus {
     outline: none;
-    border-color: var(--color-primary);
+    border-color: var(--color-medium-green);
     background-color: #fff;
-    box-shadow: 0 0 0 3px rgba(124, 143, 136, 0.2); /* Aura verde */
+    box-shadow: 0 0 0 3px rgba(124, 143, 136, 0.2);
 }
 
-/* Campo desabilitado (na edição) */
 .form-control:disabled {
     background-color: #f0f2f5;
     color: #999;
@@ -124,7 +104,7 @@ h3 {
 }
 
 .btn {
-    flex: 1; /* Faz os botões ocuparem larguras iguais */
+    flex: 1;
     padding: 12px 20px;
     font-size: 1rem;
     font-weight: 600;
@@ -139,16 +119,14 @@ h3 {
     transform: scale(0.98);
 }
 
-/* Botão Principal (Verde Sage) */
 .btn-primary {
-    background-color: var(--color-primary);
+    background-color: var(--color-dark-green);
     color: white;
 }
 .btn-primary:hover {
-    background-color: var(--color-primary-dark);
+    opacity: 0.9;
 }
 
-/* Botão Secundário (Cinza/Neutro) */
 .btn-secondary {
     background-color: #e0e0e0;
     color: #333;
@@ -157,8 +135,21 @@ h3 {
     background-color: #d0d0d0;
 }
 
+.confirm-btn {
+    background-color: var(--color-dark-green);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: 0.2s;
+}
+.confirm-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
 /* =========================================
-   6. Tabela de Listagem
+   6. Tabela
    ========================================= */
 .table {
     width: 100%;
@@ -166,20 +157,18 @@ h3 {
     border-spacing: 0;
 }
 
-/* Cabeçalho */
 .table th {
-    background-color: var(--color-primary); /* Verde Sage */
+    background-color: var(--color-dark-green);
     color: white;
     padding: 15px;
     text-align: left;
     font-weight: 600;
     font-size: 0.95rem;
 }
-/* Arredonda os cantos do cabeçalho */
+
 .table th:first-child { border-top-left-radius: var(--border-radius); }
 .table th:last-child { border-top-right-radius: var(--border-radius); }
 
-/* Linhas */
 .table td {
     padding: 15px;
     border-bottom: 1px solid #f0f0f0;
@@ -187,22 +176,11 @@ h3 {
     color: var(--color-text-dark);
 }
 
-/* Hover na linha */
 .table tr:hover td {
-    background-color: rgba(124, 143, 136, 0.05); /* Verde muito clarinho */
+    background-color: rgba(124, 143, 136, 0.05);
 }
 
-/* Data e Hora na tabela */
-.date-display {
-    font-weight: 600;
-    color: var(--color-text-dark);
-}
-.time-display {
-    font-size: 0.85em;
-    color: var(--color-text-muted);
-}
-
-/* Badges (Etiquetas de Status) */
+/* Status Badges */
 .status-badge {
     display: inline-block;
     padding: 5px 12px;
@@ -219,8 +197,12 @@ h3 {
     background-color: rgba(229, 115, 115, 0.2);
     color: #c62828;
 }
+.status-pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
 
-/* Botões de Ação (Ícones) */
+/* Ações */
 .action-btn {
     background: none;
     border: none;
@@ -231,20 +213,6 @@ h3 {
     margin: 0 2px;
     transition: background-color 0.2s;
 }
-
-.link-voltar {
-    display: block;
-    text-align: center;
-    margin-top: 20px;
-    color: #888;
-    text-decoration: none;
-    font-size: 0.9em;
-}
-
-.link-voltar:hover {
-    color: var(--color-primary);
-}
-
 .action-btn:hover {
     background-color: #f5f5f5;
 }
