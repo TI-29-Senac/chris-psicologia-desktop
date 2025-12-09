@@ -1,7 +1,7 @@
 import { ipcMain } from 'electron';
 import db from '../Database/db.js';
-import bcrypt from 'bcrypt';
-const hash = bcrypt.hashSync(dados.senha, 10);
+import bcrypt from 'bcryptjs';
+
 
 class UsuarioController {
     
@@ -65,6 +65,7 @@ class UsuarioController {
                     INSERT INTO usuario (nome_usuario, email, senha, tipo_usuario) 
                     VALUES (@nome, @email, @senha, @tipo)
                 `);
+                const hash = bcrypt.hashSync(dados.senha, 10);
                 
                 const info = stmtUser.run({
                     nome: dados.nome,
