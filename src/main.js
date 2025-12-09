@@ -3,9 +3,10 @@ import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import AuthController from './Main/Controllers/AuthController.js';
 import { initDatabase } from './Main/Database/db.js';
-
+import APIFetch from './Main/Services/APIFetch.js';
 
 const authController = new AuthController();
+const apiremoto = new APIFetch();
 
 if (started) {
   app.quit();
@@ -46,6 +47,12 @@ app.whenReady().then(() => {
   ipcMain.handle('auth:login', async (event, credenciais) => {
      return await authController.login(credenciais);
   });
+
+  async function buscarUsuariosRemoto(){
+    const resultado = await apiremoto.fetch("usuarios");
+    await controlerUsuario.sincronizarAPIlocal(resultado.data.data);
+  }
+  buscarUsuariosRemoto();
 });
 
 app.on('window-all-closed', () => {
