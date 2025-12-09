@@ -1,44 +1,40 @@
+/* Mantenha as variáveis se quiser sobrescrever algo específico, 
+   mas o body precisa ser limpo para o layout funcionar */
 
 :root {
-    --color-primary: #7C8F88;       /* Verde Sage do Dashboard */
-    --color-primary-dark: #5f706a;  /* Verde mais escuro para hover */
-    --color-bg-main: #F8F6F0;       /* Creme Claro (Fundo da tela) */
-    --color-bg-card: #ffffff;       /* Branco (Fundo dos cards) */
-   
-    --color-text-dark: #444444;     /* Texto Principal */
-    --color-text-muted: #888888;    /* Texto Secundário */
-   
-    --color-danger: #e57373;        /* Vermelho suave (Excluir/Cancelar) */
-    --color-success: #81c784;       /* Verde suave (Status Agendado) */
-    --color-edit: #64b5f6;          /* Azul suave (Editar) */
-   
-    --border-radius: 12px;          /* Arredondamento padrão */
-    --box-shadow: 0 4px 15px rgba(0,0,0,0.05); /* Sombra elegante */
-    --font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    /* Cores auxiliares específicas desta tela */
+    --color-danger: #e57373;
+    --color-success: #81c784;
+    --color-edit: #64b5f6;
+    --border-radius: 12px;
+    --box-shadow: 0 4px 15px rgba(0,0,0,0.05);
 }
- 
-/* =========================================
-   2. Reset e Corpo da Página
-   ========================================= */
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
- 
+
+/* --- CORREÇÃO IMPORTANTE --- */
+/* Removemos padding e background do body, pois o dashboard.css 
+   e a estrutura <main class="main-content"> já cuidam disso */
 body {
-    font-family: var(--font-family);
-    background-color: var(--color-bg-main); /* Fundo Creme */
-    color: var(--color-text-dark);
-    line-height: 1.6;
-    padding: 40px; /* Espaço ao redor da tela */
+    font-family: 'Questrial', sans-serif; /* Consistência com dashboard */
+    /* background-color e padding REMOVIDOS para não quebrar a sidebar */
 }
- 
+
 h2 {
-    color: var(--color-primary-dark);
+    color: #5D6D68; /* var(--color-dark-green) */
     margin-bottom: 30px;
     font-weight: 700;
 }
+
+/* Ajuste dos Cards para ficarem iguais ao dashboard */
+.card {
+    background: #ffffff;
+    border-radius: 16px; /* Arredondamento maior igual ao dashboard */
+    box-shadow: var(--box-shadow);
+    padding: 30px;
+    margin-bottom: 30px;
+    border: none; /* Remove borda sólida antiga */
+}
+
+/* ... (Mantenha o restante dos estilos de formulário e tabela) ... */
  
 h3 {
     color: var(--color-text-dark);
@@ -47,17 +43,6 @@ h3 {
     font-size: 1.2rem;
 }
  
-/* =========================================
-   3. Cards (Os blocos brancos)
-   ========================================= */
-.card {
-    background: var(--color-bg-card);
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
-    padding: 30px;
-    margin-bottom: 30px;
-    border: 1px solid rgba(0,0,0,0.02); /* Borda sutil */
-}
  
 /* =========================================
    4. Formulário
