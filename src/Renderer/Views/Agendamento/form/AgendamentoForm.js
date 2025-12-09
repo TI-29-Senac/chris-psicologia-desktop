@@ -70,7 +70,7 @@ async function init() {
     const avisoPaciente = document.getElementById('aviso-paciente');
 
     // Carrega Selects
-    if(window.api && window.api.getDadosFormulario) {
+    if(window.electronAPI && window.electronAPI.getDadosFormulario) {
         try {
             const dados = await window.electronAPI.getDadosFormulario();
             if (dados.pacientes) {
@@ -87,7 +87,7 @@ async function init() {
     // --- MODO EDIÇÃO ---
     window.preencherFormularioParaEdicao = async (id) => {
         try {
-            const agendamento = await window.api.buscarAgendamentoPorId(id);
+            const agendamento = await window.electronAPI.buscarAgendamentoPorId(id);
             if(agendamento) {
                 inputId.value = agendamento.id_agendamento;
                 
@@ -172,10 +172,10 @@ async function init() {
         let res;
         if (id) {
             dados.id_agendamento = id;
-            res = await window.api.editarAgendamento(dados);
+            res = await window.electronAPI.editarAgendamento(dados);
         } else {
             if(!dados.id_usuario) return alert("Selecione o Paciente!");
-            res = await window.api.cadastrarAgendamento(dados);
+            res = await window.electronAPI.cadastrarAgendamento(dados);
         }
         
         if (res.success) {

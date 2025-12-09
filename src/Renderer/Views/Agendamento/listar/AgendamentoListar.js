@@ -25,11 +25,11 @@ async function init() {
     const listaEl = document.getElementById('lista-agendamentos');
 
     // Verificação de segurança
-    if (!window.api) return console.error("API não encontrada!");
+    if (!window.electronAPI) return console.error("API não encontrada!");
 
     async function carregarTabela() {
         try {
-            const agendamentos = await window.api.listarAgendamentos();
+            const agendamentos = await window.electronAPI.listarAgendamentos();
             
             // Se vier vazio
             if(agendamentos.length === 0) {
@@ -92,7 +92,7 @@ async function init() {
                 const id = target.getAttribute('data-id');
                 
                 if(confirm('Tem certeza que deseja apagar este registro do histórico?')) {
-                    await window.api.removerAgendamento(id);
+                    await window.electronAPI.removerAgendamento(id);
                     carregarTabela(); 
                 }
             });
@@ -119,8 +119,8 @@ async function init() {
 
                 if(confirm('Deseja desmarcar esta consulta? O horário ficará livre.')) {
                     // Chama a função que criamos no preload/controller
-                    if(window.api.cancelarAgendamento) {
-                        await window.api.cancelarAgendamento(id);
+                    if(window.electronAPI.cancelarAgendamento) {
+                        await window.electronAPI.cancelarAgendamento(id);
                         carregarTabela();
                     } else {
                         alert("Função de cancelar não configurada no sistema.");

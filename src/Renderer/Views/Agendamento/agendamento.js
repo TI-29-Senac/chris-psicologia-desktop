@@ -14,7 +14,7 @@ const listaEl = document.getElementById('lista-agendamentos');
 
 // --- INICIALIZAÇÃO ---
 async function init() {
-    if (!window.api) return console.error("API Electron não encontrada");
+    if (!window.electronAPI) return console.error("API Electron não encontrada");
 
     await carregarSelects();
     await carregarTabela();
@@ -23,7 +23,7 @@ async function init() {
 // --- FUNÇÕES DE CARREGAMENTO ---
 async function carregarSelects() {
     try {
-        const dados = await window.api.getDadosFormulario();
+        const dados = await window.electronAPI.getDadosFormulario();
         if (dados.pacientes) {
             selectPaciente.innerHTML = '<option value="">Selecione...</option>' + 
                 dados.pacientes.map(p => `<option value="${p.id_usuario}">${p.nome_usuario}</option>`).join('');
@@ -37,7 +37,7 @@ async function carregarSelects() {
 
 async function carregarTabela() {
     try {
-        const agendamentos = await window.api.listarAgendamentos();
+        const agendamentos = await window.electronAPI.listarAgendamentos();
         
         if(agendamentos.length === 0) {
             listaEl.innerHTML = "<tr><td colspan='5' class='text-center' style='padding:30px'>Nenhum agendamento encontrado.</td></tr>";
@@ -83,7 +83,7 @@ function adicionarEventosLista() {
         btn.addEventListener('click', async (e) => {
             const id = e.target.closest('button').dataset.id;
             if(confirm('Deseja desmarcar esta consulta?')) {
-                await window.api.cancelarAgendamento(id);
+                await window.electronAPI.cancelarAgendamento(id);
                 carregarTabela();
             }
         });
@@ -93,7 +93,7 @@ function adicionarEventosLista() {
         btn.addEventListener('click', async (e) => {
             const id = e.target.closest('button').dataset.id;
             if(confirm('Tem certeza que deseja apagar?')) {
-                await window.api.removerAgendamento(id);
+                await window.electronAPI.removerAgendamento(id);
                 carregarTabela();
             }
         });
@@ -122,10 +122,10 @@ btnSalvar.addEventListener('click', async () => {
 
     if (id) {
         dados.id_agendamento = id;
-        res = await window.api.editarAgendamento(dados);
+        res = await window.electronAPI.editarAgendamento(dados);
     } else {
         if(!dados.id_usuario) return alert("Selecione o Paciente!");
-        res = await window.api.cadastrarAgendamento(dados);
+        res = await window.electronAPI.cadastrarAgendamento(dados);
     }
     
     if (res.success) {
@@ -139,7 +139,7 @@ btnSalvar.addEventListener('click', async () => {
 
 // --- FUNÇÕES AUXILIARES ---
 async function preencherEdicao(id) {
-    const agendamento = await window.api.buscarAgendamentoPorId(id);
+    const agendamento = await window.electronAPI.buscarAgendamentoPorId(id);
     if(!agendamento) return;
 
     inputId.value = agendamento.id_agendamento;
