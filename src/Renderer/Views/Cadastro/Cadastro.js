@@ -79,5 +79,15 @@ document.getElementById('btn-salvar').addEventListener('click', async () => {
     }
 });
 
+// --- CÁLCULO AUTOMÁTICO DO SINAL ---
+    const consulta = document.getElementById("valorConsulta");
+    const sinal = document.getElementById("valorSinal");
+
+    consulta.addEventListener("input", () => {
+        const v = parseFloat(consulta.value) || 0;
+        sinal.value = (v * 0.20).toFixed(2);
+    });
+
+
 // Expõe a função de mudar tipo para o HTML poder usar no onclick
 window.mudarTipo = mudarTipo;
