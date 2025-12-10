@@ -1,19 +1,20 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import { initDatabase } from './Main/Database/db.js';
 
-// Importação dos Controladores
-import PagamentoController from './Main/Controllers/PagamentoController.js';
+// Controladores
 import UsuarioController from './Main/Controllers/UsuarioController.js';
 import AgendamentoController from './Main/Controllers/AgendamentoController.js';
+import PagamentoController from './Main/Controllers/PagamentoController.js';
+import AuthController from './Main/Controllers/AuthController.js';
+import FetchAPI from './Main/Service/FetchAPI.js';
 
-// Inicializa o Banco de Dados ao arrancar
+
+// Inicializa Banco (cria tabelas se não existirem)
 initDatabase();
 
-if (started) {
-  app.quit();
-}
+if (started) { app.quit(); }
 
 const createWindow = () => {
   const mainWindow = new BrowserWindow({
@@ -21,9 +22,8 @@ const createWindow = () => {
     height: 800,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
-      webSecurity: false, 
-      nodeIntegration: true,   
-      contextIsolation: false 
+      nodeIntegration: true,
+      contextIsolation: false
     },
   });
 
@@ -35,26 +35,25 @@ const createWindow = () => {
 };
 
 app.whenReady().then(() => {
-  // --- INICIALIZAÇÃO DOS CONTROLADORES ---
-  // Isso faz o backend "ouvir" os eventos do preload
+  // Inicializa todos os controladores para ouvir eventos IPC
+  new AuthController().init();
   new UsuarioController().init();
   new AgendamentoController().init();
-  
-  // Pagamento (Mantenha como estava se preferir, ou transforme em classe para padronizar)
-  ipcMain.handle('pagamento:listar', async () => PagamentoController.listarPagamentos());
-  ipcMain.handle('pagamento:processar', async (e, dados) => PagamentoController.processarPagamento(dados));
+  PagamentoController.init();
+  async function buscaRemoto() {
+  const fetch = new FetchAPI();
+  const resultado = await fetch.get("usuarios");
+  console.log("Resultado da busca remota:", resultado);
+  }
+  buscaRemoto();
 
   createWindow();
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+  if (process.platform !== 'darwin') app.quit();
 });

@@ -2,24 +2,20 @@ import { ipcMain } from 'electron';
 import db from '../Database/db.js';
 import bcrypt from 'bcryptjs';
 
-
 class UsuarioController {
     
     init() {
-        // Registra todas as rotas que o frontend pode chamar
         ipcMain.handle('usuarios:cadastrar', async (event, dados) => this.cadastrar(dados));
         ipcMain.handle('usuarios:listar', async () => this.listar());
         ipcMain.handle('usuarios:buscarPorId', async (event, id) => this.buscarPorId(id));
         ipcMain.handle('usuarios:excluir', async (event, id) => this.excluir(id));
-        // Se precisar editar no futuro:
-        ipcMain.handle('usuarios:editar', async (event, dados) => this.editar(dados));
     }
 
     async listar() {
         try {
-            // Traz todos para a lista de admin
+            // Lista usuários ativos
             const sql = `
-                SELECT u.id_usuario, u.nome_usuario, u.email, u.tipo_usuario, 
+                SELECT u.id_usuario, u.nome_usuario, u.email_usuario as email, u.tipo_usuario, 
                        p.especialidade 
                 FROM usuario u
                 LEFT JOIN profissional p ON u.id_usuario = p.id_usuario
@@ -38,9 +34,11 @@ class UsuarioController {
             const usuario = db.prepare("SELECT * FROM usuario WHERE id_usuario = ?").get(id);
             if (!usuario) return null;
 
+            // Padroniza retorno para o frontend (que espera 'email' e não 'email_usuario')
+            usuario.email = usuario.email_usuario;
+
             if(usuario.tipo_usuario === 'profissional'){
                 const prof = db.prepare("SELECT * FROM profissional WHERE id_usuario = ?").get(id);
-                // Retorna dados mesclados (limitado ao necessário)
                 return { ...usuario, ...prof }; 
             }
             return usuario;
@@ -56,37 +54,42 @@ class UsuarioController {
                 return { success: false, erro: "Preencha os campos obrigatórios." };
             }
 
-            const existe = db.prepare("SELECT id_usuario FROM usuario WHERE email = ?").get(dados.email);
+            const existe = db.prepare("SELECT id_usuario FROM usuario WHERE email_usuario = ?").get(dados.email);
             if (existe) return { success: false, erro: "E-mail já cadastrado." };
 
-            // Transação para garantir integridade
             const insertUser = db.transaction(() => {
-                const stmtUser = db.prepare(`
-                    INSERT INTO usuario (nome_usuario, email, senha, tipo_usuario) 
-                    VALUES (@nome, @email, @senha, @tipo)
-                `);
+                // Criptografa a senha
                 const hash = bcrypt.hashSync(dados.senha, 10);
+
+                // Insere usando nomes de colunas corretos
+                const stmtUser = db.prepare(`
+                    INSERT INTO usuario (nome_usuario, email_usuario, senha_usuario, tipo_usuario, cpf, status_usuario) 
+                    VALUES (@nome, @email, @senha, @tipo, '000.000.000-00', 'ativo')
+                `);
                 
                 const info = stmtUser.run({
                     nome: dados.nome,
                     email: dados.email,
-                    senha: dados.senha, // Sugestão: Usar bcrypt aqui futuramente
-                    tipo: dados.tipo 
+                    senha: hash, 
+                    tipo: dados.tipo
                 });
                 
                 const novoIdUsuario = info.lastInsertRowid;
 
-                // Só insere em profissional se for do tipo profissional
                 if (dados.tipo === 'profissional') {
                     if (!dados.especialidade || !dados.valor) {
-                        throw new Error("Dados de profissional incompletos.");
+                        throw new Error("Profissionais precisam de Especialidade e Valor.");
                     }
 
                     const stmtProf = db.prepare(`
-                        INSERT INTO profissional (id_usuario, especialidade, valor_consulta)
-                        VALUES (?, ?, ?)
+                        INSERT INTO profissional (id_usuario, especialidade, valor_consulta, sinal_consulta)
+                        VALUES (?, ?, ?, ?)
                     `);
-                    stmtProf.run(novoIdUsuario, dados.especialidade, parseFloat(dados.valor));
+                    // Calcula sinal automático se não vier (20%)
+                    const valor = parseFloat(dados.valor);
+                    const sinal = valor * 0.2;
+
+                    stmtProf.run(novoIdUsuario, dados.especialidade, valor, sinal);
                 }
             });
 
@@ -101,7 +104,6 @@ class UsuarioController {
 
     async excluir(id) {
         try {
-            // Soft delete (não apaga do banco, só esconde)
             db.prepare("UPDATE usuario SET excluido_em = CURRENT_TIMESTAMP WHERE id_usuario = ?").run(id);
             return { success: true };
         } catch (error) {
