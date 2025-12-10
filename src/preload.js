@@ -1,6 +1,7 @@
-import { contextBridge, ipcRenderer } from 'electron';
+import { ipcRenderer } from 'electron';
 
-contextBridge.exposeInMainWorld('electronAPI', {
+// Como contextIsolation está desligado, atribuímos direto ao window
+window.electronAPI = {
   cadastrarUsuario: (dados) => ipcRenderer.invoke('usuarios:cadastrar', dados),
   listarUsuarios: () => ipcRenderer.invoke('usuarios:listar'),
   buscarUsuarioPorId: (id) => ipcRenderer.invoke('usuarios:buscarPorId', id),
@@ -9,10 +10,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   processarPagamento: (dados) => ipcRenderer.invoke('pagamento:processar', dados),
   listarPagamentos: () => ipcRenderer.invoke('pagamento:listar'),
 
-  // --- AGENDAMENTOS (Adicionado para funcionar a tela de agendamento) ---
-  // Note: Estou padronizando para 'electronAPI' para ficar igual ao Pagamento.
-  // Se preferir manter 'api' separado, me avise, mas é melhor unificar.
-  
+  // --- AGENDAMENTOS ---
   getDadosFormulario: () => ipcRenderer.invoke('agendamentos:get-form-data'),
   cadastrarAgendamento: (dados) => ipcRenderer.invoke('agendamentos:cadastrar', dados),
   listarAgendamentos: () => ipcRenderer.invoke('agendamentos:listar'),
@@ -20,4 +18,4 @@ contextBridge.exposeInMainWorld('electronAPI', {
   buscarAgendamentoPorId: (id) => ipcRenderer.invoke('agendamentos:buscarPorId', id),
   editarAgendamento: (dados) => ipcRenderer.invoke('agendamentos:editar', dados),
   cancelarAgendamento: (id) => ipcRenderer.invoke('agendamentos:cancelar', id),
-});
+};
