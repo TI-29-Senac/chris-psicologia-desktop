@@ -1,16 +1,25 @@
 import { ipcRenderer } from 'electron';
 
-// Como contextIsolation está desligado, atribuímos direto ao window
 window.electronAPI = {
+  // Autenticação
+  login: (credenciais) => ipcRenderer.invoke('auth:login', credenciais),
+
+  // Usuários
   cadastrarUsuario: (dados) => ipcRenderer.invoke('usuarios:cadastrar', dados),
   listarUsuarios: () => ipcRenderer.invoke('usuarios:listar'),
   buscarUsuarioPorId: (id) => ipcRenderer.invoke('usuarios:buscarPorId', id),
   editarUsuario: (dados) => ipcRenderer.invoke('usuarios:editar', dados),
   excluirUsuario: (id) => ipcRenderer.invoke('usuarios:excluir', id),
+
+  // LOGIN SESSÃO
+  loginUsuario: (dados) => ipcRenderer.invoke('usuarios:login', dados),
+  getCurrentUser: () => ipcRenderer.invoke('usuarios:getCurrentUser'),
+  
+  // Pagamentos
   processarPagamento: (dados) => ipcRenderer.invoke('pagamento:processar', dados),
   listarPagamentos: () => ipcRenderer.invoke('pagamento:listar'),
 
-  // --- AGENDAMENTOS ---
+  // Agendamentos
   getDadosFormulario: () => ipcRenderer.invoke('agendamentos:get-form-data'),
   cadastrarAgendamento: (dados) => ipcRenderer.invoke('agendamentos:cadastrar', dados),
   listarAgendamentos: () => ipcRenderer.invoke('agendamentos:listar'),

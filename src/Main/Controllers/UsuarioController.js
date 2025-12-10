@@ -1,9 +1,12 @@
 import { ipcMain } from 'electron';
-import db from '../Database/db.js';
-import bcrypt from 'bcryptjs';
+import UsuarioModel from '../Models/Usuario.js';
 
 class UsuarioController {
     
+    constructor() {
+        this.usuarioModel = new UsuarioModel();
+    }
+
     init() {
         ipcMain.handle('usuarios:cadastrar', async (event, dados) => this.cadastrar(dados));
         ipcMain.handle('usuarios:listar', async () => this.listar());
@@ -12,40 +15,11 @@ class UsuarioController {
     }
 
     async listar() {
-        try {
-            // Lista usuários ativos
-            const sql = `
-                SELECT u.id_usuario, u.nome_usuario, u.email_usuario as email, u.tipo_usuario, 
-                       p.especialidade 
-                FROM usuario u
-                LEFT JOIN profissional p ON u.id_usuario = p.id_usuario
-                WHERE u.excluido_em IS NULL
-                ORDER BY u.nome_usuario ASC
-            `;
-            return db.prepare(sql).all();
-        } catch (erro) {
-            console.error(erro);
-            return [];
-        }
+        return await this.usuarioModel.listar();
     }
 
     async buscarPorId(id) {
-        try {
-            const usuario = db.prepare("SELECT * FROM usuario WHERE id_usuario = ?").get(id);
-            if (!usuario) return null;
-
-            // Padroniza retorno para o frontend (que espera 'email' e não 'email_usuario')
-            usuario.email = usuario.email_usuario;
-
-            if(usuario.tipo_usuario === 'profissional'){
-                const prof = db.prepare("SELECT * FROM profissional WHERE id_usuario = ?").get(id);
-                return { ...usuario, ...prof }; 
-            }
-            return usuario;
-        } catch (error) {
-            console.error(error);
-            return null;
-        }
+        return await this.usuarioModel.buscarPorId(id);
     }
 
     async cadastrar(dados) {
@@ -54,28 +28,30 @@ class UsuarioController {
                 return { success: false, erro: "Preencha os campos obrigatórios." };
             }
 
+            // Verifica email duplicado (ajustado para nome da coluna 'email_usuario')
             const existe = db.prepare("SELECT id_usuario FROM usuario WHERE email_usuario = ?").get(dados.email);
             if (existe) return { success: false, erro: "E-mail já cadastrado." };
 
+            // Transação para garantir integridade
             const insertUser = db.transaction(() => {
-                // Criptografa a senha
-                const hash = bcrypt.hashSync(dados.senha, 10);
-
-                // Insere usando nomes de colunas corretos
                 const stmtUser = db.prepare(`
                     INSERT INTO usuario (nome_usuario, email_usuario, senha_usuario, tipo_usuario, cpf, status_usuario) 
                     VALUES (@nome, @email, @senha, @tipo, '000.000.000-00', 'ativo')
                 `);
                 
+                // 1. GERAÇÃO DO HASH DE SENHA
+                const hash = bcrypt.hashSync(dados.senha, 10);
+                
                 const info = stmtUser.run({
                     nome: dados.nome,
                     email: dados.email,
-                    senha: hash, 
+                    senha: hash, // Gravando a senha criptografada
                     tipo: dados.tipo
                 });
                 
                 const novoIdUsuario = info.lastInsertRowid;
 
+                // Só insere em profissional se for do tipo profissional
                 if (dados.tipo === 'profissional') {
                     if (!dados.especialidade || !dados.valor) {
                         throw new Error("Profissionais precisam de Especialidade e Valor.");
@@ -85,7 +61,8 @@ class UsuarioController {
                         INSERT INTO profissional (id_usuario, especialidade, valor_consulta, sinal_consulta)
                         VALUES (?, ?, ?, ?)
                     `);
-                    // Calcula sinal automático se não vier (20%)
+                    
+                    // Cálculo simples do sinal (20%) se não vier
                     const valor = parseFloat(dados.valor);
                     const sinal = valor * 0.2;
 
@@ -103,13 +80,10 @@ class UsuarioController {
     }
 
     async excluir(id) {
-        try {
-            db.prepare("UPDATE usuario SET excluido_em = CURRENT_TIMESTAMP WHERE id_usuario = ?").run(id);
-            return { success: true };
-        } catch (error) {
-            return { success: false, erro: error.message };
-        }
+        return await this.usuarioModel.excluir(id);
     }
+
+    
 }
 
 export default UsuarioController;

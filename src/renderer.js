@@ -2,9 +2,6 @@ import './index.css';
 
 console.log('Renderer process started');
 
-// URL do Backend (Mantendo a correção da pasta /backend)
-const API_URL = 'https://techlaj.faustinopsy.com/backend'; 
-
 const loginForm = document.getElementById('login-form');
 const msgErro = document.getElementById('mensagem-erro');
 const btnLogin = document.getElementById('btn-login');
@@ -13,7 +10,7 @@ if (loginForm) {
     loginForm.addEventListener('submit', async (event) => {
         event.preventDefault();
 
-        // Limpa erros e muda estado do botão
+        // Limpa mensagens e desabilita botão
         if(msgErro) msgErro.textContent = '';
         if(btnLogin) {
             btnLogin.disabled = true;
@@ -24,46 +21,38 @@ if (loginForm) {
         const senha = document.getElementById('senha').value;
 
         try {
-            console.log(`Conectando em: ${API_URL}/api/desktop/login`);
+            console.log("Tentando login via Electron API (localhost)...");
+            
+            // Chama o Main Process -> Controller -> Model -> API Local
+            const data = await window.electronAPI.login({ email, senha });
+            
+            console.log("Resposta do Login:", data);
 
-            const response = await fetch(`${API_URL}/api/desktop/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ email, senha })
-            });
-
-            const data = await response.json();
-            console.log("Resposta do servidor:", data);
-
-            if (data.success) {
+            if (data && data.success) {
                 if(msgErro) {
                     msgErro.style.color = 'green';
                     msgErro.textContent = 'Login realizado! Redirecionando...';
                 }
                 
-                // 1. Salva os dados do usuário (Token e Informações)
+                // Salva sessão
                 localStorage.setItem('usuario_logado', JSON.stringify(data.usuario));
                 if(data.token) localStorage.setItem('auth_token', data.token);
                 
-                // 2. REDIRECIONAMENTO (Aqui está a mágica)
-                // Pequeno delay de 1s para o usuário ver a mensagem de sucesso
+                // Redireciona
                 setTimeout(() => {
-                    // O caminho é relativo à raiz do projeto onde está o index.html
-                    // Certifique-se que o "R" de Renderer e "D" de Dashboard estão maiúsculos nas pastas reais
+                    // Verifique se este caminho está correto na sua estrutura final de pastas
                     window.location.href = 'src/Renderer/Views/Dashboard/dashboard.html';
                 }, 1000);
 
             } else {
-                throw new Error(data.error || 'Credenciais inválidas');
+                throw new Error(data.erro || data.error || 'Credenciais inválidas ou erro na API.');
             }
 
         } catch (error) {
             console.error('Erro detalhado:', error);
             if(msgErro) {
                 msgErro.style.color = '#e74c3c';
-                msgErro.textContent = error.message || 'Erro ao conectar com o servidor.';
+                msgErro.textContent = error.message;
             } else {
                 alert(error.message);
             }

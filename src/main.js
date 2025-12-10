@@ -1,18 +1,16 @@
 import { app, BrowserWindow } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
-import { initDatabase } from './Main/Database/db.js';
+// import { initDatabase } from './Main/Database/db.js'; // Opcional: Banco local
 
 // Controladores
 import UsuarioController from './Main/Controllers/UsuarioController.js';
 import AgendamentoController from './Main/Controllers/AgendamentoController.js';
 import PagamentoController from './Main/Controllers/PagamentoController.js';
 import AuthController from './Main/Controllers/AuthController.js';
-import FetchAPI from './Main/Service/FetchAPI.js';
 
-
-// Inicializa Banco (cria tabelas se não existirem)
-initDatabase();
+// Inicializa Banco local (Se for usar apenas API, pode manter comentado ou remover)
+// initDatabase();
 
 if (started) { app.quit(); }
 
@@ -35,17 +33,11 @@ const createWindow = () => {
 };
 
 app.whenReady().then(() => {
-  // Inicializa todos os controladores para ouvir eventos IPC
+  // Inicializa todos os controladores (MVC com API)
   new AuthController().init();
   new UsuarioController().init();
   new AgendamentoController().init();
-  PagamentoController.init();
-  async function buscaRemoto() {
-  const fetch = new FetchAPI();
-  const resultado = await fetch.get("usuarios");
-  console.log("Resultado da busca remota:", resultado);
-  }
-  buscaRemoto();
+  new PagamentoController().init(); // Agora instanciamos como classe para manter o padrão
 
   createWindow();
 

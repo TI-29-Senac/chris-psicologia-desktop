@@ -1,60 +1,79 @@
-import db from '../Database/db.js';
+import FetchAPI from '../Service/FetchAPI.js';
 
-class Agendamento {
-  
-  adicionar(agendamento) {
-    const stmt = db.prepare(
-      `INSERT INTO agendamento (id_usuario, id_profissional, data_agendamento, status_consulta) 
-       VALUES (?, ?, ?, ?)`
-    );
-    
-    // Define 'pendente' como padrão se não vier nada
-    const status = agendamento.status_consulta || 'pendente';
-
-    const info = stmt.run(
-        agendamento.id_usuario, 
-        agendamento.id_profissional, 
-        agendamento.data_agendamento, 
-        status
-    );
-    
-    return info.lastInsertRowid;
-  }
-    
-  async listar() {
-    // Aqui trazemos os dados crus. O JOIN para pegar os nomes é feito no Controller ou numa query específica.
-    const stmt = db.prepare('SELECT * FROM agendamento WHERE excluido_em IS NULL ORDER BY data_agendamento DESC');
-    return stmt.all();
-  }
-
-  async buscarPorId(id_agendamento){
-    const stmt = db.prepare('SELECT * FROM agendamento WHERE id_agendamento = ? AND excluido_em IS NULL');
-    return stmt.get(id_agendamento);
-  }
-
-  async atualizar(agendamentoAtualizado){
-      const stmt = db.prepare(
-        `UPDATE agendamento 
-         SET id_usuario = ?, id_profissional = ?, data_agendamento = ?, status_consulta = ?, atualizado_em = CURRENT_TIMESTAMP 
-         WHERE id_agendamento = ?`
-      );
-
-      const info = stmt.run(
-          agendamentoAtualizado.id_usuario,
-          agendamentoAtualizado.id_profissional,
-          agendamentoAtualizado.data_agendamento,
-          agendamentoAtualizado.status_consulta,
-          agendamentoAtualizado.id_agendamento
-      );
-      return info.changes;
+class AgendamentoModel {
+    constructor() {
+        this.api = new FetchAPI();
     }
 
-  async remover(id_agendamento) {
-    // Soft Delete (apenas marca como excluído)
-    const stmt = db.prepare('UPDATE agendamento SET excluido_em = CURRENT_TIMESTAMP WHERE id_agendamento = ?');
-    const info = stmt.run(id_agendamento);
-    return info.changes > 0 ? true : false;
-  }
+    async listar() {
+        try {
+            return await this.api.get('agendamentos');
+        } catch (error) {
+            console.error("Model Agendamento (listar):", error);
+            return [];
+        }
+    }
+
+    async buscarPorId(id) {
+        try {
+            return await this.api.get(`agendamentos/${id}`);
+        } catch (error) {
+            console.error("Model Agendamento (buscarPorId):", error);
+            return null;
+        }
+    }
+
+    async cadastrar(dados) {
+        try {
+            return await this.api.post('agendamentos', dados);
+        } catch (error) {
+            return { success: false, erro: error.message };
+        }
+    }
+
+    async editar(dados) {
+        try {
+            // Ajuste a rota conforme sua API (ex: POST em /agendamentos/editar ou PUT)
+            return await this.api.post(`agendamentos/editar/${dados.id_agendamento}`, dados);
+        } catch (error) {
+            return { success: false, erro: error.message };
+        }
+    }
+
+    async remover(id) {
+        try {
+            return await this.api.post(`agendamentos/excluir/${id}`);
+        } catch (error) {
+            return { success: false, erro: error.message };
+        }
+    }
+
+    async cancelar(id) {
+        try {
+            return await this.api.post(`agendamentos/cancelar/${id}`);
+        } catch (error) {
+            return { success: false, erro: error.message };
+        }
+    }
+
+    // Busca dados para preencher os selects (Pacientes e Profissionais)
+    async getDadosFormulario() {
+        try {
+            // Faz duas chamadas paralelas para agilizar
+            const [pacientes, profissionais] = await Promise.all([
+                this.api.get('usuarios?tipo=cliente'),      // Rota teórica da API
+                this.api.get('usuarios?tipo=profissional')  // Rota teórica da API
+            ]);
+
+            return {
+                pacientes: Array.isArray(pacientes) ? pacientes : [],
+                profissionais: Array.isArray(profissionais) ? profissionais : []
+            };
+        } catch (error) {
+            console.error("Model Agendamento (getDadosFormulario):", error);
+            return { pacientes: [], profissionais: [] };
+        }
+    }
 }
 
-export default Agendamento;
+export default AgendamentoModel;

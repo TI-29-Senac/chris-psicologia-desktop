@@ -1,51 +1,72 @@
 import { ipcMain } from 'electron';
-import db from '../Database/db.js';
-import bcrypt from 'bcryptjs';
+import AuthModel from '../Models/Auth.js';
+let usuarioLogado = null;
 
 class AuthController {
+    constructor() {
+        this.authModel = new AuthModel();
+    }
+
     init() {
-        ipcMain.handle('auth:login', async (event, { email, senha }) => {
-            try {
-                // 1. Busca pelo nome da coluna correto: email_usuario
-                const stmt = db.prepare(`
-                    SELECT * FROM usuario 
-                    WHERE email_usuario = ? 
-                    AND (excluido_em IS NULL OR excluido_em = '')
-                `);
-                const usuario = stmt.get(email);
-
-                if (!usuario) {
-                    return { success: false, erro: "E-mail não encontrado." };
-                }
-
-                // 2. Compara com a coluna correta: senha_usuario
-                const senhaValida = bcrypt.compareSync(senha, usuario.senha_usuario);
-                
-                if (!senhaValida) {
-                    return { success: false, erro: "Senha incorreta." };
-                }
-
-                // 3. Pega dados extras se for profissional
-                let dadosExtras = {};
-                if (usuario.tipo_usuario === 'profissional') {
-                    const stmtProf = db.prepare('SELECT * FROM profissional WHERE id_usuario = ?');
-                    const prof = stmtProf.get(usuario.id_usuario);
-                    if (prof) dadosExtras = prof;
-                }
-
-                // Remove a senha por segurança
-                delete usuario.senha_usuario;
-
-                return { 
-                    success: true, 
-                    usuario: { ...usuario, ...dadosExtras } 
-                };
-
-            } catch (erro) {
-                console.error("Erro no login:", erro);
-                return { success: false, erro: "Erro interno: " + erro.message };
-            }
+        // Escuta o pedido de login vindo do Front (renderer.js)
+        ipcMain.handle('auth:login', async (event, dados) => {
+            return await this.login(dados);
         });
+
+        // Escuta pedido para pegar usuário atual
+        ipcMain.handle('auth:get-user', () => {
+            return this.getCurrentUser();
+        });
+    }
+
+    async login(dados) {
+        try {
+            if (!dados.email || !dados.senha) {
+                return { success: false, erro: "Preencha e-mail e senha." };
+            }
+
+            // 1. Buscar usuário por email
+            const usuario = db.prepare("SELECT * FROM usuario WHERE email_usuario = ? AND excluido_em IS NULL").get(dados.email);
+            
+            if (!usuario) {
+                return { success: false, erro: "E-mail ou senha inválidos." };
+            }
+
+            // 2. Verificar a senha
+            // Nota: No seu banco a coluna é 'senha_usuario' ou 'senha'? Ajustei para 'senha_usuario' baseado no seu SQL anterior
+            const hashBanco = usuario.senha_usuario; 
+            const senhaCorreta = bcrypt.compareSync(dados.senha, hashBanco);
+
+            if (!senhaCorreta) {
+                // Fallback (se tiver senhas antigas sem hash)
+                if (hashBanco !== dados.senha) {
+                    return { success: false, erro: "E-mail ou senha inválidos." };
+                }
+            }
+            
+            // 3. Verificar o tipo de acesso
+            const tiposPermitidos = ['admin', 'psicólogo', 'secretaria', 'profissional'];
+            if (!tiposPermitidos.includes(usuario.tipo_usuario)) {
+                return { success: false, erro: "Seu tipo de usuário não tem permissão para acessar o aplicativo desktop." };
+            }
+
+            // 4. Salvar a sessão (in-memory)
+            usuarioLogado = {
+                id: usuario.id_usuario,
+                nome: usuario.nome_usuario,
+                email: usuario.email_usuario,
+                tipo: usuario.tipo_usuario
+            };
+
+            return { success: true, usuario: usuarioLogado };
+
+        } catch (error) {
+            console.error("Erro no login:", error);
+            return { success: false, erro: "Erro interno no servidor." };
+        }
+    }
+getCurrentUser() {
+        return usuarioLogado;
     }
 }
 

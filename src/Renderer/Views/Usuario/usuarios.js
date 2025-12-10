@@ -1,18 +1,21 @@
-// src/Renderer/Views/Usuarios/usuarios.js
-
+const sessao = sessionStorage.getItem('usuario_logado');
+if (!sessao) {
+    window.location.href = '../../../../index.html';
+}
+ 
 async function init() {
     const listaEl = document.getElementById('lista-usuarios');
-
+ 
     // 1. Função para carregar a tabela
     async function carregarUsuarios() {
         try {
             const usuarios = await window.electronAPI.listarUsuarios();
-            
+           
             if (usuarios.length === 0) {
                 listaEl.innerHTML = "<tr><td colspan='6' class='text-center'>Nenhum usuário encontrado.</td></tr>";
                 return;
             }
-
+ 
             listaEl.innerHTML = usuarios.map(u => `
                 <tr>
                     <td>#${u.id_usuario}</td>
@@ -26,14 +29,14 @@ async function init() {
                     </td>
                 </tr>
             `).join('');
-
+ 
             adicionarEventos();
-
+ 
         } catch (error) {
             console.error("Erro ao listar usuários:", error);
         }
     }
-
+ 
     // 2. Eventos dos botões da tabela
     function adicionarEventos() {
         // EDITAR
@@ -46,7 +49,7 @@ async function init() {
                 // window.location.href = `../Cadastro/cadastro.html?id=${id}`;
             });
         });
-
+ 
         // EXCLUIR
         document.querySelectorAll('.btn-delete').forEach(btn => {
             btn.addEventListener('click', async (e) => {
@@ -63,9 +66,9 @@ async function init() {
             });
         });
     }
-
+ 
     // Inicia
     carregarUsuarios();
 }
-
+ 
 init();
