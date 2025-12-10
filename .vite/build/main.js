@@ -729,7 +729,7 @@ class AuthController {
         if (!tipo || !cargosPermitidos.includes(tipo.toLowerCase())) {
           return {
             success: false,
-            erro: "Acesso restrito. Clientes devem utilizar o site, mendigo filho da puta."
+            erro: "Acesso restrito. Clientes devem utilizar o site."
           };
         }
         usuarioLogado = resposta.usuario;

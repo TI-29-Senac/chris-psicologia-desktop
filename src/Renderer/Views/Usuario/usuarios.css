@@ -1,0 +1,174 @@
+/* src/Renderer/Views/Usuario/usuarios.css */
+
+/* --- Layout Principal --- */
+.page-header-actions {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 25px;
+}
+
+/* Botão de Cadastro (Estilo renovado) */
+.btn-novo {
+    background-color: #5D6D68; /* Verde do tema */
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 4px 6px rgba(93, 109, 104, 0.2);
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+.btn-novo:hover {
+    background-color: #4a5854;
+    transform: translateY(-2px);
+}
+
+.btn-novo i {
+    font-size: 0.9em;
+}
+
+/* --- Container da Tabela (Card) --- */
+.table-card {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    padding: 20px;
+    overflow: hidden; /* Garante bordas arredondadas */
+}
+
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+}
+
+/* --- Tabela Estilizada --- */
+.table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 800px; /* Evita quebra em telas pequenas */
+}
+
+.table thead th {
+    background-color: #f8f9fa;
+    color: #5D6D68;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    padding: 18px 15px;
+    text-align: left;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.table tbody td {
+    padding: 16px 15px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f0f0f0;
+    color: #444;
+    font-size: 0.95rem;
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.table tbody tr:hover td {
+    background-color: #fafafa;
+}
+
+/* Colunas Específicas */
+.col-id { width: 60px; color: #888; font-weight: bold; }
+.col-nome { font-weight: 600; color: #333; }
+.col-actions { text-align: center; width: 120px; }
+
+/* Badges (Etiquetas de Tipo) */
+.badge-tipo {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    display: inline-block;
+}
+
+.badge-admin { background-color: #e3f2fd; color: #1976d2; }
+.badge-profissional { background-color: #e8f5e9; color: #2e7d32; }
+.badge-cliente { background-color: #fff3e0; color: #ef6c00; }
+.badge-recepcionista { background-color: #f3e5f5; color: #8e24aa; }
+
+/* Botões de Ação na Tabela */
+.action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 4px;
+    font-size: 1rem;
+}
+
+.btn-edit { color: #64b5f6; background-color: rgba(100, 181, 246, 0.1); }
+.btn-edit:hover { background-color: #64b5f6; color: white; }
+
+.btn-delete { color: #e57373; background-color: rgba(229, 115, 115, 0.1); }
+.btn-delete:hover { background-color: #e57373; color: white; }
+
+
+/* --- Estilos do Modal (Mantidos e Ajustados) --- */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.modal-overlay.active { display: flex; opacity: 1; }
+
+.modal-content {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    transform: translateY(-20px);
+    transition: transform 0.3s ease;
+}
+.modal-overlay.active .modal-content { transform: translateY(0); }
+
+.modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;
+}
+.close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999; }
+.close-btn:hover { color: #e74c3c; }
+
+/* Formulário do Modal */
+.tipo-selector { display: flex; background: #f0f2f5; padding: 4px; border-radius: 8px; margin-bottom: 20px; }
+.tipo-btn { flex: 1; padding: 10px; border: none; background: transparent; cursor: pointer; border-radius: 6px; font-weight: 600; color: #666; transition: 0.3s; }
+.tipo-btn.active { background-color: #5D6D68; color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; margin-bottom: 6px; font-size: 0.9rem; font-weight: 600; color: #5D6D68; }
+.form-control { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
+.form-control:focus { outline: none; border-color: #5D6D68; background-color: #fff; }
+
+.btn-primary { width: 100%; padding: 14px; background-color: #5D6D68; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 15px; }
+.btn-primary:hover { background-color: #4a5854; }
+.btn-primary:disabled { background-color: #ccc; cursor: not-allowed; }
