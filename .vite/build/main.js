@@ -569,39 +569,8 @@ class UsuarioController {
       if (!dados.nome || !dados.email || !dados.senha) {
         return { success: false, erro: "Preencha os campos obrigatórios." };
       }
-      const existe = db.prepare("SELECT id_usuario FROM usuario WHERE email_usuario = ?").get(dados.email);
-      if (existe) return { success: false, erro: "E-mail já cadastrado." };
-      const insertUser = db.transaction(() => {
-        const stmtUser = db.prepare(`
-                    INSERT INTO usuario (nome_usuario, email_usuario, senha_usuario, tipo_usuario, cpf, status_usuario) 
-                    VALUES (@nome, @email, @senha, @tipo, '000.000.000-00', 'ativo')
-                `);
-        const hash = bcrypt.hashSync(dados.senha, 10);
-        const info = stmtUser.run({
-          nome: dados.nome,
-          email: dados.email,
-          senha: hash,
-          // Gravando a senha criptografada
-          tipo: dados.tipo
-        });
-        const novoIdUsuario = info.lastInsertRowid;
-        if (dados.tipo === "profissional") {
-          if (!dados.especialidade || !dados.valor) {
-            throw new Error("Profissionais precisam de Especialidade e Valor.");
-          }
-          const stmtProf = db.prepare(`
-                        INSERT INTO profissional (id_usuario, especialidade, valor_consulta, sinal_consulta)
-                        VALUES (?, ?, ?, ?)
-                    `);
-          const valor = parseFloat(dados.valor);
-          const sinal = valor * 0.2;
-          stmtProf.run(novoIdUsuario, dados.especialidade, valor, sinal);
-        }
-      });
-      insertUser();
-      return { success: true };
+      return await this.usuarioModel.cadastrar(dados);
     } catch (erro) {
-      console.error("Erro no cadastro:", erro);
       return { success: false, erro: erro.message };
     }
   }
@@ -753,34 +722,22 @@ class AuthController {
   }
   async login(dados) {
     try {
-      if (!dados.email || !dados.senha) {
-        return { success: false, erro: "Preencha e-mail e senha." };
-      }
-      const usuario = db.prepare("SELECT * FROM usuario WHERE email_usuario = ? AND excluido_em IS NULL").get(dados.email);
-      if (!usuario) {
-        return { success: false, erro: "E-mail ou senha inválidos." };
-      }
-      const hashBanco = usuario.senha_usuario;
-      const senhaCorreta = bcrypt.compareSync(dados.senha, hashBanco);
-      if (!senhaCorreta) {
-        if (hashBanco !== dados.senha) {
-          return { success: false, erro: "E-mail ou senha inválidos." };
+      const resposta = await this.authModel.login(dados.email, dados.senha);
+      if (resposta.success && resposta.usuario) {
+        const tipo = resposta.usuario.tipo || resposta.usuario.tipo_usuario;
+        const cargosPermitidos = ["admin", "profissional", "psicólogo", "secretaria", "recepcionista"];
+        if (!tipo || !cargosPermitidos.includes(tipo.toLowerCase())) {
+          return {
+            success: false,
+            erro: "Acesso restrito. Clientes devem utilizar o site, mendigo filho da puta."
+          };
         }
+        usuarioLogado = resposta.usuario;
       }
-      const tiposPermitidos = ["admin", "psicólogo", "secretaria", "profissional"];
-      if (!tiposPermitidos.includes(usuario.tipo_usuario)) {
-        return { success: false, erro: "Seu tipo de usuário não tem permissão para acessar o aplicativo desktop." };
-      }
-      usuarioLogado = {
-        id: usuario.id_usuario,
-        nome: usuario.nome_usuario,
-        email: usuario.email_usuario,
-        tipo: usuario.tipo_usuario
-      };
-      return { success: true, usuario: usuarioLogado };
+      return resposta;
     } catch (error) {
-      console.error("Erro no login:", error);
-      return { success: false, erro: "Erro interno no servidor." };
+      console.error("Erro no Controller Auth:", error);
+      return { success: false, erro: "Erro interno ao tentar logar." };
     }
   }
   getCurrentUser() {

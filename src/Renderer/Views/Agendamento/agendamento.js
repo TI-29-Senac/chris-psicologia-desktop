@@ -1,4 +1,4 @@
-const sessao = sessionStorage.getItem('usuario_logado');
+const sessao = localStorage.getItem('usuario_logado');
 if (!sessao) {
     window.location.href = '../../../../index.html';
 }

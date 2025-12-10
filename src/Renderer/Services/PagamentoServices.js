@@ -2,9 +2,9 @@ const PagamentoServices = (() => {
  
   // --- VERIFICAÇÃO DE SESSÃO (NOVO) ---
   const checkSession = () => {
-      const sessao = sessionStorage.getItem('usuario_logado');
+      // ALTERAÇÃO: localStorage
+      const sessao = localStorage.getItem('usuario_logado');
       if (!sessao) {
-          // Se não houver sessão, redireciona para o login
           window.location.href = '../../../../index.html';
           return false;
       }
