@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Novo Usuário - Chris Psicologia</title>
+    
+    <!-- CSS da página -->
     <link rel="stylesheet" href="cadastro.css">
 </head>
 <body>
@@ -14,20 +16,28 @@
 
         <!-- Seletor de Tipo (Abas) -->
         <div class="tipo-selector">
-            <button class="tipo-btn active" id="btn-cliente" onclick="mudarTipo('cliente')">
+            <!-- window.mudarTipo vem do cadastro.js -->
+            <button class="tipo-btn active" id="btn-cliente" onclick="window.mudarTipo('cliente')">
                 Cadastrar Usuário
             </button>
-            <button class="tipo-btn" id="btn-profissional" onclick="mudarTipo('profissional')">
+            <button class="tipo-btn" id="btn-profissional" onclick="window.mudarTipo('profissional')">
                 Cadastrar Profissional
             </button>
         </div>
 
-        <!-- Campos Comuns (Nome, Email, Senha) -->
+        <!-- 1. NOME -->
         <div class="form-group">
             <label>Nome Completo</label>
             <input type="text" id="nome" class="form-control" placeholder="Ex: João da Silva">
         </div>
 
+        <!-- 2. CPF (REINSERIDO) -->
+        <div class="form-group">
+            <label>CPF</label>
+            <input type="text" id="cpf" class="form-control" placeholder="000.000.000-00" maxlength="14">
+        </div>
+
+        <!-- 3. EMAIL -->
         <div class="form-group">
             <label>E-mail</label>
             <input type="email" id="email" class="form-control" placeholder="joao@email.com">
@@ -39,17 +49,16 @@
                 <label>Especialidade</label>
                 <input type="text" id="especialidade" class="form-control" placeholder="Ex: Psicologia Clínica">
             </div>
+            
             <div class="form-group">
-            <label>Valor da Consulta (R$)</label>
-            <input type="number" id="valorConsulta" class="form-control" placeholder="0.00">
+                <label>Valor da Consulta (R$)</label>
+                <input type="number" id="valorConsulta" class="form-control" placeholder="0.00">
             </div>
 
             <div class="form-group">
-            <label>Valor do Sinal (R$)</label>
-            <input type="number" id="valorSinal" class="form-control" placeholder="0.00" readonly>
+                <label>Valor do Sinal (R$)</label>
+                <input type="number" id="valorSinal" class="form-control" placeholder="0.00" readonly>
             </div>
-
-
         </div>
 
         <div class="form-group">
@@ -59,10 +68,14 @@
 
         <button class="btn-primary" id="btn-salvar">Cadastrar</button>
         
-        <!-- Botão Voltar (Sobe 3 níveis para chegar na raiz onde está o index.html) -->
+        <!-- Botão Voltar -->
         <a href="../../../../index.html" class="link-voltar">Voltar ao Início</a>
     </div>
 
-    <script src="cadastro.js"></script>
+    <!-- 1. Carrega o Global (Alertas bonitos) -->
+    <script type="module" src="../../../global.js"></script>
+
+    <!-- 2. Carrega a lógica da página -->
+    <script type="module" src="cadastro.js"></script>
 </body>
 </html>

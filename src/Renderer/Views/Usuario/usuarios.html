@@ -11,7 +11,42 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <link rel="stylesheet" href="../../../dashboard.css">
-    <link rel="stylesheet" href="../Agendamento/agendamento.css"> 
+    <link rel="stylesheet" href="../Agendamento/agendamento.css">
+    <link rel="stylesheet" href="usuarios.css">
+    
+    <style>
+        .filter-btn {
+            background-color: transparent;
+            border: 2px solid var(--color-dark-green);
+            color: var(--color-dark-green);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .filter-btn.active, .filter-btn:hover {
+            background-color: var(--color-dark-green);
+            color: white;
+        }
+        /* Estilos do Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: none;
+            justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content {
+            background: white; padding: 30px; border-radius: 12px;
+            width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto;
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; }
+        
+        .tipo-selector { display: flex; gap: 10px; margin-bottom: 20px; background: #f0f0f0; padding: 5px; border-radius: 8px; }
+        .tipo-btn { flex: 1; padding: 10px; border: none; background: transparent; cursor: pointer; border-radius: 6px; font-weight: 600; }
+        .tipo-btn.active { background: var(--color-dark-green); color: white; }
+    </style>
 </head>
 <body>
 
@@ -34,37 +69,97 @@
             <header class="top-bar">
                 <div class="page-title">
                     <h2>Gestão de Usuários</h2>
-                    <p>Controle de acesso e profissionais</p>
+                    <p>Administre pacientes e profissionais</p>
                 </div>
-                <div class="user-profile"><span>Dr. Chris</span><div class="avatar"><i class="fa-regular fa-circle-user"></i></div></div>
+                <div class="user-profile"><span>Admin</span><div class="avatar"><i class="fa-regular fa-circle-user"></i></div></div>
             </header>
 
-            <div style="display: flex; gap: 15px; margin-bottom: 20px;">
-                <a href="../Cadastro/cadastro.html" class="confirm-btn" style="text-decoration: none; text-align: center; max-width: 200px;">
-                    <i class="fa-solid fa-plus"></i> Cadastrar Usuário
-                </a>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <button id="btn-novo-usuario" class="btn btn-primary" style="text-decoration: none; text-align: center; max-width: 200px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <i class="fa-solid fa-plus"></i> Novo Cadastro
+                    </button>
+                    <div style="width: 2px; height: 30px; background: #ddd; margin: 0 5px;"></div>
+                    <button class="filter-btn active" onclick="window.filtrarLista('cliente')" id="filter-cliente"><i class="fa-solid fa-users"></i> Pacientes</button>
+                    <button class="filter-btn" onclick="window.filtrarLista('profissional')" id="filter-profissional"><i class="fa-solid fa-user-doctor"></i> Profissionais</button>
+                </div>
+                <div style="position: relative;">
+                    <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #7C8F88;"></i>
+                    <input type="text" id="input-busca" placeholder="Buscar por nome ou CPF..." 
+                           style="padding: 12px 15px 12px 40px; border-radius: 20px; border: 1px solid #ccc; width: 280px; outline: none; font-size: 0.9rem;">
+                </div>
             </div>
 
             <div class="card">
-                <h3>Lista de Usuários Cadastrados</h3>
+                <h3 id="titulo-lista" style="color: #5D6D68; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px;">
+                    Lista de Pacientes Cadastrados
+                </h3>
                 <div class="table-container">
                     <table class="table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Nome</th>
-                                <th>Email</th>
-                                <th>Tipo</th>
-                                <th>Especialidade</th>
-                                <th class="text-center">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="lista-usuarios">
-                            </tbody>
+                        <thead><tr id="table-header"></tr></thead>
+                        <tbody id="lista-usuarios"></tbody>
                     </table>
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- MODAL DE CADASTRO / EDIÇÃO -->
+    <div id="modal-cadastro" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-titulo">Novo Cadastro</h3> <!-- ID ADICIONADO AQUI -->
+                <button id="btn-close-modal" class="close-btn">&times;</button>
+            </div>
+ 
+            <div class="modal-body">
+                <!-- ID OCULTO PARA EDIÇÃO -->
+                <input type="hidden" id="cad-id">
+
+                <div class="tipo-selector">
+                    <button class="tipo-btn active" id="btn-tab-cliente" data-tipo="cliente">Usuário</button>
+                    <button class="tipo-btn" id="btn-tab-profissional" data-tipo="profissional">Profissional</button>
+                </div>
+ 
+                <div class="form-group">
+                    <label>Nome Completo</label>
+                    <input type="text" id="cad-nome" class="form-control" placeholder="Ex: João da Silva">
+                </div>
+
+                <div class="form-group">
+                    <label>CPF</label>
+                    <!-- CPF Disabled na edição para evitar conflitos de chave única -->
+                    <input type="text" id="cad-cpf" class="form-control" placeholder="000.000.000-00" maxlength="14">
+                </div>
+ 
+                <div class="form-group">
+                    <label>E-mail</label>
+                    <input type="email" id="cad-email" class="form-control" placeholder="joao@email.com">
+                </div>
+ 
+                <div class="form-group">
+                    <label>Senha <span style="font-weight: normal; font-size: 0.8em; color: #888;">(Deixe em branco para manter a atual)</span></label>
+                    <input type="password" id="cad-senha" class="form-control" placeholder="******">
+                </div>
+ 
+                <div id="area-profissional" style="display: none; border-top: 1px dashed #ccc; padding-top: 15px; margin-top: 15px;">
+                    <div class="form-group">
+                        <label>Especialidade</label>
+                        <input type="text" id="cad-especialidade" class="form-control" placeholder="Ex: Psicologia Clínica">
+                    </div>
+                    <div class="form-group">
+                        <label>Valor da Consulta (R$)</label>
+                        <input type="number" id="cad-valor" class="form-control" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Valor do Sinal (20%)</label>
+                        <input type="text" id="cad-sinal" class="form-control" readonly placeholder="0.00" style="background-color: #f9f9f9;">
+                    </div>
+                </div>
+ 
+                <button id="btn-salvar-usuario" class="btn btn-primary" style="width: 100%; margin-top: 20px;">Salvar</button>
+            </div>
+        </div>
     </div>
 
     <script type="module" src="usuarios.js"></script>

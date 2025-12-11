@@ -1,7 +1,45 @@
+// src/Renderer/Views/Cadastro/cadastro.js
+
+// Estado atual (padrão: cliente)
 let tipoAtual = 'cliente';
 
-// --- FUNÇÃO PARA TROCAR ABAS ---
-function mudarTipo(tipo) {
+// --- ELEMENTOS DO DOM ---
+const inputConsulta = document.getElementById('valorConsulta');
+const inputSinal = document.getElementById('valorSinal');
+const inputCpf = document.getElementById('cpf');
+
+// --- 1. MÁSCARA DE CPF ---
+// Formata automaticamente enquanto digita: 000.000.000-00
+if (inputCpf) {
+    inputCpf.addEventListener('input', (e) => {
+        let value = e.target.value.replace(/\D/g, ""); // Remove tudo que não é dígito
+        if (value.length > 11) value = value.slice(0, 11); // Limita a 11 dígitos
+        
+        // Aplica a máscara
+        value = value.replace(/(\d{3})(\d)/, "$1.$2");
+        value = value.replace(/(\d{3})(\d)/, "$1.$2");
+        value = value.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+        
+        e.target.value = value;
+    });
+}
+
+// --- 2. CÁLCULO AUTOMÁTICO DO SINAL (20%) ---
+if (inputConsulta && inputSinal) {
+    inputConsulta.addEventListener('input', () => {
+        const valor = parseFloat(inputConsulta.value);
+        if (!isNaN(valor)) {
+            // Calcula 20% e fixa em 2 casas decimais
+            inputSinal.value = (valor * 0.20).toFixed(2);
+        } else {
+            inputSinal.value = '';
+        }
+    });
+}
+
+// --- 3. FUNÇÃO PARA TROCAR ABAS (Paciente/Profissional) ---
+// Atribuída ao window para funcionar no onclick do HTML
+window.mudarTipo = function(tipo) {
     tipoAtual = tipo;
     
     const btnCliente = document.getElementById('btn-cliente');
@@ -9,85 +47,71 @@ function mudarTipo(tipo) {
     const areaProf = document.getElementById('area-profissional');
 
     if (tipo === 'cliente') {
-        // Ativa aba Cliente
         btnCliente.classList.add('active');
         btnProf.classList.remove('active');
-        // Esconde campos extras
         areaProf.style.display = 'none';
     } else {
-        // Ativa aba Profissional
         btnProf.classList.add('active');
         btnCliente.classList.remove('active');
-        // Mostra campos extras (Especialidade/Valor)
         areaProf.style.display = 'block';
     }
-}
+};
 
-// --- FUNÇÃO DE SALVAR ---
+// --- 4. FUNÇÃO DE SALVAR ---
 document.getElementById('btn-salvar').addEventListener('click', async () => {
     // Coleta dados comuns
     const nome = document.getElementById('nome').value;
     const email = document.getElementById('email').value;
     const senha = document.getElementById('senha').value;
+    const cpf = document.getElementById('cpf').value;
     
-    if(!nome || !email || !senha) {
-        return alert("Por favor, preencha nome, email e senha.");
+    // Validação Básica
+    if(!nome || !email || !senha || !cpf) {
+        return await alert("Por favor, preencha todos os campos obrigatórios (incluindo CPF).");
     }
 
-    // Objeto base
+    // Objeto base para envio
     const dados = {
         nome,
         email,
+        cpf,
         senha,
         tipo: tipoAtual
     };
 
-    // Se for profissional, valida e pega os dados extras
+    // Validação Específica de Profissional
     if (tipoAtual === 'profissional') {
         const especialidade = document.getElementById('especialidade').value;
-        const valor = document.getElementById('valor').value;
+        const valor = document.getElementById('valorConsulta').value;
 
         if(!especialidade || !valor) {
-            return alert("Profissionais precisam preencher Especialidade e Valor.");
+            return await alert("Profissionais precisam preencher Especialidade e Valor da Consulta.");
         }
 
         dados.especialidade = especialidade;
         dados.valor = valor;
     }
 
-    // Verifica se a API do Electron está disponível
+    // Verifica API (Usa 'api' conforme preload.js)
     if (!window.api || !window.api.cadastrarUsuario) {
-        return alert("Erro: API de sistema não encontrada. Verifique o preload.js");
+        return await alert("Erro Crítico: API não encontrada. Reinicie o aplicativo.");
     }
 
     try {
-        // Envia para o Backend (UsuarioController)
-        const res = await window.electronAPI.cadastrarUsuario(dados);
+        // Envia para o Backend
+        const res = await window.api.cadastrarUsuario(dados);
 
         if (res.success) {
-            alert("Usuário cadastrado com sucesso!");
+            // Sucesso! Mostra msg e redireciona
+            await alert("Cadastro realizado com sucesso!");
             
-            // Redireciona para a tela de Agendamentos
-            // O "../Agendamento" significa: sai da pasta Cadastro e entra na Agendamento
+            // Redireciona para a agenda
             window.location.href = '../Agendamento/agendamento.html';
         } else {
-            alert("Erro ao cadastrar: " + res.erro);
+            await alert("Erro ao cadastrar: " + res.erro);
         }
     } catch (error) {
         console.error(error);
-        alert("Erro interno ao tentar cadastrar.");
+        await alert("Erro interno no sistema.");
     }
 });
-
-// --- CÁLCULO AUTOMÁTICO DO SINAL ---
-    const consulta = document.getElementById("valorConsulta");
-    const sinal = document.getElementById("valorSinal");
-
-    consulta.addEventListener("input", () => {
-        const v = parseFloat(consulta.value) || 0;
-        sinal.value = (v * 0.20).toFixed(2);
-    });
-
-
-// Expõe a função de mudar tipo para o HTML poder usar no onclick
-window.mudarTipo = mudarTipo;

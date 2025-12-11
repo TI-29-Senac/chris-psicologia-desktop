@@ -1,6 +1,6 @@
 "use strict";
 const electron = require("electron");
-electron.contextBridge.exposeInMainWorld("electronAPI", {
+electron.contextBridge.exposeInMainWorld("api", {
   cadastrarUsuario: (dados) => electron.ipcRenderer.invoke("usuarios:cadastrar", dados),
   listarUsuarios: () => electron.ipcRenderer.invoke("usuarios:listar"),
   buscarUsuarioPorId: (id) => electron.ipcRenderer.invoke("usuarios:buscarPorId", id),

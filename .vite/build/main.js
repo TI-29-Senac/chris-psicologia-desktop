@@ -506,6 +506,7 @@ function initDatabase() {
         CREATE TABLE IF NOT EXISTS usuario (
             id_usuario INTEGER PRIMARY KEY AUTOINCREMENT,
             nome_usuario TEXT NOT NULL,
+            cpf TEXT UNIQUE,
             email TEXT UNIQUE NOT NULL,
             senha TEXT NOT NULL,
             tipo_usuario TEXT NOT NULL -- 'cliente' ou 'profissional'
@@ -9722,10 +9723,11 @@ class UsuarioController {
     require$$3$1.ipcMain.handle("usuarios:excluir", async (event, id) => this.excluir(id));
     require$$3$1.ipcMain.handle("usuarios:editar", async (event, dados) => this.editar(dados));
   }
+  // ... (restante do código acima)
   async listar() {
     try {
       const sql = `
-                SELECT u.id_usuario, u.nome_usuario, u.email, u.tipo_usuario, 
+                SELECT u.id_usuario, u.nome_usuario, u.email, u.cpf, u.tipo_usuario, 
                        p.especialidade 
                 FROM usuario u
                 LEFT JOIN profissional p ON u.id_usuario = p.id_usuario
@@ -9734,8 +9736,20 @@ class UsuarioController {
             `;
       return db.prepare(sql).all();
     } catch (erro) {
-      console.error(erro);
-      return [];
+      console.error("Erro ao listar usuários (Usando Fallback):", erro);
+      try {
+        const sqlFallback = `
+                    SELECT u.id_usuario, u.nome_usuario, u.email, u.cpf, u.tipo_usuario, 
+                           p.especialidade 
+                    FROM usuario u
+                    LEFT JOIN profissional p ON u.id_usuario = p.id_usuario
+                    ORDER BY u.nome_usuario ASC
+                `;
+        return db.prepare(sqlFallback).all();
+      } catch (err2) {
+        console.error("Erro crítico no banco:", err2);
+        return db.prepare("SELECT * FROM usuario").all();
+      }
     }
   }
   async buscarPorId(id) {
@@ -9748,47 +9762,80 @@ class UsuarioController {
       }
       return usuario;
     } catch (error) {
-      console.error(error);
+      console.error("Erro ao buscar usuário:", error);
       return null;
     }
   }
   async cadastrar(dados) {
     try {
-      if (!dados.nome || !dados.email || !dados.senha) {
-        return { success: false, erro: "Preencha os campos obrigatórios." };
+      if (!dados.nome || !dados.email || !dados.senha || !dados.cpf) {
+        return { success: false, erro: "Preencha todos os campos obrigatórios." };
       }
-      const existe = db.prepare("SELECT id_usuario FROM usuario WHERE email = ?").get(dados.email);
-      if (existe) return { success: false, erro: "E-mail já cadastrado." };
-      const insertUser = db.transaction(() => {
+      const existeEmail = db.prepare("SELECT id_usuario FROM usuario WHERE email = ?").get(dados.email);
+      if (existeEmail) return { success: false, erro: "E-mail já cadastrado." };
+      const existeCpf = db.prepare("SELECT id_usuario FROM usuario WHERE cpf = ?").get(dados.cpf);
+      if (existeCpf) return { success: false, erro: "CPF já cadastrado." };
+      const realizarCadastro = db.transaction((user) => {
+        const hash2 = bcrypt.hashSync(user.senha, 10);
         const stmtUser = db.prepare(`
-                    INSERT INTO usuario (nome_usuario, email, senha, tipo_usuario) 
-                    VALUES (@nome, @email, @senha, @tipo)
+                    INSERT INTO usuario (nome_usuario, email, cpf, senha, tipo_usuario) 
+                    VALUES (@nome, @email, @cpf, @senha, @tipo)
                 `);
-        const hash2 = bcrypt.hashSync(dados.senha, 10);
         const info = stmtUser.run({
-          nome: dados.nome,
-          email: dados.email,
-          senha: dados.senha,
-          // Sugestão: Usar bcrypt aqui futuramente
-          tipo: dados.tipo
+          nome: user.nome,
+          email: user.email,
+          cpf: user.cpf,
+          // Capturando o CPF aqui
+          senha: hash2,
+          tipo: user.tipo
         });
         const novoIdUsuario = info.lastInsertRowid;
-        if (dados.tipo === "profissional") {
-          if (!dados.especialidade || !dados.valor) {
-            throw new Error("Dados de profissional incompletos.");
+        if (user.tipo === "profissional") {
+          if (!user.especialidade || !user.valor) {
+            throw new Error("Dados de especialidade/valor incompletos.");
           }
           const stmtProf = db.prepare(`
                         INSERT INTO profissional (id_usuario, especialidade, valor_consulta)
                         VALUES (?, ?, ?)
                     `);
-          stmtProf.run(novoIdUsuario, dados.especialidade, parseFloat(dados.valor));
+          stmtProf.run(novoIdUsuario, user.especialidade, parseFloat(user.valor));
         }
       });
-      insertUser();
+      realizarCadastro(dados);
       return { success: true };
     } catch (erro) {
       console.error("Erro no cadastro:", erro);
       return { success: false, erro: erro.message };
+    }
+  }
+  async editar(dados) {
+    try {
+      if (!dados.id || !dados.nome || !dados.email) {
+        return { success: false, erro: "Dados básicos obrigatórios." };
+      }
+      const transacaoEditar = db.transaction((user) => {
+        let sql = `UPDATE usuario SET nome_usuario = @nome, email = @email`;
+        const params = { nome: user.nome, email: user.email, id: user.id };
+        if (user.senha && user.senha.trim() !== "") {
+          const hash2 = bcrypt.hashSync(user.senha, 10);
+          sql += `, senha = @senha`;
+          params.senha = hash2;
+        }
+        sql += ` WHERE id_usuario = @id`;
+        db.prepare(sql).run(params);
+        if (user.tipo === "profissional") {
+          db.prepare(`
+                        UPDATE profissional 
+                        SET especialidade = ?, valor_consulta = ? 
+                        WHERE id_usuario = ?
+                    `).run(user.especialidade, parseFloat(user.valor), user.id);
+        }
+      });
+      transacaoEditar(dados);
+      return { success: true };
+    } catch (error) {
+      console.error("Erro na edição:", error);
+      return { success: false, erro: error.message };
     }
   }
   async excluir(id) {
@@ -9796,6 +9843,10 @@ class UsuarioController {
       db.prepare("UPDATE usuario SET excluido_em = CURRENT_TIMESTAMP WHERE id_usuario = ?").run(id);
       return { success: true };
     } catch (error) {
+      if (error.message.includes("no such column")) {
+        db.prepare("DELETE FROM usuario WHERE id_usuario = ?").run(id);
+        return { success: true };
+      }
       return { success: false, erro: error.message };
     }
   }

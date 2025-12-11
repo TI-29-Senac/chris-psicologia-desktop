@@ -12,6 +12,7 @@ export function initDatabase() {
         CREATE TABLE IF NOT EXISTS usuario (
             id_usuario INTEGER PRIMARY KEY AUTOINCREMENT,
             nome_usuario TEXT NOT NULL,
+            cpf TEXT UNIQUE,
             email TEXT UNIQUE NOT NULL,
             senha TEXT NOT NULL,
             tipo_usuario TEXT NOT NULL -- 'cliente' ou 'profissional'

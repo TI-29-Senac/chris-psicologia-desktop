@@ -14,7 +14,12 @@ const listaEl = document.getElementById('lista-agendamentos');
 
 // --- INICIALIZAÇÃO ---
 async function init() {
-    if (!window.electronAPI) return console.error("API Electron não encontrada");
+    // CORREÇÃO: Verifica 'window.api' (nome definido no preload.js)
+    if (!window.api) {
+        console.error("ERRO CRÍTICO: window.api não encontrado. Verifique o preload.js");
+        alert("Erro crítico: API não encontrada.");
+        return; 
+    }
 
     await carregarSelects();
     await carregarTabela();
@@ -23,7 +28,8 @@ async function init() {
 // --- FUNÇÕES DE CARREGAMENTO ---
 async function carregarSelects() {
     try {
-        const dados = await window.electronAPI.getDadosFormulario();
+        // CORREÇÃO: window.api
+        const dados = await window.api.getDadosFormulario();
         if (dados.pacientes) {
             selectPaciente.innerHTML = '<option value="">Selecione...</option>' + 
                 dados.pacientes.map(p => `<option value="${p.id_usuario}">${p.nome_usuario}</option>`).join('');
@@ -37,9 +43,10 @@ async function carregarSelects() {
 
 async function carregarTabela() {
     try {
-        const agendamentos = await window.electronAPI.listarAgendamentos();
+        // CORREÇÃO: window.api
+        const agendamentos = await window.api.listarAgendamentos();
         
-        if(agendamentos.length === 0) {
+        if (!agendamentos || agendamentos.length === 0) {
             listaEl.innerHTML = "<tr><td colspan='5' class='text-center' style='padding:30px'>Nenhum agendamento encontrado.</td></tr>";
             return;
         }
@@ -48,9 +55,14 @@ async function carregarTabela() {
             const isCancelado = a.status_consulta === 'Cancelado';
             const badgeClass = isCancelado ? 'status-cancelado' : 'status-agendado';
             
-            const dataObj = new Date(a.data_agendamento);
-            const dataStr = dataObj.toLocaleDateString('pt-BR');
-            const horaStr = dataObj.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+            // Tratamento de data seguro
+            let dataStr = '---';
+            let horaStr = '---';
+            if (a.data_agendamento) {
+                const dataObj = new Date(a.data_agendamento);
+                dataStr = dataObj.toLocaleDateString('pt-BR');
+                horaStr = dataObj.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+            }
 
             return `
             <tr>
@@ -78,22 +90,26 @@ function adicionarEventosLista() {
     document.querySelectorAll('.btn-edit').forEach(btn => {
         btn.addEventListener('click', (e) => preencherEdicao(e.target.closest('button').dataset.id));
     });
-    // Cancelar
+    
+    // Cancelar (Usando confirm nativo para evitar erros)
     document.querySelectorAll('.btn-cancel').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             const id = e.target.closest('button').dataset.id;
-            if(confirm('Deseja desmarcar esta consulta?')) {
-                await window.electronAPI.cancelarAgendamento(id);
+            if(confirm('Deseja realmente desmarcar esta consulta?')) {
+                // CORREÇÃO: window.api
+                await window.api.cancelarAgendamento(id);
                 carregarTabela();
             }
         });
     });
-    // Excluir
+    
+    // Excluir (Usando confirm nativo)
     document.querySelectorAll('.btn-delete').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             const id = e.target.closest('button').dataset.id;
-            if(confirm('Tem certeza que deseja apagar?')) {
-                await window.electronAPI.removerAgendamento(id);
+            if(confirm('Tem certeza que deseja apagar este registro do histórico?')) {
+                // CORREÇÃO: window.api
+                await window.api.removerAgendamento(id);
                 carregarTabela();
             }
         });
@@ -102,14 +118,16 @@ function adicionarEventosLista() {
 
 // --- LÓGICA DO FORMULÁRIO (SALVAR) ---
 btnSalvar.addEventListener('click', async () => {
-    // Nota: Mesmo disabled, o .value pega o valor selecionado via JS
+    // Validação
     if(!inputDia.value || !selectHora.value || !selectProfissional.value) {
         return alert("Preencha todos os campos!");
     }
 
     // Valida Fim de Semana
     const dataCheck = new Date(inputDia.value + "T12:00:00");
-    if(dataCheck.getDay() === 0 || dataCheck.getDay() === 6) return alert("Fechado aos finais de semana!");
+    if(dataCheck.getDay() === 0 || dataCheck.getDay() === 6) {
+        return alert("A clínica não funciona aos finais de semana!");
+    }
 
     const dados = {
         id_usuario: selectPaciente.value,
@@ -120,26 +138,28 @@ btnSalvar.addEventListener('click', async () => {
     const id = inputId.value;
     let res;
 
+    // CORREÇÃO: window.api
     if (id) {
         dados.id_agendamento = id;
-        res = await window.electronAPI.editarAgendamento(dados);
+        res = await window.api.editarAgendamento(dados);
     } else {
         if(!dados.id_usuario) return alert("Selecione o Paciente!");
-        res = await window.electronAPI.cadastrarAgendamento(dados);
+        res = await window.api.cadastrarAgendamento(dados);
     }
     
     if (res.success) {
-        alert(id ? 'Atualizado!' : 'Agendado!');
+        alert(id ? 'Atualizado com sucesso!' : 'Agendamento criado com sucesso!');
         limparFormulario();
         carregarTabela();
     } else {
-        alert('Erro: ' + res.erro);
+        alert('Erro: ' + (res.erro || 'Desconhecido'));
     }
 });
 
 // --- FUNÇÕES AUXILIARES ---
 async function preencherEdicao(id) {
-    const agendamento = await window.electronAPI.buscarAgendamentoPorId(id);
+    // CORREÇÃO: window.api
+    const agendamento = await window.api.buscarAgendamentoPorId(id);
     if(!agendamento) return;
 
     inputId.value = agendamento.id_agendamento;
@@ -151,15 +171,17 @@ async function preencherEdicao(id) {
         const offset = dataObj.getTimezoneOffset() * 60000;
         const localDate = new Date(dataObj.getTime() - offset);
         inputDia.value = localDate.toISOString().split('T')[0];
-        selectHora.value = String(localDate.getHours()).padStart(2, '0') + ":00";
+        // Adiciona :00 se a hora vier simples
+        const horaSimples = String(localDate.getHours()).padStart(2, '0');
+        selectHora.value = `${horaSimples}:00`;
     }
 
-    // --- BLOQUEIOS VISUAIS (ATUALIZADO) ---
+    // Bloqueios visuais
     selectPaciente.disabled = true;
-    selectProfissional.disabled = true; // Bloqueia a troca de médico na edição
+    selectProfissional.disabled = true;
     
     avisoPaciente.style.display = "block";
-    avisoPaciente.innerText = "Modo Edição: Não é permitido alterar Paciente ou Profissional."; // Mensagem mais clara
+    avisoPaciente.innerText = "Modo Edição: Paciente e Profissional bloqueados.";
     
     tituloForm.innerText = "Editar Agendamento";
     btnSalvar.innerText = "Salvar Alterações";
@@ -174,12 +196,11 @@ function limparFormulario() {
     inputDia.value = '';
     selectHora.value = '';
     
-    // --- LIBERA OS CAMPOS (ATUALIZADO) ---
     selectPaciente.disabled = false;
-    selectProfissional.disabled = false; // Libera o médico para novos cadastros
+    selectProfissional.disabled = false;
     
     avisoPaciente.style.display = "none";
-    avisoPaciente.innerText = ""; // Limpa o texto do aviso
+    avisoPaciente.innerText = "";
     
     tituloForm.innerText = "Novo Agendamento";
     btnSalvar.innerText = "Agendar";

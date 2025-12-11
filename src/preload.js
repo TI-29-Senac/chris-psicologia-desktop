@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
-contextBridge.exposeInMainWorld('electronAPI', {
+contextBridge.exposeInMainWorld('api', {
   cadastrarUsuario: (dados) => ipcRenderer.invoke('usuarios:cadastrar', dados),
   listarUsuarios: () => ipcRenderer.invoke('usuarios:listar'),
   buscarUsuarioPorId: (id) => ipcRenderer.invoke('usuarios:buscarPorId', id),
