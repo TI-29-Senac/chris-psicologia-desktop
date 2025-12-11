@@ -172,3 +172,64 @@
 .btn-primary { width: 100%; padding: 14px; background-color: #5D6D68; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 15px; }
 .btn-primary:hover { background-color: #4a5854; }
 .btn-primary:disabled { background-color: #ccc; cursor: not-allowed; }
+
+/* --- Grupo de Busca (Lado Direito) --- */
+.search-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    padding: 5px;
+    border-radius: 30px; /* Borda arredondada externa */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    border: 1px solid #ddd;
+}
+
+.search-select {
+    border: none;
+    background: transparent;
+    padding: 8px 10px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: #5D6D68;
+    font-weight: 600;
+    cursor: pointer;
+    border-right: 1px solid #eee; /* Divisória visual */
+    outline: none;
+}
+
+.search-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-input-container i {
+    color: #7C8F88;
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+#input-busca {
+    border: none;
+    outline: none;
+    padding: 8px;
+    font-size: 0.9rem;
+    width: 200px;
+    color: #444;
+}
+
+/* Responsividade simples */
+@media (max-width: 900px) {
+    .page-header-actions {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    .search-group {
+        width: 100%;
+    }
+    #input-busca {
+        width: 100%;
+    }
+}

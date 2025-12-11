@@ -10,12 +10,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Questrial&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
    
-    <!-- Estilos do Dashboard e Agendamento -->
     <link rel="stylesheet" href="../../../../src/Renderer/Views/Dashboard/dashboard.css">
     <link rel="stylesheet" href="../Agendamento/agendamento.css">
-    <link rel="stylesheet" href="usuarios.css"> <!-- Se tiver estilo específico para o modal aqui -->
+    <link rel="stylesheet" href="usuarios.css"> 
    
     <style>
+        /* Pequenos ajustes locais caso necessário */
         .filter-btn {
             background-color: transparent;
             border: 2px solid var(--color-dark-green);
@@ -30,100 +30,85 @@
             background-color: var(--color-dark-green);
             color: white;
         }
-       
-        /* Estilos do Modal (Caso não estejam no usuarios.css) */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); display: none;
-            justify-content: center; align-items: center; z-index: 1000;
-        }
-        .modal-overlay.active { display: flex; }
-        .modal-content {
-            background: white; padding: 30px; border-radius: 12px;
-            width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto;
-        }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; }
-       
-        .tipo-selector { display: flex; gap: 10px; margin-bottom: 20px; background: #f0f0f0; padding: 5px; border-radius: 8px; }
-        .tipo-btn { flex: 1; padding: 10px; border: none; background: transparent; cursor: pointer; border-radius: 6px; font-weight: 600; }
-        .tipo-btn.active { background: var(--color-dark-green); color: white; }
     </style>
 </head>
 <body>
  
     <div class="app-layout">
-        <!-- SIDEBAR -->
         <aside class="sidebar">
             <div class="brand">
                 <div class="logo-symbol">Ψ</div>
                 <div class="logo-text"><h1>CHRIS</h1><span>PSICOLOGIA</span></div>
             </div>
             <nav class="sidebar-nav">
-                <a href="../../../../index.html" class="menu-item"><i class="fa-solid fa-chart-pie"></i><span>Visão Geral</span></a>
+                <a href="../Dashboard/dashboard.html" class="menu-item"><i class="fa-solid fa-chart-pie"></i><span>Visão Geral</span></a>
                 <a href="#" class="menu-item active"><i class="fa-solid fa-users"></i><span>Usuários</span></a>
                 <a href="../Agendamento/agendamento.html" class="menu-item"><i class="fa-solid fa-calendar-days"></i><span>Agendamentos</span></a>
                 <a href="../Pagamento/pagamento.html" class="menu-item"><i class="fa-solid fa-hand-holding-dollar"></i><span>Pagamentos</span></a>
             </nav>
-            <div class="sidebar-footer"><a href="#" class="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i> Sair</a></div>
+            <div class="sidebar-footer"><a href="#" id="btn-logout" class="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i> Sair</a></div>
         </aside>
  
-        <!-- CONTEÚDO PRINCIPAL -->
         <main class="main-content">
             <header class="top-bar">
                 <div class="page-title">
                     <h2>Gestão de Usuários</h2>
                     <p>Administre pacientes e profissionais</p>
                 </div>
-                <div class="user-profile"><span>Admin</span><div class="avatar"><i class="fa-regular fa-circle-user"></i></div></div>
+                <div class="user-profile">
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; margin-right: 12px;">
+                        <span class="user-name" style="font-weight: 700; color: #5D6D68; line-height: 1.2;">Carregando...</span>
+                        <span class="user-type" style="font-size: 0.85rem; color: #7A8F89; font-weight: 500;">---</span>
+                    </div>
+                    <div class="avatar"><i class="fa-regular fa-circle-user"></i></div>
+                </div>
             </header>
  
-            <!-- BARRA DE FERRAMENTAS -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
                
-                <!-- LADO ESQUERDO: Botões de Ação e Filtro -->
                 <div style="display: flex; gap: 15px; align-items: center;">
-                    <!-- Botão abre o Modal -->
-                    <button id="btn-novo-usuario" class="btn btn-primary" style="text-decoration: none; text-align: center; max-width: 200px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <button id="btn-novo-usuario" class="btn-novo">
                         <i class="fa-solid fa-plus"></i> Novo Cadastro
                     </button>
  
                     <div style="width: 2px; height: 30px; background: #ddd; margin: 0 5px;"></div>
  
-                    <!-- Botões de Filtro (IDs importantes para o JS) -->
-                    <button class="filter-btn active" onclick="window.filtrarLista('cliente')" id="filter-cliente">
+                    <button class="filter-btn active" id="filter-cliente">
                         <i class="fa-solid fa-users"></i> Pacientes
                     </button>
-                    <button class="filter-btn" onclick="window.filtrarLista('profissional')" id="filter-profissional">
+                    <button class="filter-btn" id="filter-profissional">
                         <i class="fa-solid fa-user-doctor"></i> Profissionais
                     </button>
                 </div>
  
-                <!-- LADO DIREITO: Campo de Busca -->
-                <div style="position: relative;">
-                    <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #7C8F88;"></i>
-                    <input type="text" id="input-busca" placeholder="Buscar por nome ou CPF..."
-                           style="padding: 12px 15px 12px 40px; border-radius: 20px; border: 1px solid #ccc; width: 280px; outline: none; font-size: 0.9rem;">
+                <div class="search-group">
+                    <select id="select-filtro-tipo" class="search-select">
+                        <option value="nome">Nome</option>
+                        <option value="cpf">CPF</option>
+                        <option value="email">E-mail</option>
+                    </select>
+
+                    <div class="search-input-container">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="input-busca" placeholder="Buscar...">
+                    </div>
                 </div>
  
             </div>
  
-            <!-- Tabela Dinâmica -->
-            <div class="card">
+            <div class="card table-card">
                 <h3 id="titulo-lista" style="color: #5D6D68; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px;">
                     Lista de Pacientes Cadastrados
                 </h3>
                
-                <div class="table-container">
+                <div class="table-container table-responsive">
                     <table class="table">
                         <thead>
                             <tr id="table-header">
-                                <!-- O cabeçalho é preenchido via Javascript -->
-                            </tr>
+                                </tr>
                         </thead>
                         <tbody id="lista-usuarios">
-                            <!-- As linhas são preenchidas via Javascript -->
-                        </tbody>
+                            </tbody>
                     </table>
                 </div>
             </div>
@@ -131,7 +116,6 @@
         </main>
     </div>
  
-    <!-- MODAL DE CADASTRO -->
     <div id="modal-cadastro" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -150,7 +134,6 @@
                     <input type="text" id="cad-nome" class="form-control" placeholder="Ex: João da Silva">
                 </div>
  
-                <!-- Campo CPF -->
                 <div class="form-group">
                     <label>CPF</label>
                     <input type="text" id="cad-cpf" class="form-control" placeholder="000.000.000-00" maxlength="14">
@@ -181,12 +164,32 @@
                     </div>
                 </div>
  
-                <button id="btn-salvar-usuario" class="btn btn-primary" style="width: 100%; margin-top: 20px;">Salvar Cadastro</button>
+                <button id="btn-salvar-usuario" class="btn-primary">Salvar Cadastro</button>
             </div>
         </div>
     </div>
+
+    <script src="../../Services/Auth.js"></script>
+    <script>
+        const PATH_TO_ROOT = '../../../../';
+        const user = window.Auth.check(PATH_TO_ROOT);
+        // Atualiza UI do Header manualmente
+        if(user) {
+            const nomeEl = document.querySelector('.user-name');
+            const tipoEl = document.querySelector('.user-type');
+            if(nomeEl) nomeEl.textContent = user.nome || user.nome_usuario;
+            if(tipoEl) {
+                const tipo = user.tipo || user.tipo_usuario;
+                tipoEl.textContent = tipo ? tipo.charAt(0).toUpperCase() + tipo.slice(1) : 'Usuário';
+            }
+            
+            document.getElementById('btn-logout').addEventListener('click', (e) => {
+                e.preventDefault();
+                window.Auth.logout(PATH_TO_ROOT);
+            });
+        }
+    </script>
  
-    <!-- Importa Global (Alertas) e Lógica -->
     <script type="module" src="usuarios.js"></script>
 </body>
 </html>
