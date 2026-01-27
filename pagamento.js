@@ -1,3 +1,5 @@
+import "dotenv/config";
+
 document.addEventListener('DOMContentLoaded', () => {
   // Elementos do Modal
   const menuTrigger = document.getElementById('menu-trigger');
