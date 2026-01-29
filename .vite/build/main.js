@@ -484,10 +484,10 @@ class FetchAPI {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${this.chaveAPI}`
+          "Authorization": this.chaveAPI
         }
       });
-      return await response.json();
+      return await this._tratarResposta(response);
     } catch (error) {
       console.error(`Erro GET em ${endpoint}:`, error);
       return { success: false, erro: "Erro de conexão com a API Local." };
@@ -495,18 +495,36 @@ class FetchAPI {
   }
   async post(endpoint, data) {
     try {
+      console.log(`Enviando POST para ${endpoint}:`, data);
       const response = await fetch(`${this.baseURL}${endpoint}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${this.chaveAPI}`
+          "Authorization": this.chaveAPI
+          // REMOVIDO O 'Bearer '
         },
         body: JSON.stringify(data)
       });
-      return await response.json();
+      return await this._tratarResposta(response);
     } catch (error) {
       console.error(`Erro POST em ${endpoint}:`, error);
-      return { success: false, erro: "Erro de conexão com a API Local." };
+      return { success: false, erro: "Servidor indisponível ou erro de rede." };
+    }
+  }
+  /**
+   * Método auxiliar para validar a resposta do PHP
+   */
+  async _tratarResposta(response) {
+    const textoOriginal = await response.text();
+    try {
+      const json = JSON.parse(textoOriginal);
+      return json;
+    } catch (e) {
+      console.error("A API não retornou um JSON válido. Resposta bruta:", textoOriginal);
+      return {
+        success: false,
+        erro: "O servidor retornou um formato inválido. Verifique o console do Terminal."
+      };
     }
   }
 }
@@ -537,45 +555,96 @@ class UsuarioModel {
   }
   async cadastrar(dados) {
     try {
-      return await this.api.post("usuarios", dados);
+      return await this.api.post("usuarios/salvar", dados);
     } catch (error) {
       console.error("Erro na Model Usuario (cadastrar):", error);
       return { success: false, erro: error.message };
     }
   }
-  // Método excluir se existir na API
+  async editar(dados) {
+    try {
+      return await this.api.post("usuarios/salvar", dados);
+    } catch (error) {
+      console.error("Erro na Model Usuario (editar):", error);
+      return { success: false, erro: error.message };
+    }
+  }
   async excluir(id) {
-    return { success: false, erro: "Exclusão via API não implementada ainda." };
+    try {
+      return await this.api.post(`usuarios/excluir/${id}`);
+    } catch (error) {
+      console.error("Erro na Model Usuario (excluir):", error);
+      return { success: false, erro: error.message };
+    }
   }
 }
 class UsuarioController {
   constructor() {
     this.usuarioModel = new UsuarioModel();
   }
+  /**
+   * Inicializa os ouvintes do IPC.
+   * Mapeia as chamadas do frontend (preload) para os métodos do backend (controller).
+   */
   init() {
-    require$$3$1.ipcMain.handle("usuarios:cadastrar", async (event, dados) => this.cadastrar(dados));
-    require$$3$1.ipcMain.handle("usuarios:listar", async () => this.listar());
-    require$$3$1.ipcMain.handle("usuarios:buscarPorId", async (event, id) => this.buscarPorId(id));
-    require$$3$1.ipcMain.handle("usuarios:excluir", async (event, id) => this.excluir(id));
+    require$$3$1.ipcMain.removeHandler("usuarios:cadastrar");
+    require$$3$1.ipcMain.removeHandler("usuarios:listar");
+    require$$3$1.ipcMain.removeHandler("usuarios:buscarPorId");
+    require$$3$1.ipcMain.removeHandler("usuarios:editar");
+    require$$3$1.ipcMain.removeHandler("usuarios:excluir");
+    require$$3$1.ipcMain.handle("usuarios:cadastrar", async (event, dados) => await this.cadastrar(dados));
+    require$$3$1.ipcMain.handle("usuarios:listar", async () => await this.listar());
+    require$$3$1.ipcMain.handle("usuarios:buscarPorId", async (event, id) => await this.buscarPorId(id));
+    require$$3$1.ipcMain.handle("usuarios:editar", async (event, dados) => await this.editar(dados));
+    require$$3$1.ipcMain.handle("usuarios:excluir", async (event, id) => await this.excluir(id));
   }
   async listar() {
-    return await this.usuarioModel.listar();
+    try {
+      return await this.usuarioModel.listar();
+    } catch (error) {
+      console.error("Erro no Controller (listar):", error);
+      return [];
+    }
   }
   async buscarPorId(id) {
-    return await this.usuarioModel.buscarPorId(id);
+    try {
+      return await this.usuarioModel.buscarPorId(id);
+    } catch (error) {
+      console.error("Erro no Controller (buscarPorId):", error);
+      return null;
+    }
   }
   async cadastrar(dados) {
+    console.log(dados);
     try {
-      if (!dados.nome || !dados.email || !dados.senha) {
-        return { success: false, erro: "Preencha os campos obrigatórios." };
+      if (!dados.nome_usuario || !dados.email_usuario || !dados.senha_usuario) {
+        return { success: false, erro: "Campos obrigatórios faltando (nome_usuario, email_usuario ou senha_usuario)." };
       }
       return await this.usuarioModel.cadastrar(dados);
     } catch (erro) {
+      console.error("Erro no Controller Desktop:", erro);
       return { success: false, erro: erro.message };
     }
   }
+  async editar(dados) {
+    try {
+      if (!dados || !dados.id) {
+        return { success: false, erro: "ID do usuário é necessário para edição." };
+      }
+      return await this.usuarioModel.editar(dados);
+    } catch (error) {
+      console.error("Erro no Controller (editar):", error);
+      return { success: false, erro: error.message };
+    }
+  }
   async excluir(id) {
-    return await this.usuarioModel.excluir(id);
+    try {
+      if (!id) return { success: false, erro: "ID necessário para exclusão." };
+      return await this.usuarioModel.excluir(id);
+    } catch (error) {
+      console.error("Erro no Controller (excluir):", error);
+      return { success: false, erro: error.message };
+    }
   }
 }
 class AgendamentoModel {
@@ -747,14 +816,16 @@ class AuthController {
 if (started) {
   require$$3$1.app.quit();
 }
+const controllers = {};
 const createWindow = () => {
   const mainWindow = new require$$3$1.BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
       preload: path$1.join(__dirname, "preload.js"),
-      nodeIntegration: true,
-      contextIsolation: false
+      // Configurações recomendadas para segurança
+      contextIsolation: true,
+      nodeIntegration: false
     }
   });
   {
@@ -762,10 +833,15 @@ const createWindow = () => {
   }
 };
 require$$3$1.app.whenReady().then(() => {
-  new AuthController().init();
-  new UsuarioController().init();
-  new AgendamentoController().init();
-  new PagamentoController().init();
+  controllers.auth = new AuthController();
+  controllers.usuario = new UsuarioController();
+  controllers.agendamento = new AgendamentoController();
+  controllers.pagamento = new PagamentoController();
+  Object.values(controllers).forEach((controller) => {
+    if (typeof controller.init === "function") {
+      controller.init();
+    }
+  });
   createWindow();
   require$$3$1.app.on("activate", () => {
     if (require$$3$1.BrowserWindow.getAllWindows().length === 0) createWindow();

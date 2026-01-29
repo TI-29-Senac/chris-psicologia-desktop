@@ -16,8 +16,7 @@ class UsuarioModel {
                 return [];
             }
             
-            // Se a API retornar o array direto ou dentro de 'data', ajuste aqui
-            // Assumindo que retorna um array ou { data: [...] }
+            // Retorna o array de dados para o Controller
             return Array.isArray(resultado) ? resultado : (resultado.data || []);
         } catch (error) {
             console.error("Erro na Model Usuario (listar):", error);
@@ -36,20 +35,33 @@ class UsuarioModel {
 
     async cadastrar(dados) {
         try {
-            // POST /usuarios na API local
-            return await this.api.post('usuarios', dados);
+            // Rota corrigida conforme o log do terminal: 'usuarios/salvar'
+            return await this.api.post('usuarios/salvar', dados); 
         } catch (error) {
             console.error("Erro na Model Usuario (cadastrar):", error);
             return { success: false, erro: error.message };
         }
     }
+
+    async editar(dados) {
+        try {
+            // Adicionado para suportar a função editarUsuario do seu preload.js
+            // Geralmente utiliza a rota de salvar ou uma específica de update
+            return await this.api.post('usuarios/salvar', dados); 
+        } catch (error) {
+            console.error("Erro na Model Usuario (editar):", error);
+            return { success: false, erro: error.message };
+        }
+    }
     
-    // Método excluir se existir na API
     async excluir(id) {
-        // Implementar se sua API tiver DELETE /usuarios/:id ou POST /usuarios/delete
-        // Exemplo:
-        // return await this.api.post(`usuarios/delete/${id}`);
-        return { success: false, erro: "Exclusão via API não implementada ainda." };
+        try {
+            // Implementação padrão de exclusão via POST ou DELETE
+            return await this.api.post(`usuarios/excluir/${id}`);
+        } catch (error) {
+            console.error("Erro na Model Usuario (excluir):", error);
+            return { success: false, erro: error.message };
+        }
     }
 }
 

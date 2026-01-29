@@ -1,7 +1,6 @@
 import { app, BrowserWindow } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
-// import { initDatabase } from './Main/Database/db.js'; // Opcional: Banco local
 
 // Controladores
 import UsuarioController from './Main/Controllers/UsuarioController.js';
@@ -9,10 +8,10 @@ import AgendamentoController from './Main/Controllers/AgendamentoController.js';
 import PagamentoController from './Main/Controllers/PagamentoController.js';
 import AuthController from './Main/Controllers/AuthController.js';
 
-// Inicializa Banco local (Se for usar apenas API, pode manter comentado ou remover)
-// initDatabase();
-
 if (started) { app.quit(); }
+
+// Objeto para manter as instâncias vivas na memória
+const controllers = {};
 
 const createWindow = () => {
   const mainWindow = new BrowserWindow({
@@ -20,8 +19,9 @@ const createWindow = () => {
     height: 800,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: true,
-      contextIsolation: false
+      // Configurações recomendadas para segurança
+      contextIsolation: true, 
+      nodeIntegration: false 
     },
   });
 
@@ -33,11 +33,18 @@ const createWindow = () => {
 };
 
 app.whenReady().then(() => {
-  // Inicializa todos os controladores (MVC com API)
-  new AuthController().init();
-  new UsuarioController().init();
-  new AgendamentoController().init();
-  new PagamentoController().init(); // Agora instanciamos como classe para manter o padrão
+  // Inicializa e armazena os controladores
+  controllers.auth = new AuthController();
+  controllers.usuario = new UsuarioController();
+  controllers.agendamento = new AgendamentoController();
+  controllers.pagamento = new PagamentoController();
+
+  // Ativa os listeners de cada um
+  Object.values(controllers).forEach(controller => {
+    if (typeof controller.init === 'function') {
+      controller.init();
+    }
+  });
 
   createWindow();
 

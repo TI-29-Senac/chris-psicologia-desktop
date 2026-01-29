@@ -1,6 +1,7 @@
-import { ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer } from 'electron';
 
-window.electronAPI = {
+// Usamos contextBridge para expor a API de forma segura para o Renderer
+contextBridge.exposeInMainWorld('electronAPI', {
   // Autenticação
   login: (credenciais) => ipcRenderer.invoke('auth:login', credenciais),
 
@@ -27,4 +28,4 @@ window.electronAPI = {
   buscarAgendamentoPorId: (id) => ipcRenderer.invoke('agendamentos:buscarPorId', id),
   editarAgendamento: (dados) => ipcRenderer.invoke('agendamentos:editar', dados),
   cancelarAgendamento: (id) => ipcRenderer.invoke('agendamentos:cancelar', id),
-};
+});

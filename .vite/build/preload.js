@@ -1,6 +1,6 @@
 "use strict";
 const electron = require("electron");
-window.electronAPI = {
+electron.contextBridge.exposeInMainWorld("electronAPI", {
   // Autenticação
   login: (credenciais) => electron.ipcRenderer.invoke("auth:login", credenciais),
   // Usuários
@@ -23,4 +23,4 @@ window.electronAPI = {
   buscarAgendamentoPorId: (id) => electron.ipcRenderer.invoke("agendamentos:buscarPorId", id),
   editarAgendamento: (dados) => electron.ipcRenderer.invoke("agendamentos:editar", dados),
   cancelarAgendamento: (id) => electron.ipcRenderer.invoke("agendamentos:cancelar", id)
-};
+});

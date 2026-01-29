@@ -232,7 +232,7 @@ async function salvarUsuario() {
  
     if (!nome || !email || !senha) return alert("Preencha os campos obrigatórios.");
  
-    const dados = { nome, email, cpf, senha, tipo: tipoCadastroAtual };
+    //const dados = { nome, email, cpf, senha, tipo: tipoCadastroAtual };
     
     if (tipoCadastroAtual === 'profissional') {
         const especialidade = document.getElementById('cad-especialidade').value;
@@ -246,7 +246,14 @@ async function salvarUsuario() {
     btnSalvar.innerText = "Salvando...";
     btnSalvar.disabled = true;
  
-    try {
+       const dados = {
+            nome_usuario: nome,
+            email_usuario: email,
+            senha_usuario: senha,
+            tipo_usuario: tipoCadastroAtual, // 'cliente' ou 'profissional'
+            cpf: cpf
+        };
+        try {
         const res = await window.electronAPI.cadastrarUsuario(dados);
         if (res.success) {
             alert("Cadastro realizado!");
