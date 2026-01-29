@@ -7,11 +7,13 @@ import UsuarioController from './Main/Controllers/UsuarioController.js';
 import AgendamentoController from './Main/Controllers/AgendamentoController.js';
 import PagamentoController from './Main/Controllers/PagamentoController.js';
 import AuthController from './Main/Controllers/AuthController.js';
+import { initDatabase } from './Main/Database/db.js';
 
 if (started) { app.quit(); }
 
 // Objeto para manter as instâncias vivas na memória
 const controllers = {};
+initDatabase();
 
 const createWindow = () => {
   const mainWindow = new BrowserWindow({
