@@ -98,7 +98,9 @@
  
             <div class="card table-card">
                 <h3 id="titulo-lista" style="color: #5D6D68; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px;">
-                    Lista de Pacientes Cadastrados
+                    Lista de Pacientes Cadastrados <button id="btnSincronizar" class="btn-sync">
+    <i class="fas fa-sync"></i> Sincronizar com Nuvem
+</button>
                 </h3>
                
                 <div class="table-container table-responsive">
@@ -114,60 +116,65 @@
             </div>
  
         </main>
+        
     </div>
  
     <div id="modal-cadastro" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Novo Cadastro</h3>
-                <button id="btn-close-modal" class="close-btn">&times;</button>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modal-titulo">Gestão de Usuário</h3>
+            <button id="btn-close-modal" class="close-btn">&times;</button>
+        </div>
+
+        <div class="modal-body">
+            <div class="tipo-selector">
+    <button class="tipo-btn active" id="btn-tab-cliente" data-tipo="cliente">Paciente</button>
+    <button class="tipo-btn" id="btn-tab-profissional" data-tipo="profissional">Profissional</button>
+    <button class="tipo-btn" id="btn-tab-recepcionista" data-tipo="recepcionista">Recepcionista</button>
+    <button class="tipo-btn" id="btn-tab-admin" data-tipo="admin">Admin</button>
+</div>
+
+            <div class="form-group">
+                <label>Nome Completo</label>
+                <input type="text" id="cad-nome" class="form-control" placeholder="Ex: João da Silva">
             </div>
- 
-            <div class="modal-body">
-                <div class="tipo-selector">
-                    <button class="tipo-btn active" id="btn-tab-cliente" data-tipo="cliente">Usuário</button>
-                    <button class="tipo-btn" id="btn-tab-profissional" data-tipo="profissional">Profissional</button>
-                </div>
- 
+
+            <div class="form-group">
+                <label>CPF</label>
+                <input type="text" id="cad-cpf" class="form-control" placeholder="000.000.000-00">
+            </div>
+
+            <div class="form-group">
+                <label>E-mail</label>
+                <input type="email" id="cad-email" class="form-control" placeholder="joao@email.com">
+            </div>
+
+            <div class="form-group">
+                <label>Senha</label>
+                <input type="password" id="cad-senha" class="form-control" placeholder="******">
+            </div>
+
+            <div id="area-profissional" style="display: none; border-top: 1px dashed #ccc; padding-top: 15px; margin-top: 15px;">
                 <div class="form-group">
-                    <label>Nome Completo</label>
-                    <input type="text" id="cad-nome" class="form-control" placeholder="Ex: João da Silva">
+                    <label>Especialidade</label>
+                    <input type="text" id="cad-especialidade" class="form-control" placeholder="Ex: Psicologia Clínica">
                 </div>
- 
-                <div class="form-group">
-                    <label>CPF</label>
-                    <input type="text" id="cad-cpf" class="form-control" placeholder="000.000.000-00" maxlength="14">
-                </div>
- 
-                <div class="form-group">
-                    <label>E-mail</label>
-                    <input type="email" id="cad-email" class="form-control" placeholder="joao@email.com">
-                </div>
- 
-                <div class="form-group">
-                    <label>Senha</label>
-                    <input type="password" id="cad-senha" class="form-control" placeholder="******">
-                </div>
- 
-                <div id="area-profissional" style="display: none; border-top: 1px dashed #ccc; padding-top: 15px; margin-top: 15px;">
-                    <div class="form-group">
-                        <label>Especialidade</label>
-                        <input type="text" id="cad-especialidade" class="form-control" placeholder="Ex: Psicologia Clínica">
-                    </div>
-                    <div class="form-group">
-                        <label>Valor da Consulta (R$)</label>
+                <div class="form-row" style="display: flex; gap: 10px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label>Valor Consulta (R$)</label>
                         <input type="number" id="cad-valor" class="form-control" placeholder="0.00">
                     </div>
-                    <div class="form-group">
-                        <label>Valor do Sinal (20%)</label>
-                        <input type="text" id="cad-sinal" class="form-control" readonly placeholder="0.00" style="background-color: #f9f9f9;">
+                    <div class="form-group" style="flex: 1;">
+                        <label>Sinal (20%)</label>
+                        <input type="text" id="cad-sinal" class="form-control" readonly style="background-color: #f9f9f9;">
                     </div>
                 </div>
- 
-                <button id="btn-salvar-usuario" class="btn-primary">Salvar Cadastro</button>
             </div>
+
+            <button id="btn-salvar-usuario" class="btn-primary">Salvar Cadastro</button>
         </div>
     </div>
+</div>
 
     <script src="../../Services/Auth.js"></script>
     <script>

@@ -25,6 +25,9 @@ class UsuarioController {
         ipcMain.handle('usuarios:buscarPorId', async (event, id) => await this.buscarPorId(id));
         ipcMain.handle('usuarios:editar', async (event, dados) => await this.editar(dados));
         ipcMain.handle('usuarios:excluir', async (event, id) => await this.excluir(id));
+        ipcMain.handle('usuarios:sincronizar', async () => {
+    return await this.usuarioModel.sincronizar();
+});
     }
 
     async listar() {
@@ -62,26 +65,14 @@ class UsuarioController {
 }
 
     async editar(dados) {
-        try {
-            if (!dados || !dados.id) {
-                return { success: false, erro: "ID do usuário é necessário para edição." };
-            }
-            return await this.usuarioModel.editar(dados);
-        } catch (error) {
-            console.error("Erro no Controller (editar):", error);
-            return { success: false, erro: error.message };
-        }
-    }
+    if (!dados.id_usuario) return { success: false, erro: "ID ausente." };
+    return await this.usuarioModel.editar(dados);
+}
 
-    async excluir(id) {
-        try {
-            if (!id) return { success: false, erro: "ID necessário para exclusão." };
-            return await this.usuarioModel.excluir(id);
-        } catch (error) {
-            console.error("Erro no Controller (excluir):", error);
-            return { success: false, erro: error.message };
-        }
-    }
+async excluir(id) {
+    if (!id) return { success: false, erro: "ID ausente." };
+    return await this.usuarioModel.excluir(id);
+}
 }
 
 export default UsuarioController;

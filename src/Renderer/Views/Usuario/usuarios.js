@@ -1,23 +1,23 @@
 // src/Renderer/Views/Usuario/usuarios.js
- 
+
 // 1. Elementos Globais
 const listaEl = document.getElementById('lista-usuarios');
 const headerEl = document.getElementById('table-header');
 const tituloEl = document.getElementById('titulo-lista');
 const modal = document.getElementById('modal-cadastro');
- 
+
 // Elementos de Ação e Filtro
 const btnNovo = document.getElementById('btn-novo-usuario');
 const btnClose = document.getElementById('btn-close-modal');
 const btnSalvar = document.getElementById('btn-salvar-usuario');
- 
+
 const btnFilterCliente = document.getElementById('filter-cliente');
 const btnFilterProfissional = document.getElementById('filter-profissional');
- 
-// Elementos de Busca Avançada (Novos)
+
+// Elementos de Busca Avançada
 const inputBusca = document.getElementById('input-busca');
 const selectFiltroTipo = document.getElementById('select-filtro-tipo');
- 
+
 // Elementos do Modal
 const btnTabCliente = document.getElementById('btn-tab-cliente');
 const btnTabProfissional = document.getElementById('btn-tab-profissional');
@@ -25,49 +25,47 @@ const areaProfissional = document.getElementById('area-profissional');
 const inputValor = document.getElementById('cad-valor');
 const inputSinal = document.getElementById('cad-sinal');
 const inputCpf = document.getElementById('cad-cpf');
- 
+
 // Estado da Aplicação
 let todosUsuarios = [];
-let tipoCadastroAtual = 'cliente'; // Para o Modal (Novo Cadastro)
-let tabAtiva = 'cliente';          // Aba selecionada (Paciente vs Profissional)
- 
+let tipoCadastroAtual = 'cliente'; 
+let tabAtiva = 'cliente';          
+
 async function init() {
     if (!window.electronAPI) {
         console.error("ERRO: window.electronAPI não encontrada.");
         return;
     }
- 
-    // Eventos de Busca em tempo real
+
     inputBusca.addEventListener('keyup', aplicarFiltros);
     selectFiltroTipo.addEventListener('change', aplicarFiltros);
     
-    // Eventos de troca de Aba (Filtro Categoria)
     btnFilterCliente.addEventListener('click', () => trocarAba('cliente'));
     btnFilterProfissional.addEventListener('click', () => trocarAba('profissional'));
- 
+
     configurarEventosModal();
+    document.getElementById('btn-tab-recepcionista').addEventListener('click', () => mudarAbaCadastro('recepcionista'));
+    document.getElementById('btn-tab-admin').addEventListener('click', () => mudarAbaCadastro('admin'));
     
-    // Carrega dados iniciais
     await buscarDados();
 }
- 
+
 // --- 1. BUSCA DE DADOS ---
 async function buscarDados() {
     try {
         listaEl.innerHTML = "<tr><td colspan='7' class='text-center'>Carregando...</td></tr>";
         todosUsuarios = await window.electronAPI.listarUsuarios();
-        aplicarFiltros(); // Renderiza com os dados carregados
+        aplicarFiltros(); 
     } catch (error) {
         console.error("Erro ao buscar usuários:", error);
         listaEl.innerHTML = "<tr><td colspan='7' class='text-center' style='color:red'>Erro ao conectar com servidor.</td></tr>";
     }
 }
- 
+
 // --- 2. LÓGICA DE FILTRAGEM E TABELAS ---
 function trocarAba(tipo) {
     tabAtiva = tipo;
     
-    // Atualiza botões
     if(tipo === 'cliente') {
         btnFilterCliente.classList.add('active');
         btnFilterProfissional.classList.remove('active');
@@ -77,81 +75,78 @@ function trocarAba(tipo) {
         btnFilterCliente.classList.remove('active');
         tituloEl.innerText = "Lista de Profissionais";
     }
- 
-    // Limpa busca ao trocar de aba (opcional)
+
     inputBusca.value = ''; 
     aplicarFiltros();
 }
- 
+
 function aplicarFiltros() {
     const termo = inputBusca.value.toLowerCase();
-    const colunaFiltro = selectFiltroTipo.value; // 'nome', 'cpf' ou 'email'
- 
-    // Passo 1: Filtrar pela Aba (Cliente ou Profissional)
+    const colunaFiltro = selectFiltroTipo.value;
+
     let filtrados = todosUsuarios.filter(u => u.tipo_usuario === tabAtiva);
- 
-    // Passo 2: Filtrar pelo Termo de Busca (se houver)
+
     if (termo) {
         filtrados = filtrados.filter(u => {
             let valorParaChecar = '';
-            
-            // Mapeia a seleção do dropdown para a propriedade do objeto
             switch(colunaFiltro) {
                 case 'nome':  valorParaChecar = u.nome_usuario; break;
                 case 'cpf':   valorParaChecar = u.cpf; break;
                 case 'email': valorParaChecar = u.email_usuario; break;
                 default:      valorParaChecar = u.nome_usuario;
             }
- 
             return valorParaChecar && valorParaChecar.toLowerCase().includes(termo);
         });
     }
- 
+
     renderizarTabela(filtrados);
 }
- 
+
 function renderizarTabela(dados) {
-    // Define o Cabeçalho (com a coluna TIPO inclusa)
     let htmlHeader = `
-        <th width="50">ID</th>
+        <th width="80">ID</th>
         <th>Nome</th>
         <th>CPF</th>
         <th>Email</th>
         <th>Tipo</th>
     `;
- 
-    // Se for profissional, adiciona Especialidade
+
     if (tabAtiva === 'profissional') {
         htmlHeader += `<th>Especialidade</th>`;
     }
     
     htmlHeader += `<th class="text-center">Ações</th>`;
     headerEl.innerHTML = htmlHeader;
- 
-    // Define o Corpo
+
     if (dados.length === 0) {
-        // Ajusta colspan baseado no número de colunas
         const colSpan = tabAtiva === 'profissional' ? 7 : 6;
         listaEl.innerHTML = `<tr><td colspan='${colSpan}' class='text-center' style="padding:20px;">Nenhum registro encontrado.</td></tr>`;
         return;
     }
- 
+
     listaEl.innerHTML = dados.map(u => {
-        // Estiliza o badge de tipo
         const tipoClass = `badge-${u.tipo_usuario ? u.tipo_usuario.toLowerCase() : 'cliente'}`;
         const tipoLabel = u.tipo_usuario ? u.tipo_usuario.charAt(0).toUpperCase() + u.tipo_usuario.slice(1) : 'Cliente';
- 
+        
+        // ÍCONE DE SINCRONIZAÇÃO
+        const isPendente = u.sincronizado === 0;
+        const statusIcon = isPendente 
+            ? '<i class="fa-solid fa-cloud-arrow-up" title="Pendente de Sincronização" style="color: #f39c12; margin-right: 5px;"></i>' 
+            : '<i class="fa-solid fa-cloud" title="Sincronizado" style="color: #27ae60; margin-right: 5px;"></i>';
+
+        // EXIBIÇÃO DO ID (Encurta se for UUID)
+        const displayId = u.id_usuario.toString().length > 10 
+            ? u.id_usuario.substring(0, 8) + '...' 
+            : u.id_usuario;
+
         return `
         <tr>
-            <td class="col-id">#${u.id_usuario}</td>
+            <td class="col-id">${statusIcon}#${displayId}</td>
             <td class="col-nome"><strong>${u.nome_usuario}</strong></td>
             <td>${u.cpf || '---'}</td>
             <td>${u.email_usuario}</td>
-            
             <td><span class="badge-tipo ${tipoClass}">${tipoLabel}</span></td>
-            
             ${tabAtiva === 'profissional' ? `<td>${u.especialidade || '-'}</td>` : ''}
-            
             <td class="col-actions text-center">
                 <button class="action-btn btn-edit" data-id="${u.id_usuario}" title="Editar">
                     <i class="fa-solid fa-pen"></i>
@@ -162,22 +157,24 @@ function renderizarTabela(dados) {
             </td>
         </tr>
     `}).join('');
- 
+
     adicionarEventosTabela();
 }
- 
-// --- 3. MODAL E CADASTRO (Lógica Mantida) ---
+
+// --- 3. MODAL E CADASTRO ---
 function configurarEventosModal() {
-    // Abrir/Fechar Modal
-    btnNovo.addEventListener('click', () => { limparFormulario(); modal.classList.add('active'); });
+    btnNovo.addEventListener('click', () => { 
+        limparFormulario(); 
+        delete btnSalvar.dataset.id; // Garante que é um novo cadastro
+        modal.classList.add('active'); 
+    });
+    
     btnClose.addEventListener('click', () => modal.classList.remove('active'));
     modal.addEventListener('click', (e) => { if(e.target === modal) modal.classList.remove('active'); });
- 
-    // Abas Internas do Modal
+
     btnTabCliente.addEventListener('click', () => mudarAbaCadastro('cliente'));
     btnTabProfissional.addEventListener('click', () => mudarAbaCadastro('profissional'));
- 
-    // Máscara CPF
+
     if(inputCpf) {
         inputCpf.addEventListener('input', (e) => {
             let v = e.target.value.replace(/\D/g, "");
@@ -188,31 +185,31 @@ function configurarEventosModal() {
             e.target.value = v;
         });
     }
- 
-    // Cálculo do Sinal
+
     if(inputValor) {
         inputValor.addEventListener('input', () => {
             const v = parseFloat(inputValor.value) || 0;
             inputSinal.value = (v * 0.20).toFixed(2);
         });
     }
- 
+
     btnSalvar.addEventListener('click', salvarUsuario);
 }
- 
+
 function mudarAbaCadastro(tipo) {
-    tipoCadastroAtual = tipo;
-    if (tipo === 'cliente') {
-        btnTabCliente.classList.add('active');
-        btnTabProfissional.classList.remove('active');
-        areaProfissional.style.display = 'none';
-    } else {
-        btnTabProfissional.classList.add('active');
-        btnTabCliente.classList.remove('active');
-        areaProfissional.style.display = 'block';
-    }
+    tipoCadastroAtual = tipo; // Atualiza o estado global com o tipo escolhido
+
+    // Remove a classe 'active' de todos os botões de tipo
+    document.querySelectorAll('.tipo-btn').forEach(btn => btn.classList.remove('active'));
+    
+    // Adiciona 'active' ao botão clicado
+    const btnAtivo = document.querySelector(`.tipo-btn[data-tipo="${tipo}"]`);
+    if(btnAtivo) btnAtivo.classList.add('active');
+
+    // Mostra a área de profissional apenas se o tipo for profissional
+    areaProfissional.style.display = (tipo === 'profissional') ? 'block' : 'none';
 }
- 
+
 function limparFormulario() {
     document.getElementById('cad-nome').value = '';
     document.getElementById('cad-email').value = '';
@@ -223,62 +220,136 @@ function limparFormulario() {
     if(inputSinal) inputSinal.value = '';
     mudarAbaCadastro('cliente');
 }
- 
+
 async function salvarUsuario() {
     const nome = document.getElementById('cad-nome').value;
     const email = document.getElementById('cad-email').value;
     const cpf = document.getElementById('cad-cpf').value;
     const senha = document.getElementById('cad-senha').value;
- 
-    if (!nome || !email || !senha) return alert("Preencha os campos obrigatórios.");
- 
-    //const dados = { nome, email, cpf, senha, tipo: tipoCadastroAtual };
-    
-    if (tipoCadastroAtual === 'profissional') {
-        const especialidade = document.getElementById('cad-especialidade').value;
-        const valor = inputValor.value;
-        if (!especialidade || !valor) return alert("Profissionais precisam de Especialidade e Valor.");
-        dados.especialidade = especialidade;
-        dados.valor = valor;
-    }
- 
-    const txtOriginal = btnSalvar.innerText;
-    btnSalvar.innerText = "Salvando...";
-    btnSalvar.disabled = true;
- 
-       const dados = {
-            nome_usuario: nome,
-            email_usuario: email,
-            senha_usuario: senha,
-            tipo_usuario: tipoCadastroAtual, // 'cliente' ou 'profissional'
-            cpf: cpf
-        };
-        try {
-        const res = await window.electronAPI.cadastrarUsuario(dados);
+    const idEdicao = btnSalvar.dataset.id; 
+
+    if (!nome || !email || (!idEdicao && !senha)) return alert("Preencha os campos obrigatórios.");
+
+    // O 'tipo_usuario' será definido pela aba ativa no modal (tipoCadastroAtual)
+    const dados = {
+        id_usuario: idEdicao,
+        nome_usuario: document.getElementById('cad-nome').value,
+        email_usuario: document.getElementById('cad-email').value,
+        cpf: document.getElementById('cad-cpf').value,
+        tipo_usuario: tipoCadastroAtual, // <--- ESTA É A CHAVE
+        senha_usuario: document.getElementById('cad-senha').value
+    };
+    if (idEdicao) {
+        const res = await window.electronAPI.editarUsuario(dados);
         if (res.success) {
-            alert("Cadastro realizado!");
+            alert("Tipo de utilizador atualizado!");
             modal.classList.remove('active');
+            buscarDados();
+        }
+    }
+
+    if (tipoCadastroAtual === 'profissional') {
+        dados.especialidade = document.getElementById('cad-especialidade').value;
+        dados.valor_consulta = inputValor.value;
+        dados.sinal_consulta = inputSinal.value;
+    }
+
+    const txtOriginal = btnSalvar.innerText;
+    btnSalvar.innerText = "Processando...";
+    btnSalvar.disabled = true;
+
+    try {
+        let res;
+        if (idEdicao) {
+            res = await window.electronAPI.editarUsuario(dados); // Envia o novo tipo para o SQLite/API
+        } else {
+            res = await window.electronAPI.cadastrarUsuario(dados);
+        }
+
+        if (res.success) {
+            alert(idEdicao ? "Usuário atualizado com sucesso!" : "Cadastro realizado!");
+            modal.classList.remove('active');
+            delete btnSalvar.dataset.id;
             buscarDados();
         } else {
             alert("Erro: " + (res.erro || "Falha desconhecida"));
         }
-    } catch (e) { console.error(e); alert("Erro interno."); } 
-    finally { btnSalvar.innerText = txtOriginal; btnSalvar.disabled = false; }
+    } catch (e) { 
+        console.error(e); 
+        alert("Erro interno."); 
+    } finally { 
+        btnSalvar.innerText = txtOriginal; 
+        btnSalvar.disabled = false; 
+    }
 }
- 
+
 function adicionarEventosTabela() {
+    // BOTÃO EXCLUIR
     document.querySelectorAll('.btn-delete').forEach(btn => {
         btn.addEventListener('click', async (e) => {
-            if(confirm("Tem certeza que deseja excluir?")) {
-                const id = e.target.closest('button').dataset.id;
+            const id = e.target.closest('button').dataset.id;
+            if(confirm("Tem certeza que deseja excluir o usuário #" + id + "?")) {
                 const res = await window.electronAPI.excluirUsuario(id);
                 if(res.success) buscarDados();
                 else alert("Erro ao excluir: " + res.erro);
             }
         });
     });
-    // Edição pode ser adicionada aqui posteriormente
+
+    // BOTÃO EDITAR
+    document.querySelectorAll('.btn-edit').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+        const id = e.target.closest('button').dataset.id;
+        const usuario = todosUsuarios.find(u => u.id_usuario == id);
+        
+        if (usuario) {
+            limparFormulario();
+            document.getElementById('cad-nome').value = usuario.nome_usuario;
+            document.getElementById('cad-email').value = usuario.email_usuario;
+            document.getElementById('cad-cpf').value = usuario.cpf || '';
+            
+            // Define a aba do modal com base no tipo atual do banco
+            mudarAbaCadastro(usuario.tipo_usuario || 'cliente'); 
+
+            if (usuario.tipo_usuario === 'profissional') {
+                document.getElementById('cad-especialidade').value = usuario.especialidade || '';
+                inputValor.value = usuario.valor_consulta || '';
+                inputSinal.value = usuario.sinal_consulta || '';
+            }
+
+            btnSalvar.dataset.id = id; 
+            modal.classList.add('active');
+        }
+    });
+});
 }
- 
-// Inicia
+
+const btnSincronizar = document.getElementById('btnSincronizar');
+
+if (btnSincronizar) {
+    btnSincronizar.addEventListener('click', async () => {
+        try {
+            btnSincronizar.disabled = true;
+            const originalText = btnSincronizar.innerHTML;
+            btnSincronizar.innerText = "Sincronizando...";
+
+            const resultado = await window.electronAPI.sincronizarUsuarios();
+
+            if (resultado.success) {
+                alert(resultado.message || "Sincronização concluída!");
+                await buscarDados(); 
+            } else {
+                alert("Erro ao sincronizar: " + (resultado.erro || "Falha na conexão"));
+            }
+
+            btnSincronizar.disabled = false;
+            btnSincronizar.innerHTML = originalText;
+        } catch (error) {
+            console.error("Erro no clique de sincronização:", error);
+            alert("Erro interno ao processar sincronização.");
+            btnSincronizar.disabled = false;
+        }
+    });
+}
+
 init();

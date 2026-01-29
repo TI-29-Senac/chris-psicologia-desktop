@@ -9,6 +9,7 @@ electron.contextBridge.exposeInMainWorld("electronAPI", {
   buscarUsuarioPorId: (id) => electron.ipcRenderer.invoke("usuarios:buscarPorId", id),
   editarUsuario: (dados) => electron.ipcRenderer.invoke("usuarios:editar", dados),
   excluirUsuario: (id) => electron.ipcRenderer.invoke("usuarios:excluir", id),
+  sincronizarUsuarios: () => electron.ipcRenderer.invoke("usuarios:sincronizar"),
   // LOGIN SESSÃO
   loginUsuario: (dados) => electron.ipcRenderer.invoke("usuarios:login", dados),
   getCurrentUser: () => electron.ipcRenderer.invoke("usuarios:getCurrentUser"),

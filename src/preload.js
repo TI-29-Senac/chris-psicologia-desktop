@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   buscarUsuarioPorId: (id) => ipcRenderer.invoke('usuarios:buscarPorId', id),
   editarUsuario: (dados) => ipcRenderer.invoke('usuarios:editar', dados),
   excluirUsuario: (id) => ipcRenderer.invoke('usuarios:excluir', id),
+  sincronizarUsuarios: () => ipcRenderer.invoke('usuarios:sincronizar'),
 
   // LOGIN SESSÃO
   loginUsuario: (dados) => ipcRenderer.invoke('usuarios:login', dados),
