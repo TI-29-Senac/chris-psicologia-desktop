@@ -7,12 +7,12 @@ const require$$0 = require("tty");
 const require$$1 = require("util");
 const require$$3 = require("fs");
 const require$$4$1 = require("net");
-const Database = require("better-sqlite3");
 const require$$2 = require("os");
 const crypto$2 = require("crypto");
 const events = require("events");
 const http_ = require("http");
 const https_ = require("https");
+const Database = require("better-sqlite3");
 function _interopNamespaceDefault(e) {
   const n = Object.create(null, { [Symbol.toStringTag]: { value: "Module" } });
   if (e) {
@@ -499,41 +499,6 @@ var check = function() {
 };
 var electronSquirrelStartup = check();
 const started = /* @__PURE__ */ getDefaultExportFromCjs(electronSquirrelStartup);
-const dbPath = require$$0$1.join(require$$3$1.app.getPath("userData"), "clinica.db");
-const db = new Database(dbPath, { verbose: console.log });
-function initDatabase() {
-  db.exec(`
-        CREATE TABLE IF NOT EXISTS usuario (
-            id_usuario INTEGER PRIMARY KEY AUTOINCREMENT,
-            nome_usuario TEXT NOT NULL,
-            cpf TEXT UNIQUE,
-            email TEXT UNIQUE NOT NULL,
-            senha TEXT NOT NULL,
-            tipo_usuario TEXT NOT NULL -- 'cliente' ou 'profissional'
-        );
-    `);
-  db.exec(`
-        CREATE TABLE IF NOT EXISTS profissional (
-            id_profissional INTEGER PRIMARY KEY AUTOINCREMENT,
-            id_usuario INTEGER NOT NULL,
-            especialidade TEXT,
-            valor_consulta REAL,
-            FOREIGN KEY(id_usuario) REFERENCES usuario(id_usuario) ON DELETE CASCADE
-        );
-    `);
-  db.exec(`
-        CREATE TABLE IF NOT EXISTS agendamento (
-            id_agendamento INTEGER PRIMARY KEY AUTOINCREMENT,
-            id_usuario INTEGER NOT NULL,
-            id_profissional INTEGER NOT NULL,
-            data_agendamento DATETIME NOT NULL,
-            status_consulta TEXT DEFAULT 'Agendado',
-            FOREIGN KEY(id_usuario) REFERENCES usuario(id_usuario),
-            FOREIGN KEY(id_profissional) REFERENCES profissional(id_profissional)
-        );
-    `);
-  console.log("Banco inicializado em:", dbPath);
-}
 var main = { exports: {} };
 const version$1 = "17.2.3";
 const require$$4 = {
@@ -863,49 +828,6 @@ main.exports.parse = DotenvModule.parse;
 main.exports.populate = DotenvModule.populate;
 main.exports = DotenvModule;
 var mainExports = main.exports;
-const options = {};
-if (process.env.DOTENV_CONFIG_ENCODING != null) {
-  options.encoding = process.env.DOTENV_CONFIG_ENCODING;
-}
-if (process.env.DOTENV_CONFIG_PATH != null) {
-  options.path = process.env.DOTENV_CONFIG_PATH;
-}
-if (process.env.DOTENV_CONFIG_QUIET != null) {
-  options.quiet = process.env.DOTENV_CONFIG_QUIET;
-}
-if (process.env.DOTENV_CONFIG_DEBUG != null) {
-  options.debug = process.env.DOTENV_CONFIG_DEBUG;
-}
-if (process.env.DOTENV_CONFIG_OVERRIDE != null) {
-  options.override = process.env.DOTENV_CONFIG_OVERRIDE;
-}
-if (process.env.DOTENV_CONFIG_DOTENV_KEY != null) {
-  options.DOTENV_KEY = process.env.DOTENV_CONFIG_DOTENV_KEY;
-}
-var envOptions = options;
-const re = /^dotenv_config_(encoding|path|quiet|debug|override|DOTENV_KEY)=(.+)$/;
-var cliOptions = function optionMatcher(args) {
-  const options2 = args.reduce(function(acc, cur) {
-    const matches = cur.match(re);
-    if (matches) {
-      acc[matches[1]] = matches[2];
-    }
-    return acc;
-  }, {});
-  if (!("quiet" in options2)) {
-    options2.quiet = "true";
-  }
-  return options2;
-};
-(function() {
-  mainExports.config(
-    Object.assign(
-      {},
-      envOptions,
-      cliOptions(process.argv)
-    )
-  );
-})();
 class CryptoProvider {
   /**
    * Computes a SHA-256 HMAC given a secret and a payload (encoded in UTF-8).
@@ -1913,7 +1835,14 @@ function requireFunctionBind() {
   functionBind = Function.prototype.bind || implementation2;
   return functionBind;
 }
-var functionCall = Function.prototype.call;
+var functionCall;
+var hasRequiredFunctionCall;
+function requireFunctionCall() {
+  if (hasRequiredFunctionCall) return functionCall;
+  hasRequiredFunctionCall = 1;
+  functionCall = Function.prototype.call;
+  return functionCall;
+}
 var functionApply;
 var hasRequiredFunctionApply;
 function requireFunctionApply() {
@@ -1925,12 +1854,12 @@ function requireFunctionApply() {
 var reflectApply = typeof Reflect !== "undefined" && Reflect && Reflect.apply;
 var bind$2 = requireFunctionBind();
 var $apply$1 = requireFunctionApply();
-var $call$2 = functionCall;
+var $call$2 = requireFunctionCall();
 var $reflectApply = reflectApply;
 var actualApply = $reflectApply || bind$2.call($call$2, $apply$1);
 var bind$1 = requireFunctionBind();
 var $TypeError$4 = type;
-var $call$1 = functionCall;
+var $call$1 = requireFunctionCall();
 var $actualApply = actualApply;
 var callBindApplyHelpers = function callBindBasic(args) {
   if (args.length < 1 || typeof args[0] !== "function") {
@@ -2045,7 +1974,7 @@ var getProto = requireGetProto();
 var $ObjectGPO = requireObject_getPrototypeOf();
 var $ReflectGPO = requireReflect_getPrototypeOf();
 var $apply = requireFunctionApply();
-var $call = functionCall;
+var $call = requireFunctionCall();
 var needsEval = {};
 var TypedArray = typeof Uint8Array === "undefined" || !getProto ? undefined$1 : getProto(Uint8Array);
 var INTRINSICS = {
@@ -7982,11 +7911,102 @@ function createStripe(platformFunctions, requestSender = defaultRequestSenderFac
   return Stripe2;
 }
 const Stripe = createStripe(new NodePlatformFunctions());
-const stripe = new Stripe(process.env.STRIPE_KEY);
+const dbPath = require$$0$1.join(require$$3$1.app.getPath("userData"), "clinica.db");
+const db = new Database(dbPath, { verbose: console.log });
+function initDatabase() {
+  db.exec(`
+        CREATE TABLE IF NOT EXISTS usuario (
+            id_usuario INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome_usuario TEXT NOT NULL,
+            cpf TEXT UNIQUE,
+            email TEXT UNIQUE NOT NULL,
+            senha TEXT NOT NULL,
+            tipo_usuario TEXT NOT NULL -- 'cliente' ou 'profissional'
+        );
+    `);
+  db.exec(`
+        CREATE TABLE IF NOT EXISTS profissional (
+            id_profissional INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_usuario INTEGER NOT NULL,
+            especialidade TEXT,
+            valor_consulta REAL,
+            FOREIGN KEY(id_usuario) REFERENCES usuario(id_usuario) ON DELETE CASCADE
+        );
+    `);
+  db.exec(`
+        CREATE TABLE IF NOT EXISTS agendamento (
+            id_agendamento INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_usuario INTEGER NOT NULL,
+            id_profissional INTEGER NOT NULL,
+            data_agendamento DATETIME NOT NULL,
+            status_consulta TEXT DEFAULT 'Agendado',
+            FOREIGN KEY(id_usuario) REFERENCES usuario(id_usuario),
+            FOREIGN KEY(id_profissional) REFERENCES profissional(id_profissional)
+        );
+    `);
+  console.log("Banco inicializado em:", dbPath);
+}
+const options = {};
+if (process.env.DOTENV_CONFIG_ENCODING != null) {
+  options.encoding = process.env.DOTENV_CONFIG_ENCODING;
+}
+if (process.env.DOTENV_CONFIG_PATH != null) {
+  options.path = process.env.DOTENV_CONFIG_PATH;
+}
+if (process.env.DOTENV_CONFIG_QUIET != null) {
+  options.quiet = process.env.DOTENV_CONFIG_QUIET;
+}
+if (process.env.DOTENV_CONFIG_DEBUG != null) {
+  options.debug = process.env.DOTENV_CONFIG_DEBUG;
+}
+if (process.env.DOTENV_CONFIG_OVERRIDE != null) {
+  options.override = process.env.DOTENV_CONFIG_OVERRIDE;
+}
+if (process.env.DOTENV_CONFIG_DOTENV_KEY != null) {
+  options.DOTENV_KEY = process.env.DOTENV_CONFIG_DOTENV_KEY;
+}
+var envOptions = options;
+const re = /^dotenv_config_(encoding|path|quiet|debug|override|DOTENV_KEY)=(.+)$/;
+var cliOptions = function optionMatcher(args) {
+  const options2 = args.reduce(function(acc, cur) {
+    const matches = cur.match(re);
+    if (matches) {
+      acc[matches[1]] = matches[2];
+    }
+    return acc;
+  }, {});
+  if (!("quiet" in options2)) {
+    options2.quiet = "true";
+  }
+  return options2;
+};
+(function() {
+  mainExports.config(
+    Object.assign(
+      {},
+      envOptions,
+      cliOptions(process.argv)
+    )
+  );
+})();
+const stripeKey = process.env.STRIPE_KEY;
+let stripe;
+if (stripeKey) {
+  try {
+    stripe = new Stripe(stripeKey);
+  } catch (err) {
+    console.error("Erro ao inicializar Stripe:", err);
+  }
+} else {
+  console.warn("⚠️ AVISO: STRIPE_KEY não encontrada. Módulo de pagamentos desativado.");
+}
 const PagamentoController = {
   // Função para buscar o histórico de pagamentos no Stripe
   async listarPagamentos() {
     try {
+      if (!stripe) {
+        return { success: false, message: "API do Stripe não configurada (Chave ausente)." };
+      }
       const charges = await stripe.charges.list({
         limit: 10
       });

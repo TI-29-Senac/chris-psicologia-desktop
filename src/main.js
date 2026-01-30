@@ -1,6 +1,8 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
+import dotenv from 'dotenv'; // Importação moderna do dotenv
+import Stripe from 'stripe'; // Importação moderna do Stripe
 import { initDatabase } from './Main/Database/db.js';
 
 // Importação dos Controladores
@@ -8,9 +10,11 @@ import PagamentoController from './Main/Controllers/PagamentoController.js';
 import UsuarioController from './Main/Controllers/UsuarioController.js';
 import AgendamentoController from './Main/Controllers/AgendamentoController.js';
 
+
 // Inicializa o Banco de Dados ao arrancar
 initDatabase();
 
+// Verifica instalação do Squirrel (Windows)
 if (started) {
   app.quit();
 }
@@ -26,6 +30,7 @@ const createWindow = () => {
     },
   });
 
+  // Carrega a URL do Vite (Dev) ou o arquivo HTML (Prod)
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
   } else {
@@ -35,11 +40,10 @@ const createWindow = () => {
 
 app.whenReady().then(() => {
   // --- INICIALIZAÇÃO DOS CONTROLADORES ---
-  // Isso faz o backend "ouvir" os eventos do preload
   new UsuarioController().init();
   new AgendamentoController().init();
   
-  // Pagamento (Mantenha como estava se preferir, ou transforme em classe para padronizar)
+  // Pagamento
   ipcMain.handle('pagamento:listar', async () => PagamentoController.listarPagamentos());
   ipcMain.handle('pagamento:processar', async (e, dados) => PagamentoController.processarPagamento(dados));
 

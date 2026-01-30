@@ -1,12 +1,27 @@
 import 'dotenv/config';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_KEY); 
+const stripeKey = process.env.STRIPE_KEY;
+let stripe;
+
+if (stripeKey) {
+  try {
+    stripe = new Stripe(stripeKey);
+  } catch (err) {
+    console.error("Erro ao inicializar Stripe:", err);
+  }
+} else {
+  console.warn("⚠️ AVISO: STRIPE_KEY não encontrada. Módulo de pagamentos desativado.");
+}
 
 const PagamentoController = {
   // Função para buscar o histórico de pagamentos no Stripe
   async listarPagamentos() {
     try {
+      if (!stripe) {
+        return { success: false, message: 'API do Stripe não configurada (Chave ausente).' };
+      }
+
       // Busca os últimos 10 pagamentos (charges)
       const charges = await stripe.charges.list({
         limit: 10,
