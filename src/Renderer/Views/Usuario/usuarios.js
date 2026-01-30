@@ -48,6 +48,12 @@ async function init() {
     document.getElementById('btn-tab-admin').addEventListener('click', () => mudarAbaCadastro('admin'));
     
     await buscarDados();
+
+    if (navigator.onLine) {
+        window.electronAPI.sincronizarBidirecional().then(() => buscarDados());
+    } else {
+        await buscarDados();
+    }
 }
 
 // --- 1. BUSCA DE DADOS ---
@@ -331,22 +337,22 @@ if (btnSincronizar) {
         try {
             btnSincronizar.disabled = true;
             const originalText = btnSincronizar.innerHTML;
-            btnSincronizar.innerText = "Sincronizando...";
+            btnSincronizar.innerText = "Sincronizando via Nuvem...";
 
-            const resultado = await window.electronAPI.sincronizarUsuarios();
+            // Chamada para a nova função bidirecional
+            const resultado = await window.electronAPI.sincronizarBidirecional();
 
             if (resultado.success) {
-                alert(resultado.message || "Sincronização concluída!");
-                await buscarDados(); 
+                alert(resultado.message || "Sincronização bidirecional concluída!");
+                await buscarDados(); // Recarrega a lista com os dados novos do site
             } else {
-                alert("Erro ao sincronizar: " + (resultado.erro || "Falha na conexão"));
+                alert("Erro na sincronização: " + (resultado.erro || "Falha na conexão"));
             }
 
             btnSincronizar.disabled = false;
             btnSincronizar.innerHTML = originalText;
         } catch (error) {
-            console.error("Erro no clique de sincronização:", error);
-            alert("Erro interno ao processar sincronização.");
+            console.error("Erro ao disparar sincronização:", error);
             btnSincronizar.disabled = false;
         }
     });

@@ -25,9 +25,8 @@ class UsuarioController {
         ipcMain.handle('usuarios:buscarPorId', async (event, id) => await this.buscarPorId(id));
         ipcMain.handle('usuarios:editar', async (event, dados) => await this.editar(dados));
         ipcMain.handle('usuarios:excluir', async (event, id) => await this.excluir(id));
-        ipcMain.handle('usuarios:sincronizar', async () => {
-    return await this.usuarioModel.sincronizar();
-});
+        ipcMain.handle('usuarios:sincronizarBidirecional', async () => {return await this.usuarioModel.sincronizacaoBidirecional();
+    });
     }
 
     async listar() {

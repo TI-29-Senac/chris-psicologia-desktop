@@ -129,26 +129,56 @@ async excluir(id) {
     }
 }
 
-async sincronizar() {
+async sincronizacaoBidirecional() {
     try {
-        const pendentes = db.prepare('SELECT * FROM usuario WHERE sincronizado = 0').all();
-
-        for (const user of pendentes) {
+        // --- FLUXO 1: PUSH (Local -> Servidor) ---
+        // Busca alterações locais (sincronizado = 0)
+        const pendentesLocais = db.prepare('SELECT * FROM usuario WHERE sincronizado = 0').all();
+        
+        for (const user of pendentesLocais) {
             const res = await this.api.post('usuarios/salvar', user);
-
-            if (res && res.success && res.id_gerado) {
-                // SUCESSO: Atualizamos o UUID para o ID real do MySQL (ex: 82)
-                // Usamos o UUID antigo para localizar o registro e mudar para o novo ID
-                const updateStmt = db.prepare(`
-                    UPDATE usuario 
-                    SET id_usuario = ?, sincronizado = 1 
-                    WHERE id_usuario = ?
-                `);
-                updateStmt.run(res.id_gerado.toString(), user.id_usuario);
+            if (res && res.success) {
+                // Se o servidor gerou um ID novo (82), atualizamos o UUID local
+                const novoId = res.id_gerado || user.id_usuario;
+                db.prepare('UPDATE usuario SET id_usuario = ?, sincronizado = 1 WHERE id_usuario = ?')
+                  .run(novoId.toString(), user.id_usuario);
             }
         }
-        return { success: true };
+
+        // --- FLUXO 2: PULL (Servidor -> Local) ---
+        // Busca todos os usuários do MySQL
+        const usuariosSite = await this.api.get('usuarios');
+        const listaOficial = Array.isArray(usuariosSite) ? usuariosSite : (usuariosSite.data || []);
+
+        const stmtUpsert = db.prepare(`
+            INSERT INTO usuario (id_usuario, nome_usuario, email_usuario, senha_usuario, tipo_usuario, cpf, sincronizado)
+            VALUES (?, ?, ?, ?, ?, ?, 1)
+            ON CONFLICT(id_usuario) DO UPDATE SET
+                nome_usuario = excluded.nome_usuario,
+                email_usuario = excluded.email_usuario,
+                tipo_usuario = excluded.tipo_usuario,
+                cpf = excluded.cpf,
+                sincronizado = 1
+        `);
+
+        const transacaoPull = db.transaction((dados) => {
+            for (const u of dados) {
+                stmtUpsert.run(
+                    u.id_usuario.toString(),
+                    u.nome_usuario,
+                    u.email_usuario,
+                    u.senha_usuario,
+                    u.tipo_usuario,
+                    u.cpf || '000.000.000-00'
+                );
+            }
+        });
+
+        transacaoPull(listaOficial);
+        return { success: true, message: "Sincronização bidirecional concluída." };
+
     } catch (error) {
+        console.error("Erro na sincronização bidirecional:", error);
         return { success: false, erro: error.message };
     }
 }
