@@ -13,6 +13,8 @@ const btnSalvar = document.getElementById('btn-salvar-usuario');
 
 const btnFilterCliente = document.getElementById('filter-cliente');
 const btnFilterProfissional = document.getElementById('filter-profissional');
+const btnFilterRecepcionista = document.getElementById('filter-recepcionista');
+const btnFilterAdmin = document.getElementById('filter-admin');
 
 // Elementos de Busca Avançada
 const inputBusca = document.getElementById('input-busca');
@@ -28,8 +30,8 @@ const inputCpf = document.getElementById('cad-cpf');
 
 // Estado da Aplicação
 let todosUsuarios = [];
-let tipoCadastroAtual = 'cliente'; 
-let tabAtiva = 'cliente';          
+let tipoCadastroAtual = 'cliente';
+let tabAtiva = 'cliente';
 
 async function init() {
     if (!window.electronAPI) {
@@ -39,14 +41,16 @@ async function init() {
 
     inputBusca.addEventListener('keyup', aplicarFiltros);
     selectFiltroTipo.addEventListener('change', aplicarFiltros);
-    
+
     btnFilterCliente.addEventListener('click', () => trocarAba('cliente'));
     btnFilterProfissional.addEventListener('click', () => trocarAba('profissional'));
+    btnFilterRecepcionista.addEventListener('click', () => trocarAba('recepcionista'));
+    btnFilterAdmin.addEventListener('click', () => trocarAba('admin'));
 
     configurarEventosModal();
     document.getElementById('btn-tab-recepcionista').addEventListener('click', () => mudarAbaCadastro('recepcionista'));
     document.getElementById('btn-tab-admin').addEventListener('click', () => mudarAbaCadastro('admin'));
-    
+
     await buscarDados();
 
     if (navigator.onLine) {
@@ -61,7 +65,7 @@ async function buscarDados() {
     try {
         listaEl.innerHTML = "<tr><td colspan='7' class='text-center'>Carregando...</td></tr>";
         todosUsuarios = await window.electronAPI.listarUsuarios();
-        aplicarFiltros(); 
+        aplicarFiltros();
     } catch (error) {
         console.error("Erro ao buscar usuários:", error);
         listaEl.innerHTML = "<tr><td colspan='7' class='text-center' style='color:red'>Erro ao conectar com servidor.</td></tr>";
@@ -71,18 +75,29 @@ async function buscarDados() {
 // --- 2. LÓGICA DE FILTRAGEM E TABELAS ---
 function trocarAba(tipo) {
     tabAtiva = tipo;
-    
-    if(tipo === 'cliente') {
+
+    // Remove 'active' de todos
+    btnFilterCliente.classList.remove('active');
+    btnFilterProfissional.classList.remove('active');
+    btnFilterRecepcionista.classList.remove('active');
+    btnFilterAdmin.classList.remove('active');
+
+    // Adiciona 'active' e define título
+    if (tipo === 'cliente') {
         btnFilterCliente.classList.add('active');
-        btnFilterProfissional.classList.remove('active');
         tituloEl.innerText = "Lista de Pacientes";
-    } else {
+    } else if (tipo === 'profissional') {
         btnFilterProfissional.classList.add('active');
-        btnFilterCliente.classList.remove('active');
         tituloEl.innerText = "Lista de Profissionais";
+    } else if (tipo === 'recepcionista') {
+        btnFilterRecepcionista.classList.add('active');
+        tituloEl.innerText = "Lista de Recepcionistas";
+    } else if (tipo === 'admin') {
+        btnFilterAdmin.classList.add('active');
+        tituloEl.innerText = "Lista de Administradores";
     }
 
-    inputBusca.value = ''; 
+    inputBusca.value = '';
     aplicarFiltros();
 }
 
@@ -95,11 +110,11 @@ function aplicarFiltros() {
     if (termo) {
         filtrados = filtrados.filter(u => {
             let valorParaChecar = '';
-            switch(colunaFiltro) {
-                case 'nome':  valorParaChecar = u.nome_usuario; break;
-                case 'cpf':   valorParaChecar = u.cpf; break;
+            switch (colunaFiltro) {
+                case 'nome': valorParaChecar = u.nome_usuario; break;
+                case 'cpf': valorParaChecar = u.cpf; break;
                 case 'email': valorParaChecar = u.email_usuario; break;
-                default:      valorParaChecar = u.nome_usuario;
+                default: valorParaChecar = u.nome_usuario;
             }
             return valorParaChecar && valorParaChecar.toLowerCase().includes(termo);
         });
@@ -120,7 +135,7 @@ function renderizarTabela(dados) {
     if (tabAtiva === 'profissional') {
         htmlHeader += `<th>Especialidade</th>`;
     }
-    
+
     htmlHeader += `<th class="text-center">Ações</th>`;
     headerEl.innerHTML = htmlHeader;
 
@@ -133,16 +148,16 @@ function renderizarTabela(dados) {
     listaEl.innerHTML = dados.map(u => {
         const tipoClass = `badge-${u.tipo_usuario ? u.tipo_usuario.toLowerCase() : 'cliente'}`;
         const tipoLabel = u.tipo_usuario ? u.tipo_usuario.charAt(0).toUpperCase() + u.tipo_usuario.slice(1) : 'Cliente';
-        
+
         // ÍCONE DE SINCRONIZAÇÃO
         const isPendente = u.sincronizado === 0;
-        const statusIcon = isPendente 
-            ? '<i class="fa-solid fa-cloud-arrow-up" title="Pendente de Sincronização" style="color: #f39c12; margin-right: 5px;"></i>' 
+        const statusIcon = isPendente
+            ? '<i class="fa-solid fa-cloud-arrow-up" title="Pendente de Sincronização" style="color: #f39c12; margin-right: 5px;"></i>'
             : '<i class="fa-solid fa-cloud" title="Sincronizado" style="color: #27ae60; margin-right: 5px;"></i>';
 
         // EXIBIÇÃO DO ID (Encurta se for UUID)
-        const displayId = u.id_usuario.toString().length > 10 
-            ? u.id_usuario.substring(0, 8) + '...' 
+        const displayId = u.id_usuario.toString().length > 10
+            ? u.id_usuario.substring(0, 8) + '...'
             : u.id_usuario;
 
         return `
@@ -169,19 +184,19 @@ function renderizarTabela(dados) {
 
 // --- 3. MODAL E CADASTRO ---
 function configurarEventosModal() {
-    btnNovo.addEventListener('click', () => { 
-        limparFormulario(); 
+    btnNovo.addEventListener('click', () => {
+        limparFormulario();
         delete btnSalvar.dataset.id; // Garante que é um novo cadastro
-        modal.classList.add('active'); 
+        modal.classList.add('active');
     });
-    
+
     btnClose.addEventListener('click', () => modal.classList.remove('active'));
-    modal.addEventListener('click', (e) => { if(e.target === modal) modal.classList.remove('active'); });
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
 
     btnTabCliente.addEventListener('click', () => mudarAbaCadastro('cliente'));
     btnTabProfissional.addEventListener('click', () => mudarAbaCadastro('profissional'));
 
-    if(inputCpf) {
+    if (inputCpf) {
         inputCpf.addEventListener('input', (e) => {
             let v = e.target.value.replace(/\D/g, "");
             if (v.length > 11) v = v.slice(0, 11);
@@ -192,7 +207,7 @@ function configurarEventosModal() {
         });
     }
 
-    if(inputValor) {
+    if (inputValor) {
         inputValor.addEventListener('input', () => {
             const v = parseFloat(inputValor.value) || 0;
             inputSinal.value = (v * 0.20).toFixed(2);
@@ -207,10 +222,10 @@ function mudarAbaCadastro(tipo) {
 
     // Remove a classe 'active' de todos os botões de tipo
     document.querySelectorAll('.tipo-btn').forEach(btn => btn.classList.remove('active'));
-    
+
     // Adiciona 'active' ao botão clicado
     const btnAtivo = document.querySelector(`.tipo-btn[data-tipo="${tipo}"]`);
-    if(btnAtivo) btnAtivo.classList.add('active');
+    if (btnAtivo) btnAtivo.classList.add('active');
 
     // Mostra a área de profissional apenas se o tipo for profissional
     areaProfissional.style.display = (tipo === 'profissional') ? 'block' : 'none';
@@ -221,9 +236,9 @@ function limparFormulario() {
     document.getElementById('cad-email').value = '';
     document.getElementById('cad-cpf').value = '';
     document.getElementById('cad-senha').value = '';
-    if(document.getElementById('cad-especialidade')) document.getElementById('cad-especialidade').value = '';
-    if(inputValor) inputValor.value = '';
-    if(inputSinal) inputSinal.value = '';
+    if (document.getElementById('cad-especialidade')) document.getElementById('cad-especialidade').value = '';
+    if (inputValor) inputValor.value = '';
+    if (inputSinal) inputSinal.value = '';
     mudarAbaCadastro('cliente');
 }
 
@@ -232,7 +247,7 @@ async function salvarUsuario() {
     const email = document.getElementById('cad-email').value;
     const cpf = document.getElementById('cad-cpf').value;
     const senha = document.getElementById('cad-senha').value;
-    const idEdicao = btnSalvar.dataset.id; 
+    const idEdicao = btnSalvar.dataset.id;
 
     if (!nome || !email || (!idEdicao && !senha)) return alert("Preencha os campos obrigatórios.");
 
@@ -280,12 +295,12 @@ async function salvarUsuario() {
         } else {
             alert("Erro: " + (res.erro || "Falha desconhecida"));
         }
-    } catch (e) { 
-        console.error(e); 
-        alert("Erro interno."); 
-    } finally { 
-        btnSalvar.innerText = txtOriginal; 
-        btnSalvar.disabled = false; 
+    } catch (e) {
+        console.error(e);
+        alert("Erro interno.");
+    } finally {
+        btnSalvar.innerText = txtOriginal;
+        btnSalvar.disabled = false;
     }
 }
 
@@ -294,9 +309,9 @@ function adicionarEventosTabela() {
     document.querySelectorAll('.btn-delete').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             const id = e.target.closest('button').dataset.id;
-            if(confirm("Tem certeza que deseja excluir o usuário #" + id + "?")) {
+            if (confirm("Tem certeza que deseja excluir o usuário #" + id + "?")) {
                 const res = await window.electronAPI.excluirUsuario(id);
-                if(res.success) buscarDados();
+                if (res.success) buscarDados();
                 else alert("Erro ao excluir: " + res.erro);
             }
         });
@@ -304,30 +319,30 @@ function adicionarEventosTabela() {
 
     // BOTÃO EDITAR
     document.querySelectorAll('.btn-edit').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-        const id = e.target.closest('button').dataset.id;
-        const usuario = todosUsuarios.find(u => u.id_usuario == id);
-        
-        if (usuario) {
-            limparFormulario();
-            document.getElementById('cad-nome').value = usuario.nome_usuario;
-            document.getElementById('cad-email').value = usuario.email_usuario;
-            document.getElementById('cad-cpf').value = usuario.cpf || '';
-            
-            // Define a aba do modal com base no tipo atual do banco
-            mudarAbaCadastro(usuario.tipo_usuario || 'cliente'); 
+        btn.addEventListener('click', async (e) => {
+            const id = e.target.closest('button').dataset.id;
+            const usuario = todosUsuarios.find(u => u.id_usuario == id);
 
-            if (usuario.tipo_usuario === 'profissional') {
-                document.getElementById('cad-especialidade').value = usuario.especialidade || '';
-                inputValor.value = usuario.valor_consulta || '';
-                inputSinal.value = usuario.sinal_consulta || '';
+            if (usuario) {
+                limparFormulario();
+                document.getElementById('cad-nome').value = usuario.nome_usuario;
+                document.getElementById('cad-email').value = usuario.email_usuario;
+                document.getElementById('cad-cpf').value = usuario.cpf || '';
+
+                // Define a aba do modal com base no tipo atual do banco
+                mudarAbaCadastro(usuario.tipo_usuario || 'cliente');
+
+                if (usuario.tipo_usuario === 'profissional') {
+                    document.getElementById('cad-especialidade').value = usuario.especialidade || '';
+                    inputValor.value = usuario.valor_consulta || '';
+                    inputSinal.value = usuario.sinal_consulta || '';
+                }
+
+                btnSalvar.dataset.id = id;
+                modal.classList.add('active');
             }
-
-            btnSalvar.dataset.id = id; 
-            modal.classList.add('active');
-        }
+        });
     });
-});
 }
 
 const btnSincronizar = document.getElementById('btnSincronizar');

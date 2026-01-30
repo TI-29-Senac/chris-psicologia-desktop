@@ -1,11 +1,13 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import { app } from 'electron';
+import bcrypt from 'bcryptjs';
+import { v4 as uuidv4 } from 'uuid';
 
 // 1. Definição do Caminho do Banco
 const isDev = process.env.NODE_ENV === 'development';
-const dbPath = isDev 
-    ? path.join(process.cwd(), 'clinica.db') 
+const dbPath = isDev
+    ? path.join(process.cwd(), 'clinica.db')
     : path.join(app.getPath('userData'), 'clinica.db');
 
 // 2. Instância do Banco (Síncrono)
@@ -19,7 +21,7 @@ export function initDatabase() {
 
     // Usamos transação para garantir que tudo seja criado corretamente
     const createTables = db.transaction(() => {
-        
+
         // Tabela de Usuário (ID como TEXT para UUID)
         db.prepare(`
             CREATE TABLE IF NOT EXISTS usuario (
@@ -47,7 +49,7 @@ export function initDatabase() {
                 sinal_consulta REAL DEFAULT 0,
                 criado_em TEXT DEFAULT CURRENT_TIMESTAMP,
                 excluido_em TEXT DEFAULT NULL,
-                FOREIGN KEY(id_usuario) REFERENCES usuario(id_usuario) ON DELETE CASCADE
+                FOREIGN KEY(id_usuario) REFERENCES usuario(id_usuario) ON DELETE CASCADE ON UPDATE CASCADE
             )
         `).run();
 
@@ -82,6 +84,19 @@ export function initDatabase() {
         ['Dinheiro', 'Pix', 'Cartão de Crédito', 'Cartão de Débito'].forEach(forma => {
             insertForma.run(forma);
         });
+    }
+
+    // 5. Seed Admin (Garante acesso inicial)
+    const adminExist = db.prepare("SELECT id_usuario FROM usuario WHERE email_usuario = 'admin@teste.com'").get();
+    if (!adminExist) {
+        console.log("Criando usuário ADMIN padrão...");
+        const salt = bcrypt.genSaltSync(10);
+        const hash = bcrypt.hashSync('123', salt);
+
+        db.prepare(`
+            INSERT INTO usuario (id_usuario, nome_usuario, email_usuario, senha_usuario, tipo_usuario, cpf, sincronizado)
+            VALUES (?, ?, ?, ?, ?, ?, 0)
+        `).run(uuidv4(), 'Admin Local', 'admin@teste.com', hash, 'admin', '000.000.000-00');
     }
 
     console.log("Banco de dados conectado e tabelas prontas.");
