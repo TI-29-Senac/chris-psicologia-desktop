@@ -1,19 +1,20 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestão de Usuários</title>
-   
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Questrial&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-   
+
     <link rel="stylesheet" href="../../../../src/Renderer/Views/Dashboard/dashboard.css">
     <link rel="stylesheet" href="../Agendamento/agendamento.css">
-    <link rel="stylesheet" href="usuarios.css"> 
-   
+    <link rel="stylesheet" href="usuarios.css">
+
     <style>
         /* Pequenos ajustes locais caso necessário */
         .filter-btn {
@@ -26,29 +27,38 @@
             font-weight: 600;
             transition: all 0.3s;
         }
-        .filter-btn.active, .filter-btn:hover {
+
+        .filter-btn.active,
+        .filter-btn:hover {
             background-color: var(--color-dark-green);
             color: white;
         }
     </style>
 </head>
+
 <body>
- 
+
     <div class="app-layout">
         <aside class="sidebar">
             <div class="brand">
                 <div class="logo-symbol">Ψ</div>
-                <div class="logo-text"><h1>CHRIS</h1><span>PSICOLOGIA</span></div>
+                <div class="logo-text">
+                    <h1>CHRIS</h1><span>PSICOLOGIA</span>
+                </div>
             </div>
             <nav class="sidebar-nav">
-                <a href="../Dashboard/dashboard.html" class="menu-item"><i class="fa-solid fa-chart-pie"></i><span>Visão Geral</span></a>
+                <a href="../Dashboard/dashboard.html" class="menu-item"><i class="fa-solid fa-chart-pie"></i><span>Visão
+                        Geral</span></a>
                 <a href="#" class="menu-item active"><i class="fa-solid fa-users"></i><span>Usuários</span></a>
-                <a href="../Agendamento/agendamento.html" class="menu-item"><i class="fa-solid fa-calendar-days"></i><span>Agendamentos</span></a>
-                <a href="../Pagamento/pagamento.html" class="menu-item"><i class="fa-solid fa-hand-holding-dollar"></i><span>Pagamentos</span></a>
+                <a href="../Agendamento/agendamento.html" class="menu-item"><i
+                        class="fa-solid fa-calendar-days"></i><span>Agendamentos</span></a>
+                <a href="../Pagamento/pagamento.html" class="menu-item"><i
+                        class="fa-solid fa-hand-holding-dollar"></i><span>Pagamentos</span></a>
             </nav>
-            <div class="sidebar-footer"><a href="#" id="btn-logout" class="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i> Sair</a></div>
+            <div class="sidebar-footer"><a href="#" id="btn-logout" class="logout-btn"><i
+                        class="fa-solid fa-arrow-right-from-bracket"></i> Sair</a></div>
         </aside>
- 
+
         <main class="main-content">
             <header class="top-bar">
                 <div class="page-title">
@@ -57,22 +67,23 @@
                 </div>
                 <div class="user-profile">
                     <div style="display: flex; flex-direction: column; align-items: flex-end; margin-right: 12px;">
-                        <span class="user-name" style="font-weight: 700; color: #5D6D68; line-height: 1.2;">Carregando...</span>
+                        <span class="user-name"
+                            style="font-weight: 700; color: #5D6D68; line-height: 1.2;">Carregando...</span>
                         <span class="user-type" style="font-size: 0.85rem; color: #7A8F89; font-weight: 500;">---</span>
                     </div>
                     <div class="avatar"><i class="fa-regular fa-circle-user"></i></div>
                 </div>
             </header>
- 
+
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-               
+
                 <div style="display: flex; gap: 15px; align-items: center;">
                     <button id="btn-novo-usuario" class="btn-novo">
                         <i class="fa-solid fa-plus"></i> Novo Cadastro
                     </button>
- 
+
                     <div style="width: 2px; height: 30px; background: #ddd; margin: 0 5px;"></div>
- 
+
                     <button class="filter-btn active" id="filter-cliente">
                         <i class="fa-solid fa-users"></i> Pacientes
                     </button>
@@ -86,7 +97,7 @@
                         <i class="fa-solid fa-user-shield"></i> Admins
                     </button>
                 </div>
- 
+
                 <div class="search-group">
                     <select id="select-filtro-tipo" class="search-select">
                         <option value="nome">Nome</option>
@@ -99,110 +110,115 @@
                         <input type="text" id="input-busca" placeholder="Buscar...">
                     </div>
                 </div>
- 
+
             </div>
- 
+
             <div class="card table-card">
                 <h3 id="titulo-lista">
-                    Lista de Pacientes Cadastrados <button id="btnSincronizar" class="btn-sync">
-    <i class="fas fa-sync"></i> Sincronizar com Nuvem
-</button>
+                    <span id="titulo-texto">Lista de Pacientes Cadastrados</span>
+                    <button id="btnSincronizar" class="btn-sync">
+                        <i class="fas fa-sync"></i> Sincronizar com Nuvem
+                    </button>
                 </h3>
-               
+
                 <div class="table-container table-responsive">
                     <table class="table">
                         <thead>
                             <tr id="table-header">
-                                </tr>
+                            </tr>
                         </thead>
                         <tbody id="lista-usuarios">
-                            </tbody>
+                        </tbody>
                     </table>
                 </div>
             </div>
- 
+
         </main>
-        
+
     </div>
- 
+
     <div id="modal-cadastro" class="modal-overlay">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3 id="modal-titulo">Gestão de Usuário</h3>
-            <button id="btn-close-modal" class="close-btn">&times;</button>
-        </div>
-
-        <div class="modal-body">
-            <div class="tipo-selector">
-    <button class="tipo-btn active" id="btn-tab-cliente" data-tipo="cliente">Paciente</button>
-    <button class="tipo-btn" id="btn-tab-profissional" data-tipo="profissional">Profissional</button>
-    <button class="tipo-btn" id="btn-tab-recepcionista" data-tipo="recepcionista">Recepcionista</button>
-    <button class="tipo-btn" id="btn-tab-admin" data-tipo="admin">Admin</button>
-</div>
-
-            <div class="form-group">
-                <label>Nome Completo</label>
-                <input type="text" id="cad-nome" class="form-control" placeholder="Ex: João da Silva">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-titulo">Gestão de Usuário</h3>
+                <button id="btn-close-modal" class="close-btn">&times;</button>
             </div>
 
-            <div class="form-group">
-                <label>CPF</label>
-                <input type="text" id="cad-cpf" class="form-control" placeholder="000.000.000-00">
-            </div>
+            <div class="modal-body">
+                <div class="tipo-selector">
+                    <button class="tipo-btn active" id="btn-tab-cliente" data-tipo="cliente">Paciente</button>
+                    <button class="tipo-btn" id="btn-tab-profissional" data-tipo="profissional">Profissional</button>
+                    <button class="tipo-btn" id="btn-tab-recepcionista" data-tipo="recepcionista">Recepcionista</button>
+                    <button class="tipo-btn" id="btn-tab-admin" data-tipo="admin">Admin</button>
+                </div>
 
-            <div class="form-group">
-                <label>E-mail</label>
-                <input type="email" id="cad-email" class="form-control" placeholder="joao@email.com">
-            </div>
-
-            <div class="form-group">
-                <label>Senha</label>
-                <input type="password" id="cad-senha" class="form-control" placeholder="******">
-            </div>
-
-            <div id="area-profissional" style="display: none; border-top: 1px dashed #ccc; padding-top: 15px; margin-top: 15px;">
                 <div class="form-group">
-                    <label>Especialidade</label>
-                    <input type="text" id="cad-especialidade" class="form-control" placeholder="Ex: Psicologia Clínica">
+                    <label>Nome Completo</label>
+                    <input type="text" id="cad-nome" class="form-control" placeholder="Ex: João da Silva">
                 </div>
-                <div class="form-row" style="display: flex; gap: 10px;">
-                    <div class="form-group" style="flex: 1;">
-                        <label>Valor Consulta (R$)</label>
-                        <input type="number" id="cad-valor" class="form-control" placeholder="0.00">
-                    </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label>Sinal (20%)</label>
-                        <input type="text" id="cad-sinal" class="form-control" readonly style="background-color: #f9f9f9;">
-                    </div>
-                </div>
-            </div>
 
-            <button id="btn-salvar-usuario" class="btn-primary">Salvar Cadastro</button>
+                <div class="form-group">
+                    <label>CPF</label>
+                    <input type="text" id="cad-cpf" class="form-control" placeholder="000.000.000-00">
+                </div>
+
+                <div class="form-group">
+                    <label>E-mail</label>
+                    <input type="email" id="cad-email" class="form-control" placeholder="joao@email.com">
+                </div>
+
+                <div class="form-group">
+                    <label>Senha</label>
+                    <input type="password" id="cad-senha" class="form-control" placeholder="******">
+                </div>
+
+                <div id="area-profissional"
+                    style="display: none; border-top: 1px dashed #ccc; padding-top: 15px; margin-top: 15px;">
+                    <div class="form-group">
+                        <label>Especialidade</label>
+                        <input type="text" id="cad-especialidade" class="form-control"
+                            placeholder="Ex: Psicologia Clínica">
+                    </div>
+                    <div class="form-row" style="display: flex; gap: 10px;">
+                        <div class="form-group" style="flex: 1;">
+                            <label>Valor Consulta (R$)</label>
+                            <input type="number" id="cad-valor" class="form-control" placeholder="0.00">
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>Sinal (20%)</label>
+                            <input type="text" id="cad-sinal" class="form-control" readonly
+                                style="background-color: #f9f9f9;">
+                        </div>
+                    </div>
+                </div>
+
+                <button id="btn-salvar-usuario" class="btn-primary">Salvar Cadastro</button>
+            </div>
         </div>
     </div>
-</div>
 
     <script src="../../Services/Auth.js"></script>
     <script>
         const PATH_TO_ROOT = '../../../../';
         const user = window.Auth.check(PATH_TO_ROOT);
         // Atualiza UI do Header manualmente
-        if(user) {
+        if (user) {
             const nomeEl = document.querySelector('.user-name');
             const tipoEl = document.querySelector('.user-type');
-            if(nomeEl) nomeEl.textContent = user.nome || user.nome_usuario;
-            if(tipoEl) {
+            if (nomeEl) nomeEl.textContent = user.nome || user.nome_usuario;
+            if (tipoEl) {
                 const tipo = user.tipo || user.tipo_usuario;
                 tipoEl.textContent = tipo ? tipo.charAt(0).toUpperCase() + tipo.slice(1) : 'Usuário';
             }
-            
+
             document.getElementById('btn-logout').addEventListener('click', (e) => {
                 e.preventDefault();
                 window.Auth.logout(PATH_TO_ROOT);
             });
         }
     </script>
- 
+
     <script type="module" src="usuarios.js"></script>
 </body>
+
 </html>

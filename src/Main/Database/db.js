@@ -53,6 +53,24 @@ export function initDatabase() {
             )
         `).run();
 
+        // Tabela de Agendamento
+        db.prepare(`
+            CREATE TABLE IF NOT EXISTS agendamento (
+                id_agendamento TEXT PRIMARY KEY,
+                id_usuario TEXT NOT NULL,
+                id_profissional TEXT NOT NULL,
+                data_agendamento TEXT NOT NULL,
+                status_consulta TEXT DEFAULT 'Agendado',
+                observacoes TEXT,
+                sincronizado INTEGER DEFAULT 0,
+                criado_em TEXT DEFAULT CURRENT_TIMESTAMP,
+                atualizado_em TEXT DEFAULT CURRENT_TIMESTAMP,
+                excluido_em TEXT DEFAULT NULL,
+                FOREIGN KEY(id_usuario) REFERENCES usuario(id_usuario),
+                FOREIGN KEY(id_profissional) REFERENCES usuario(id_usuario)
+            )
+        `).run();
+
         // Tabela de Formas de Pagamento
         db.prepare(`
             CREATE TABLE IF NOT EXISTS formas_pagamento (

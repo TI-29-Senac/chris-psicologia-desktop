@@ -3,7 +3,7 @@
 // 1. Elementos Globais
 const listaEl = document.getElementById('lista-usuarios');
 const headerEl = document.getElementById('table-header');
-const tituloEl = document.getElementById('titulo-lista');
+const tituloTextoEl = document.getElementById('titulo-texto'); // Alterado para o SPAN
 const modal = document.getElementById('modal-cadastro');
 
 // Elementos de Ação e Filtro
@@ -85,16 +85,16 @@ function trocarAba(tipo) {
     // Adiciona 'active' e define título
     if (tipo === 'cliente') {
         btnFilterCliente.classList.add('active');
-        tituloEl.innerText = "Lista de Pacientes";
+        tituloTextoEl.innerText = "Lista de Pacientes";
     } else if (tipo === 'profissional') {
         btnFilterProfissional.classList.add('active');
-        tituloEl.innerText = "Lista de Profissionais";
+        tituloTextoEl.innerText = "Lista de Profissionais";
     } else if (tipo === 'recepcionista') {
         btnFilterRecepcionista.classList.add('active');
-        tituloEl.innerText = "Lista de Recepcionistas";
+        tituloTextoEl.innerText = "Lista de Recepcionistas";
     } else if (tipo === 'admin') {
         btnFilterAdmin.classList.add('active');
-        tituloEl.innerText = "Lista de Administradores";
+        tituloTextoEl.innerText = "Lista de Administradores";
     }
 
     inputBusca.value = '';
