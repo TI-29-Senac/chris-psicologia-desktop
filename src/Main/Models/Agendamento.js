@@ -1,4 +1,5 @@
 import FetchAPI from '../Service/FetchAPI.js';
+import db from '../Database/db.js';
 
 class AgendamentoModel {
     constructor() {
@@ -7,16 +8,29 @@ class AgendamentoModel {
 
     async listar() {
         try {
-            return await this.api.get('agendamentos');
+            // OFFLINE-FIRST: Busca do banco local
+            // Faz um JOIN para trazer os nomes de paciente e profissional
+            // assumindo que os nomes estão na tabela usuario
+            const sql = `
+                SELECT 
+                    a.*,
+                    p.nome_usuario as nome_paciente,
+                    prof.nome_usuario as nome_profissional
+                FROM agendamento a
+                LEFT JOIN usuario p ON a.id_usuario = p.id_usuario
+                LEFT JOIN usuario prof ON a.id_profissional = prof.id_usuario
+                ORDER BY a.data_agendamento DESC
+            `;
+            return db.prepare(sql).all();
         } catch (error) {
-            console.error("Model Agendamento (listar):", error);
+            console.error("Model Agendamento (listar local):", error);
             return [];
         }
     }
 
     async buscarPorId(id) {
         try {
-            return await this.api.get(`agendamentos/${id}`);
+            return db.prepare('SELECT * FROM agendamento WHERE id_agendamento = ?').get(id);
         } catch (error) {
             console.error("Model Agendamento (buscarPorId):", error);
             return null;
@@ -25,15 +39,20 @@ class AgendamentoModel {
 
     async cadastrar(dados) {
         try {
+            // Para simplificar, vamos salvar direto na API por enquanto, 
+            // mas o ideal seria salvar local e sincronizar.
+            // Se salvar local, precisa criar tabela agendamento no db.js se não existir.
+            // Dado o erro do usuário, a prioridade é a LEITURA funcionar.
+
+            // Tenta salvar API
             return await this.api.post('agendamentos', dados);
         } catch (error) {
-            return { success: false, erro: error.message };
+            return { success: false, erro: "Erro ao salvar (API Offline): " + error.message };
         }
     }
 
     async editar(dados) {
         try {
-            // Ajuste a rota conforme sua API (ex: POST em /agendamentos/editar ou PUT)
             return await this.api.post(`agendamentos/editar/${dados.id_agendamento}`, dados);
         } catch (error) {
             return { success: false, erro: error.message };
@@ -59,18 +78,16 @@ class AgendamentoModel {
     // Busca dados para preencher os selects (Pacientes e Profissionais)
     async getDadosFormulario() {
         try {
-            // Faz duas chamadas paralelas para agilizar
-            const [pacientes, profissionais] = await Promise.all([
-                this.api.get('usuarios?tipo=cliente'),      // Rota teórica da API
-                this.api.get('usuarios?tipo=profissional')  // Rota teórica da API
-            ]);
+            // BUSCA LOCAL (OFFLINE-FIRST)
+            const pacientes = db.prepare("SELECT id_usuario, nome_usuario FROM usuario WHERE tipo_usuario = 'cliente' AND excluido_em IS NULL").all();
+            const profissionais = db.prepare("SELECT id_usuario as id_profissional, nome_usuario FROM usuario WHERE tipo_usuario = 'profissional' AND excluido_em IS NULL").all();
 
             return {
-                pacientes: Array.isArray(pacientes) ? pacientes : [],
-                profissionais: Array.isArray(profissionais) ? profissionais : []
+                pacientes: pacientes || [],
+                profissionais: profissionais || []
             };
         } catch (error) {
-            console.error("Model Agendamento (getDadosFormulario):", error);
+            console.error("Model Agendamento (getDadosFormulario Local):", error);
             return { pacientes: [], profissionais: [] };
         }
     }

@@ -42,6 +42,47 @@
     overflow: hidden; /* Garante bordas arredondadas */
 }
 
+/* --- CABEÇALHO DA TABELA (Título + Botão Sync) --- */
+#titulo-lista {
+    display: flex;
+    justify-content: space-between; /* Joga o botão para a direita */
+    align-items: center;
+    color: #5D6D68;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    font-size: 1.17em; /* Mantém tamanho de H3 padrão */
+    margin-top: 0;
+}
+
+/* Botão Sincronizar (Estilo igual ao Novo Cadastro) */
+.btn-sync {
+    background-color: #5D6D68; /* Mesma cor do botão novo */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 6px rgba(93, 109, 104, 0.2);
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+.btn-sync:hover {
+    background-color: #4a5854;
+    transform: translateY(-2px);
+}
+
+.btn-sync:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
 .table-responsive {
     width: 100%;
     overflow-x: auto;
