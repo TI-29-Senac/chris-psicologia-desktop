@@ -61,7 +61,8 @@ class AgendamentoModel {
             // 2. Tenta Sync API
             try {
                 const dadosApi = { ...dados, id_agendamento: novoId };
-                await this.api.post('agendamentos', dadosApi);
+                // Rota: POST /api/agendamentos/salvar (API JSON)
+                await this.api.post('api/agendamentos/salvar', dadosApi);
                 db.prepare('UPDATE agendamento SET sincronizado = 1 WHERE id_agendamento = ?').run(novoId);
             } catch (e) {
                 console.warn("Agendamento salvo offline (Sync pendente).");
@@ -87,7 +88,9 @@ class AgendamentoModel {
 
             // 2. Tenta Sync
             try {
-                await this.api.post(`agendamentos/editar/${dados.id_agendamento}`, dados);
+                // Rota: POST /api/agendamentos/salvar (API JSON assumindo Upsert ou fallback)
+                // Se a API não suportar atualização por aqui, será necessário criar rota específica no back.
+                await this.api.post(`api/agendamentos/salvar`, dados);
                 db.prepare('UPDATE agendamento SET sincronizado = 1 WHERE id_agendamento = ?').run(dados.id_agendamento);
             } catch (e) {
                 console.warn("Edição salva offline (Sync pendente).");
@@ -106,7 +109,9 @@ class AgendamentoModel {
             db.prepare('UPDATE agendamento SET excluido_em = CURRENT_TIMESTAMP, sincronizado = 0 WHERE id_agendamento = ?').run(id);
 
             try {
-                await this.api.post(`agendamentos/excluir/${id}`);
+                // Rota: POST /agendamentos/deletar/{id} (Web Controller - Form Data)
+                // Usamos postForm pois é controller Web
+                await this.api.postForm(`agendamentos/deletar/${id}`, {});
                 db.prepare('UPDATE agendamento SET sincronizado = 1 WHERE id_agendamento = ?').run(id);
             } catch (e) {
                 console.warn("Remoção salva offline (Sync pendente).");
@@ -124,8 +129,14 @@ class AgendamentoModel {
             db.prepare("UPDATE agendamento SET status_consulta = 'Cancelado', sincronizado = 0 WHERE id_agendamento = ?").run(id);
 
             try {
-                await this.api.post(`agendamentos/cancelar/${id}`);
-                db.prepare('UPDATE agendamento SET sincronizado = 1 WHERE id_agendamento = ?').run(id);
+                // AVISO: Não existe rota de cancelar explícita no backend.
+                // Tentaremos 'deletar' ou 'salvar' com status novo dependendo da lógica.
+                // Como não tem 'cancelar' na lista, vou enviar como update (salvar) com status.
+                const agendamento = db.prepare('SELECT * FROM agendamento WHERE id_agendamento = ?').get(id);
+                if (agendamento) {
+                    await this.api.post('api/agendamentos/salvar', agendamento);
+                    db.prepare('UPDATE agendamento SET sincronizado = 1 WHERE id_agendamento = ?').run(id);
+                }
             } catch (e) {
                 console.warn("Cancelamento salvo offline (Sync pendente).");
             }
@@ -150,6 +161,82 @@ class AgendamentoModel {
         } catch (error) {
             console.error("Model Agendamento (getDadosFormulario Local):", error);
             return { pacientes: [], profissionais: [] };
+        }
+    }
+
+    async sincronizacaoBidirecional() {
+        try {
+            // --- PUSH (Local -> API) ---
+            const pendentes = db.prepare('SELECT * FROM agendamento WHERE sincronizado = 0').all();
+
+            for (const item of pendentes) {
+                try {
+                    let res;
+                    if (item.excluido_em) {
+                        // Deletar via Controller Web (Form)
+                        res = await this.api.postForm(`agendamentos/deletar/${item.id_agendamento}`, {});
+                    } else if (item.status_consulta === 'Cancelado') {
+                        // Cancelar via Save (JSON)
+                        res = await this.api.post('api/agendamentos/salvar', item);
+                    } else {
+                        // Salvar/Editar (JSON)
+                        res = await this.api.post('api/agendamentos/salvar', item);
+                    }
+
+                    // Verificações padrão
+                    if (res && res.sessionExpired) return { success: false, erro: "Sessão expirada", sessionExpired: true };
+                    if (res && res.offline) return { success: false, erro: "Offline", offline: true };
+
+                    if (res && (res.success || res.offline)) { // Aceita offline se a API retornar flag
+                        db.prepare('UPDATE agendamento SET sincronizado = 1 WHERE id_agendamento = ?').run(item.id_agendamento);
+                    }
+                } catch (errItem) {
+                    console.error(`Erro sync agendamento ${item.id_agendamento}:`, errItem);
+                }
+            }
+
+            // --- PULL (API -> Local) ---
+            const apiData = await this.api.get('api/agendamentos'); // Rota JSON
+
+            if (apiData && apiData.sessionExpired) return { success: false, sessionExpired: true };
+            if (apiData && apiData.offline) return { success: false, offline: true };
+
+            const lista = Array.isArray(apiData) ? apiData : (apiData.data || []);
+
+            if (lista.length > 0) {
+                const stmtUpsert = db.prepare(`
+                    INSERT INTO agendamento (id_agendamento, id_usuario, id_profissional, data_agendamento, status_consulta, observacoes, sincronizado, excluido_em)
+                    VALUES (@id, @id_user, @id_prof, @data, @status, @obs, 1, NULL)
+                    ON CONFLICT(id_agendamento) DO UPDATE SET
+                        id_usuario = excluded.id_usuario,
+                        id_profissional = excluded.id_profissional,
+                        data_agendamento = excluded.data_agendamento,
+                        status_consulta = excluded.status_consulta,
+                        observacoes = excluded.observacoes,
+                        sincronizado = 1,
+                        excluido_em = NULL
+                `);
+
+                const transacao = db.transaction((dados) => {
+                    for (const d of dados) {
+                        stmtUpsert.run({
+                            id: d.id_agendamento,
+                            id_user: d.id_usuario,
+                            id_prof: d.id_profissional,
+                            data: d.data_agendamento,
+                            status: d.status_consulta,
+                            obs: d.observacoes
+                        });
+                    }
+                });
+                transacao(lista);
+            }
+
+            return { success: true };
+
+        } catch (error) {
+            console.error("Erro Sync Agendamentos:", error);
+            return { success: false, erro: error.message };
         }
     }
 }

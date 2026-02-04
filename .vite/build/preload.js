@@ -3,6 +3,8 @@ const electron = require("electron");
 electron.contextBridge.exposeInMainWorld("electronAPI", {
   // Autenticação
   login: (credenciais) => electron.ipcRenderer.invoke("auth:login", credenciais),
+  logout: () => electron.ipcRenderer.invoke("auth:logout"),
+  onSessionExpired: (callback) => electron.ipcRenderer.on("auth:session-expired", (_event, value) => callback(value)),
   // Usuários
   cadastrarUsuario: (dados) => electron.ipcRenderer.invoke("usuarios:cadastrar", dados),
   listarUsuarios: () => electron.ipcRenderer.invoke("usuarios:listar"),

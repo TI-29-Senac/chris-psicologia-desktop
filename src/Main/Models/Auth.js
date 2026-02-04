@@ -10,7 +10,17 @@ class AuthModel {
     async login(email, senha) {
         try {
             // 1. Tenta login online primeiro
-            const resultado = await this.api.post('auth/login', { email, senha });
+            // ALTERADO: Usa chaves compatíveis com o backend PHP (email_usuario/senha_usuario)
+            const payload = {
+                email_usuario: email,
+                senha_usuario: senha,
+                // Mantemos 'email' e 'senha' por compatibilidade caso o backend use os curtos
+                // Mantemos 'email' e 'senha' por compatibilidade caso o backend use os curtos
+                email: email,
+                senha: senha
+            };
+            // REVERTIDO: O Controller da API Desktop provavelmente espera JSON, não POST Form
+            const resultado = await this.api.post('desktop/login', payload);
 
             console.log("Resposta do Login Online:", resultado);
 

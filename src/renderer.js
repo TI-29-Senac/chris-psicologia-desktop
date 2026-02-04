@@ -6,13 +6,21 @@ const loginForm = document.getElementById('login-form');
 const msgErro = document.getElementById('mensagem-erro');
 const btnLogin = document.getElementById('btn-login');
 
+// Listener para Sessão Expirada (vindo do Main process)
+if (window.electronAPI && window.electronAPI.onSessionExpired) {
+    window.electronAPI.onSessionExpired(() => {
+        alert("Sua sessão expirou. Por favor, faça login novamente.");
+        window.location.href = '../../index.html'; // Ajuste o caminho se necessário
+    });
+}
+
 if (loginForm) {
     loginForm.addEventListener('submit', async (event) => {
         event.preventDefault();
 
         // Limpa mensagens e desabilita botão
-        if(msgErro) msgErro.textContent = '';
-        if(btnLogin) {
+        if (msgErro) msgErro.textContent = '';
+        if (btnLogin) {
             btnLogin.disabled = true;
             btnLogin.textContent = 'Entrando...';
         }
@@ -22,22 +30,26 @@ if (loginForm) {
 
         try {
             console.log("Tentando login via Electron API (localhost)...");
-            
-            // Chama o Main Process -> Controller -> Model -> API Local
-            const data = await window.electronAPI.login({ email, senha });
-            
-            console.log("Resposta do Login:", data);
 
-            if (data && data.success) {
-                if(msgErro) {
+            // Chama o Main Process -> Controller -> Model -> API Local
+            // A resposta agora já contém tokens salvos no SecureStorage (Main Process)
+            const resposta = await window.electronAPI.login({ email, senha });
+
+            console.log("Resposta do Login:", resposta);
+
+            if (resposta && resposta.success) { // Verifique se a API retorna 'success' ou 'status: success'
+                if (msgErro) {
                     msgErro.style.color = 'green';
                     msgErro.textContent = 'Login realizado! Redirecionando...';
                 }
-                
-                // Salva sessão
-                localStorage.setItem('usuario_logado', JSON.stringify(data.usuario));
-                if(data.token) localStorage.setItem('auth_token', data.token);
-                
+
+                // Salva dados básicos do usuário (apenas para UI)
+                // TOKENS NÃO SÃO SALVOS AQUI, ELES FICAM NO SECURE STORAGE (MAIN)
+                localStorage.setItem('usuario_logado', JSON.stringify(resposta.data ? resposta.data.usuario : resposta.usuario));
+
+                // Limpa token antigo se existir (legado)
+                localStorage.removeItem('auth_token');
+
                 // Redireciona
                 setTimeout(() => {
                     // Verifique se este caminho está correto na sua estrutura final de pastas
@@ -45,19 +57,19 @@ if (loginForm) {
                 }, 1000);
 
             } else {
-                throw new Error(data.erro || data.error || 'Credenciais inválidas ou erro na API.');
+                throw new Error(resposta.erro || resposta.error || 'Credenciais inválidas ou erro na API.');
             }
 
         } catch (error) {
             console.error('Erro detalhado:', error);
-            if(msgErro) {
+            if (msgErro) {
                 msgErro.style.color = '#e74c3c';
                 msgErro.textContent = error.message;
             } else {
                 alert(error.message);
             }
         } finally {
-            if(btnLogin) {
+            if (btnLogin) {
                 btnLogin.disabled = false;
                 btnLogin.textContent = 'Entrar';
             }

@@ -58,6 +58,16 @@ async function init() {
     } else {
         await buscarDados();
     }
+
+    // Listener para Sessão Expirada
+    if (window.electronAPI && window.electronAPI.onSessionExpired) {
+        window.electronAPI.onSessionExpired(() => {
+            alert("Sua sessão expirou. Você será redirecionado para o login.");
+            localStorage.removeItem('usuario_logado');
+            localStorage.removeItem('auth_token');
+            window.location.href = '../../../../index.html';
+        });
+    }
 }
 
 // --- 1. BUSCA DE DADOS ---
@@ -361,6 +371,11 @@ if (btnSincronizar) {
                 alert(resultado.message || "Sincronização bidirecional concluída!");
                 await buscarDados(); // Recarrega a lista com os dados novos do site
             } else {
+                if (resultado.sessionExpired) {
+                    // Se for sessão expirada, o listener acima deve pegar, mas garantimos aqui também
+                    // Não alertamos erro genérico para não confundir
+                    return;
+                }
                 alert("Erro na sincronização: " + (resultado.erro || "Falha na conexão"));
             }
 

@@ -3,30 +3,40 @@
 // 1. Recupera Sessão
 const sessao = localStorage.getItem('usuario_logado');
 let usuarioLogado = null;
- 
+
 if (!sessao) {
     // Se não tiver sessão, manda pro login
     window.location.href = '../../../../index.html';
 } else {
     usuarioLogado = JSON.parse(sessao);
     console.log("Usuário carregado no Dashboard:", usuarioLogado); // Para debug
-   
+
+    // Listener para Sessão Expirada (Logout forçado pelo Main process)
+    if (window.electronAPI && window.electronAPI.onSessionExpired) {
+        window.electronAPI.onSessionExpired(() => {
+            alert("Sua sessão expirou. Você será redirecionado para o login.");
+            localStorage.removeItem('usuario_logado');
+            localStorage.removeItem('auth_token');
+            window.location.href = '../../../../index.html';
+        });
+    }
+
     // 2. Seleciona os elementos
     const nomeEl = document.querySelector('.user-name');
-    const tipoEl = document.querySelector('.user-type'); 
+    const tipoEl = document.querySelector('.user-type');
     const welcomeEl = document.querySelector('.page-title p');
-   
+
     // 3. Normaliza os dados (aceita nome ou nome_usuario)
     const nomeReal = usuarioLogado.nome || usuarioLogado.nome_usuario || "Usuário Sem Nome";
     const tipoReal = usuarioLogado.tipo || usuarioLogado.tipo_usuario;
 
     // 4. Preenche o Nome
-    if(nomeEl) {
+    if (nomeEl) {
         nomeEl.textContent = nomeReal;
     }
 
     // 5. Preenche o Tipo
-    if(tipoEl) {
+    if (tipoEl) {
         if (tipoReal) {
             // Capitaliza a primeira letra (ex: "profissional" -> "Profissional")
             const tipoFormatado = tipoReal.charAt(0).toUpperCase() + tipoReal.slice(1);
@@ -37,12 +47,12 @@ if (!sessao) {
     }
 
     // 6. Mensagem de Boas-vindas
-    if(welcomeEl) {
+    if (welcomeEl) {
         welcomeEl.textContent = `Bem-vindo de volta, ${nomeReal.split(' ')[0]}!`; // Pega só o primeiro nome
     }
-   
+
     // Função de Logout
-    window.logout = function() {
+    window.logout = function () {
         localStorage.removeItem('usuario_logado');
         localStorage.removeItem('auth_token');
         window.location.href = '../../../../index.html';
@@ -58,11 +68,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     Chart.defaults.font.family = "'Questrial', sans-serif";
     Chart.defaults.color = '#5D6D68';
-    
+
     const colorPrimary = '#5D6D68';
     const colorSecondary = '#7A8F89';
     const colorAccent = '#d6e3d6';
- 
+
     /* --- 1. Gráfico de Agendamentos (Linha) --- */
     const canvasAppt = document.getElementById('appointmentsChart');
     if (canvasAppt) {
@@ -96,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
- 
+
     /* --- 2. Gráfico de Usuários (Doughnut) --- */
     const canvasUsers = document.getElementById('usersChart');
     if (canvasUsers) {
@@ -120,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
- 
+
     /* --- 3. Gráfico Financeiro (Barra) --- */
     const canvasFinance = document.getElementById('financeChart');
     if (canvasFinance) {

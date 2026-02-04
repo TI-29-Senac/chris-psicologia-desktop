@@ -4,6 +4,8 @@ import { contextBridge, ipcRenderer } from 'electron';
 contextBridge.exposeInMainWorld('electronAPI', {
   // Autenticação
   login: (credenciais) => ipcRenderer.invoke('auth:login', credenciais),
+  logout: () => ipcRenderer.invoke('auth:logout'),
+  onSessionExpired: (callback) => ipcRenderer.on('auth:session-expired', (_event, value) => callback(value)),
 
   // Usuários
   cadastrarUsuario: (dados) => ipcRenderer.invoke('usuarios:cadastrar', dados),
@@ -16,7 +18,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // LOGIN SESSÃO
   loginUsuario: (dados) => ipcRenderer.invoke('usuarios:login', dados),
   getCurrentUser: () => ipcRenderer.invoke('usuarios:getCurrentUser'),
-  
+
   // Pagamentos
   processarPagamento: (dados) => ipcRenderer.invoke('pagamento:processar', dados),
   listarPagamentos: () => ipcRenderer.invoke('pagamento:listar'),

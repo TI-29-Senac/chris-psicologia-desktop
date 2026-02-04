@@ -56,6 +56,7 @@ class UsuarioModel {
             try {
                 // Garante que o ID gerado vá para a API também
                 const dadosParaAPI = { ...dados, id_usuario: novoId };
+                // REVERTIDO: APIUsuarioController espera JSON
                 const apiRes = await this.api.post('usuarios/salvar', dadosParaAPI);
 
                 if (apiRes && apiRes.success) {
@@ -96,6 +97,7 @@ class UsuarioModel {
 
             // Tenta avisar o site da mudança
             try {
+                // REVERTIDO: API espera JSON
                 await this.api.post('usuarios/salvar', dados);
                 db.prepare('UPDATE usuario SET sincronizado = 1 WHERE id_usuario = ?')
                     .run(dados.id_usuario);
@@ -148,6 +150,18 @@ class UsuarioModel {
                     if (user.excluido_em) {
                         try {
                             const res = await this.api.post(`usuarios/excluir/${user.id_usuario}`);
+
+                            // SE A SESSÃO EXPIROU, PARE TUDO IMEDIATAMENTE
+                            if (res && res.sessionExpired) {
+                                return { success: false, erro: "Sessão expirada.", sessionExpired: true };
+                            }
+
+                            // SE ESTIVER OFFLINE, PARE TUDO PARA EVITAR FLOOD
+                            if (res && res.offline) {
+                                console.warn("Sincronização interrompida: Modo Offline.");
+                                return { success: false, erro: "Modo Offline.", offline: true };
+                            }
+
                             // Se sucesso (ou se já não existe), marcamos como sincronizado
                             if (res && (res.success || res.offline)) {
                                 db.prepare('UPDATE usuario SET sincronizado = 1 WHERE id_usuario = ?').run(user.id_usuario);
@@ -158,7 +172,21 @@ class UsuarioModel {
                         }
                     } else {
                         // Cadastro ou Edição
+                        // REVERTIDO: API espera JSON
                         const res = await this.api.post('usuarios/salvar', user);
+
+                        // SE A SESSÃO EXPIROU, PARE TUDO IMEDIATAMENTE
+                        if (res && res.sessionExpired) {
+                            console.error("Sincronização abortada: Sessão expirada.");
+                            return { success: false, erro: "Sessão expirada.", sessionExpired: true };
+                        }
+
+                        // SE ESTIVER OFFLINE, PARE TUDO
+                        if (res && res.offline) {
+                            console.warn("Sincronização interrompida: Modo Offline.");
+                            return { success: false, erro: "Modo Offline.", offline: true };
+                        }
+
                         if (res && res.success) {
                             // Se o servidor gerou um ID novo e é diferente do local
                             const novoId = res.id_gerado || user.id_usuario;
@@ -181,6 +209,15 @@ class UsuarioModel {
             // --- FLUXO 2: PULL (Servidor -> Local) ---
             // Busca todos os usuários do MySQL
             const usuariosSite = await this.api.get('usuarios');
+
+            if (usuariosSite && usuariosSite.sessionExpired) {
+                return { success: false, erro: "Sessão expirada durante Pull.", sessionExpired: true };
+            }
+
+            if (usuariosSite && usuariosSite.offline) {
+                return { success: false, erro: "Modo Offline durante Pull.", offline: true };
+            }
+
             const listaOficial = Array.isArray(usuariosSite) ? usuariosSite : (usuariosSite.data || []);
 
             if (listaOficial.length > 0) {

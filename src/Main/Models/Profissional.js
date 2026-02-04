@@ -59,15 +59,11 @@ class ProfissionalModel {
                 dados.sinal_consulta || 0
             );
 
-            // 2. Tenta enviar para API
+            // 2. Tenta enviar para API (Web Controller - Form Data)
             const dadosParaAPI = { ...dados, id_profissional: novoIdProfissional };
             try {
-                const apiRes = await this.api.post('profissionais/salvar', dadosParaAPI);
-                // Se sucesso, poderíamos marcar algo como sincronizado, mas 
-                // a tabela profissional não tem coluna 'sincronizado' no esquema original?
-                // Vamos verificar. No db.js não tinha 'sincronizado' na tabela profissional.
-                // Isso é um problema. Precisamos adicionar ou assumir que o sync roda globalmente.
-                // Por enqunto, segue o fluxo.
+                // Rota: POST /profissionais/salvar (Controller Web)
+                await this.api.postForm('profissionais/salvar', dadosParaAPI);
             } catch (apiErr) {
                 console.warn("Offline: Profissional salvo apenas localmente.");
             }
@@ -98,7 +94,8 @@ class ProfissionalModel {
             );
 
             try {
-                await this.api.post('profissionais/salvar', dados);
+                // Rota: POST /profissionais/atualizar/{id} (Controller Web)
+                await this.api.postForm(`profissionais/atualizar/${dados.id_profissional}`, dados);
             } catch (e) {
                 console.warn("Edição offline (Profissional).");
             }
@@ -116,7 +113,8 @@ class ProfissionalModel {
 
             // Tenta excluir na API
             try {
-                await this.api.post(`profissionais/excluir/${id}`);
+                // Rota: POST /profissionais/deletar/{id} (Controller Web) e postForm (PHP)
+                await this.api.postForm(`profissionais/deletar/${id}`, {});
             } catch (e) {
                 console.warn("Exclusão offline.");
             }
