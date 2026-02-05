@@ -3,8 +3,10 @@ body {
   font-family: 'Questrial', sans-serif;
   margin: 0;
   padding: 0;
-  background-color: #EBF1F0;
-  /* Fundo suave esverdeado */
+  background-color: #5D6D68;
+  /* Fundo base escuro */
+  background: linear-gradient(135deg, #5D6D68 0%, #4a5854 100%);
+  /* Gradiente suave */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -13,47 +15,38 @@ body {
 
 .login-card {
   background: white;
-  padding: 3rem 2.5rem;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(93, 109, 104, 0.1);
+  padding: 3.5rem 3rem;
+  /* Mais espaçamento interno */
+  border-radius: 20px;
+  /* Bordas mais arredondadas */
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  /* Sombra mais profunda */
   width: 100%;
-  max-width: 380px;
+  max-width: 400px;
   text-align: center;
   transition: transform 0.3s;
 }
 
 /* Logo Styling */
 .brand-login {
-  font-size: 2rem;
-  color: #5D6D68;
-  line-height: 1;
   display: flex;
   justify-content: center;
-  gap: 5px;
-  align-items: baseline;
-}
-
-.logo-text-bold {
-  font-weight: 900;
-  letter-spacing: -1px;
-}
-
-.logo-text-light {
-  font-weight: 300;
+  align-items: center;
+  margin-bottom: 2rem;
 }
 
 .subtitle {
   color: #7A8F89;
-  margin-bottom: 2rem;
-  font-size: 0.95rem;
-  margin-top: -20px;
-  /* Aproxima do logo */
+  margin-bottom: 2.5rem;
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
 /* Form Styles */
 .input-group {
   text-align: left;
-  margin-bottom: 1.2rem;
+  margin-bottom: 1.5rem;
   position: relative;
 }
 
@@ -63,18 +56,19 @@ label {
   color: #5D6D68;
   font-weight: 600;
   font-size: 0.9rem;
+  padding-left: 5px;
 }
 
 input {
   width: 100%;
-  padding: 12px 15px;
+  padding: 14px 18px;
   border: 2px solid #e0e0e0;
-  border-radius: 8px;
+  border-radius: 12px;
   font-size: 1rem;
   font-family: inherit;
   color: #444;
   box-sizing: border-box;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
   background-color: #f8f9fa;
 }
 
@@ -82,7 +76,7 @@ input:focus {
   border-color: #5D6D68;
   background-color: #fff;
   outline: none;
-  box-shadow: 0 0 0 3px rgba(93, 109, 104, 0.1);
+  box-shadow: 0 0 0 4px rgba(93, 109, 104, 0.15);
 }
 
 input::placeholder {
@@ -91,27 +85,30 @@ input::placeholder {
 
 button {
   width: 100%;
-  padding: 14px;
+  padding: 16px;
   background-color: #5D6D68;
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 1.05rem;
+  border-radius: 12px;
+  font-size: 1.1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
-  margin-top: 1rem;
-  box-shadow: 0 4px 6px rgba(93, 109, 104, 0.2);
+  transition: all 0.3s ease;
+  margin-top: 1.5rem;
+  box-shadow: 0 4px 10px rgba(93, 109, 104, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 button:hover {
   background-color: #4a5854;
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(93, 109, 104, 0.3);
+  box-shadow: 0 6px 15px rgba(93, 109, 104, 0.4);
 }
 
 button:active {
   transform: translateY(0);
+  box-shadow: 0 2px 5px rgba(93, 109, 104, 0.3);
 }
 
 button:disabled {
@@ -127,4 +124,6 @@ button:disabled {
   font-size: 0.9rem;
   min-height: 1.2em;
   font-weight: 500;
+  padding: 10px;
+  border-radius: 8px;
 }

@@ -161,19 +161,20 @@ class UsuarioModel {
 
     async excluir(id) {
         try {
-            // 1. Remove do SQLite local imediatamente (Soft Delete preferido para sync, mas mantendo lógica original modificada para soft delete sync)
-            // Alterado para Soft Delete local para permitir sync de exclusão
+            // 1. Remove do SQLite local imediatamente (Update Soft Delete)
             const stmt = db.prepare('UPDATE usuario SET excluido_em = CURRENT_TIMESTAMP, sincronizado = 0 WHERE id_usuario = ?');
             stmt.run(id);
 
-            // 2. Tenta remover no site (MySQL)
+            // 2. Busca o usuário atualizado para enviar o timestamp correto
+            const usuarioAtualizado = db.prepare('SELECT * FROM usuario WHERE id_usuario = ?').get(id);
+
+            // 3. Tenta salvar a atualização (Soft Delete) no site (MySQL)
             // OFFLINE-FIRST: Não retornamos erro se a API falhar, pois a exclusão local foi sucesso.
             try {
-                // Certifique-se de que a rota de exclusão no PHP aceite o ID enviado
-                const res = await this.api.post(`usuarios/excluir/${id}`);
+                // ALTERADO: Usamos 'salvar' em vez de 'excluir' para garantir que o campo excluido_em seja atualizado lá
+                const res = await this.api.post('usuarios/salvar', usuarioAtualizado);
+
                 if (res && res.success) {
-                    // Se confirmou exclusão lá, podemos excluir fisicamente aqui ou manter como excluido.
-                    // Vamos manter soft delete sincronizado.
                     db.prepare('UPDATE usuario SET sincronizado = 1 WHERE id_usuario = ?').run(id);
                 }
             } catch (apiErr) {
@@ -196,10 +197,11 @@ class UsuarioModel {
 
             for (const user of pendentesLocais) {
                 try {
-                    // Se tiver excluido_em preenchido, manda excluir na API
+                    // Se tiver excluido_em preenchido, manda SALVAR na API (Soft Delete)
+                    // Anteriormente chamava 'excluir', agora chama 'salvar' para persistir o timestamp
                     if (user.excluido_em) {
                         try {
-                            const res = await this.api.post(`usuarios/excluir/${user.id_usuario}`);
+                            const res = await this.api.post('usuarios/salvar', user);
 
                             // SE A SESSÃO EXPIROU, PARE TUDO IMEDIATAMENTE
                             if (res && res.sessionExpired) {
@@ -215,10 +217,9 @@ class UsuarioModel {
                             // Se sucesso (ou se já não existe), marcamos como sincronizado
                             if (res && (res.success || res.offline)) {
                                 db.prepare('UPDATE usuario SET sincronizado = 1 WHERE id_usuario = ?').run(user.id_usuario);
-                                // Opcional: deletar fisicamente agora se quiser limpar o banco
                             }
                         } catch (e) {
-                            console.warn(`Erro ao excluir usuário ${user.id_usuario} na API:`, e);
+                            console.warn(`Erro ao sincronizar exclusão do usuário ${user.id_usuario} na API:`, e);
                         }
                     } else {
                         // Cadastro ou Edição
