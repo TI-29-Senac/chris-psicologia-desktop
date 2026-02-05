@@ -1,34 +1,43 @@
 <!doctype html>
 <html lang="pt-br">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login - Chris Psicologia</title>
-  </head>
-  <body>
-    <div class="login-wrapper">
-      <div class="login-card">
-        <h1>Chris Psicologia</h1>
-        <p class="subtitle">Acesso Administrativo</p>
-        
-        <form id="login-form">
-          <div class="input-group">
-            <label for="email">E-mail</label>
-            <input type="email" id="email" placeholder="seu@email.com" required>
-          </div>
-          
-          <div class="input-group">
-            <label for="senha">Senha</label>
-            <input type="password" id="senha" placeholder="Sua senha" required>
-          </div>
 
-          <button type="submit" id="btn-login">Entrar</button>
-        </form>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - Chris Psicologia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Questrial&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
 
-        <p id="mensagem-erro" class="error-msg"></p>
+<body>
+  <div class="login-wrapper">
+    <div class="login-card">
+      <div class="brand-login" style="margin-bottom: 30px;">
+        <span class="logo-text-bold">CHRIS</span><span class="logo-text-light">PSICOLOGIA</span>
       </div>
+      <p class="subtitle">Acesso Administrativo</p>
+
+      <form id="login-form">
+        <div class="input-group">
+          <label for="email">E-mail</label>
+          <input type="email" id="email" placeholder="seu@email.com" required>
+        </div>
+
+        <div class="input-group">
+          <label for="senha">Senha</label>
+          <input type="password" id="senha" placeholder="Sua senha" required>
+        </div>
+
+        <button type="submit" id="btn-login">Entrar</button>
+      </form>
+
+      <p id="mensagem-erro" class="error-msg"></p>
     </div>
-    
-    <script type="module" src="/src/renderer.js"></script>
-  </body>
+  </div>
+
+  <script type="module" src="/src/renderer.js"></script>
+</body>
+
 </html>

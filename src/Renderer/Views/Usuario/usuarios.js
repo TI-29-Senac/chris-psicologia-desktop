@@ -259,7 +259,7 @@ async function salvarUsuario() {
     const senha = document.getElementById('cad-senha').value;
     const idEdicao = btnSalvar.dataset.id;
 
-    if (!nome || !email || (!idEdicao && !senha)) return alert("Preencha os campos obrigatórios.");
+    if (!nome || !email || (!idEdicao && !senha)) return mostrarAviso("Campos Obrigatórios", "Preencha todos os campos obrigatórios.", "info");
 
     // O 'tipo_usuario' será definido pela aba ativa no modal (tipoCadastroAtual)
     const dados = {
@@ -273,7 +273,7 @@ async function salvarUsuario() {
     if (idEdicao) {
         const res = await window.electronAPI.editarUsuario(dados);
         if (res.success) {
-            alert("Tipo de utilizador atualizado!");
+            mostrarAviso("Sucesso", "Usuário atualizado com sucesso!", "sucesso");
             modal.classList.remove('active');
             buscarDados();
         }
@@ -298,32 +298,103 @@ async function salvarUsuario() {
         }
 
         if (res.success) {
-            alert(idEdicao ? "Usuário atualizado com sucesso!" : "Cadastro realizado!");
+            mostrarAviso("Sucesso", idEdicao ? "Usuário atualizado!" : "Cadastro realizado!", "sucesso");
             modal.classList.remove('active');
             delete btnSalvar.dataset.id;
             buscarDados();
         } else {
-            alert("Erro: " + (res.erro || "Falha desconhecida"));
+            mostrarAviso("Erro no Cadastro", "Erro: " + (res.erro || "Falha desconhecida"), "erro");
         }
     } catch (e) {
         console.error(e);
-        alert("Erro interno.");
+        mostrarAviso("Erro Interno", "Houve um erro grave no sistema.", "erro");
     } finally {
         btnSalvar.innerText = txtOriginal;
         btnSalvar.disabled = false;
     }
 }
 
+// --- 4. FUNÇÕES DE MODAIS CUSTOMIZADOS ---
+
+// MODAL AVISO (Substitui alert)
+function mostrarAviso(titulo, mensagem, tipo = 'sucesso') {
+    const modalAviso = document.getElementById('modal-aviso');
+    const tituloEl = document.getElementById('aviso-titulo');
+    const msgEl = document.getElementById('aviso-mensagem');
+    const iconContainer = document.getElementById('aviso-icon-container');
+    const btnOk = document.getElementById('btn-ok-aviso');
+
+    tituloEl.innerText = titulo;
+    msgEl.innerText = mensagem;
+
+    let iconHtml = '';
+    if (tipo === 'sucesso') {
+        iconHtml = '<i class="fa-solid fa-circle-check" style="font-size: 3rem; color: #27ae60;"></i>';
+    } else if (tipo === 'erro') {
+        iconHtml = '<i class="fa-solid fa-circle-xmark" style="font-size: 3rem; color: #e74c3c;"></i>';
+    } else {
+        iconHtml = '<i class="fa-solid fa-circle-info" style="font-size: 3rem; color: #3498db;"></i>';
+    }
+    iconContainer.innerHTML = iconHtml;
+
+    modalAviso.classList.add('active');
+
+    // Remove listener anterior para evitar múltiplos disparos se chamar várias vezes
+    const novoBtnOk = btnOk.cloneNode(true);
+    btnOk.parentNode.replaceChild(novoBtnOk, btnOk);
+
+    novoBtnOk.addEventListener('click', () => {
+        modalAviso.classList.remove('active');
+    });
+}
+
+// MODAL CONFIRMAÇÃO (Substitui confirm)
+function mostrarConfirmacao(titulo, mensagem, callback) {
+    const modalConf = document.getElementById('modal-confirmacao');
+    const tituloEl = document.getElementById('confirm-titulo');
+    const msgEl = document.getElementById('confirm-mensagem');
+    const btnCancel = document.getElementById('btn-cancel-confirm');
+    const btnOk = document.getElementById('btn-ok-confirm');
+
+    tituloEl.innerText = titulo;
+    msgEl.innerText = mensagem;
+
+    modalConf.classList.add('active');
+
+    // Limpa listeners antigos
+    const novoBtnCancel = btnCancel.cloneNode(true);
+    const novoBtnOk = btnOk.cloneNode(true);
+    btnCancel.parentNode.replaceChild(novoBtnCancel, btnCancel);
+    btnOk.parentNode.replaceChild(novoBtnOk, btnOk);
+
+    novoBtnCancel.addEventListener('click', () => {
+        modalConf.classList.remove('active');
+    });
+
+    novoBtnOk.addEventListener('click', () => {
+        modalConf.classList.remove('active');
+        if (callback) callback();
+    });
+}
+
+// ... Resto das funções ...
+
 function adicionarEventosTabela() {
-    // BOTÃO EXCLUIR
+    // BOTÃO EXCLUIR (User Custom Modal)
     document.querySelectorAll('.btn-delete').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
+        btn.addEventListener('click', (e) => {
             const id = e.target.closest('button').dataset.id;
-            if (confirm("Tem certeza que deseja excluir o usuário #" + id + "?")) {
-                const res = await window.electronAPI.excluirUsuario(id);
-                if (res.success) buscarDados();
-                else alert("Erro ao excluir: " + res.erro);
-            }
+
+            mostrarConfirmacao(
+                "Excluir Usuário",
+                "Tem certeza que deseja excluir o usuário #" + id + "? Essa ação pode ser sincronizada.",
+                async () => {
+                    const res = await window.electronAPI.excluirUsuario(id);
+                    if (res.success) mostrarAviso("Sucesso", "Usuário excluído com sucesso!", "sucesso");
+                    buscarDados();
+                    // else agora é silencioso, mas se quiser aviso visual: mostrarAviso("Erro", res.erro, "erro");
+                }
+            );
         });
     });
 
@@ -368,15 +439,13 @@ if (btnSincronizar) {
             const resultado = await window.electronAPI.sincronizarBidirecional();
 
             if (resultado.success) {
-                alert(resultado.message || "Sincronização bidirecional concluída!");
-                await buscarDados(); // Recarrega a lista com os dados novos do site
+                mostrarAviso("Sincronizado!", resultado.message || "Dados atualizados com sucesso.", "sucesso");
+                await buscarDados();
             } else {
                 if (resultado.sessionExpired) {
-                    // Se for sessão expirada, o listener acima deve pegar, mas garantimos aqui também
-                    // Não alertamos erro genérico para não confundir
                     return;
                 }
-                alert("Erro na sincronização: " + (resultado.erro || "Falha na conexão"));
+                mostrarAviso("Atenção", "Erro na sincronização: " + (resultado.erro || "Falha na conexão"), "erro");
             }
 
             btnSincronizar.disabled = false;

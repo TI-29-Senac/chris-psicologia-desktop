@@ -197,6 +197,33 @@
         </div>
     </div>
 
+    <!-- MODAL DE CONFIRMAÇÃO (Substitui confirm) -->
+    <div id="modal-confirmacao" class="modal-overlay">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div style="margin-bottom: 20px;">
+                <i class="fa-solid fa-circle-exclamation" style="font-size: 3rem; color: #e74c3c;"></i>
+            </div>
+            <h3 id="confirm-titulo" style="margin-bottom: 10px; color: #5D6D68;">Confirmar Exclusão</h3>
+            <p id="confirm-mensagem" style="color: #666; margin-bottom: 25px;">Tem certeza que deseja excluir este item?</p>
+            <div style="display: flex; gap: 10px;">
+                <button id="btn-cancel-confirm" class="btn-secondary" style="flex: 1;">Cancelar</button>
+                <button id="btn-ok-confirm" class="btn-danger" style="flex: 1;">Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE AVISO (Substitui alert) -->
+    <div id="modal-aviso" class="modal-overlay">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div id="aviso-icon-container" style="margin-bottom: 20px;">
+                <!-- Icone injetado via JS -->
+            </div>
+            <h3 id="aviso-titulo" style="margin-bottom: 10px; color: #5D6D68;">Aviso</h3>
+            <p id="aviso-mensagem" style="color: #666; margin-bottom: 25px;">Mensagem aqui.</p>
+            <button id="btn-ok-aviso" class="btn-primary">OK</button>
+        </div>
+    </div>
+
     <script src="../../Services/Auth.js"></script>
     <script>
         const PATH_TO_ROOT = '../../../../';

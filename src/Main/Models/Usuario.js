@@ -22,6 +22,54 @@ class UsuarioModel {
 
     async cadastrar(dados) {
         try {
+            // 0. Verifica se o e-mail já existe (Ativo ou Excluído)
+            const emailNormalizado = dados.email_usuario.trim().toLowerCase();
+            const usuarioExistente = db.prepare('SELECT * FROM usuario WHERE LOWER(email_usuario) = ?').get(emailNormalizado);
+
+            if (usuarioExistente) {
+                if (!usuarioExistente.excluido_em) {
+                    // Cenário A: Usuário existe e está ativo
+                    return { success: false, erro: "E-mail já cadastrado." };
+                } else {
+                    // Cenário B: Usuário existe mas está 'excluído' (Soft Delete) -> REATIVAR
+                    console.log(`Reativando usuário excluído: ${usuarioExistente.id_usuario}`);
+
+                    const salt = bcrypt.genSaltSync(10);
+                    const senhaHashLocal = bcrypt.hashSync(dados.senha_usuario, salt);
+
+                    db.prepare(`
+                        UPDATE usuario 
+                        SET nome_usuario = ?, 
+                            email_usuario = ?,
+                            senha_usuario = ?, 
+                            tipo_usuario = ?, 
+                            cpf = ?, 
+                            sincronizado = 0, 
+                            excluido_em = NULL,
+                            atualizado_em = CURRENT_TIMESTAMP
+                        WHERE id_usuario = ?
+                    `).run(
+                        dados.nome_usuario,
+                        emailNormalizado, // Garante update com o email novo (embora deva ser igual)
+                        senhaHashLocal,
+                        dados.tipo_usuario,
+                        dados.cpf || '000.000.000-00',
+                        usuarioExistente.id_usuario
+                    );
+
+                    // Tenta avisar API (Upsert)
+                    try {
+                        const dadosReativacao = { ...dados, email_usuario: emailNormalizado, id_usuario: usuarioExistente.id_usuario };
+                        await this.api.post('usuarios/salvar', dadosReativacao);
+                        db.prepare('UPDATE usuario SET sincronizado = 1 WHERE id_usuario = ?').run(usuarioExistente.id_usuario);
+                    } catch (e) {
+                        console.warn("Reativação feita apenas localmente (API Offline).");
+                    }
+
+                    return { success: true, id: usuarioExistente.id_usuario, reativado: true };
+                }
+            }
+
             const novoId = uuidv4();
 
             // 1. Salva no SQLite - Note o mapeamento correto das propriedades
@@ -45,7 +93,7 @@ class UsuarioModel {
             stmt.run(
                 novoId,
                 dados.nome_usuario,
-                dados.email_usuario,
+                emailNormalizado,
                 senhaHashLocal, // Salva o hash, não a senha crua
                 dados.tipo_usuario,
                 dados.cpf || '000.000.000-00',
@@ -119,6 +167,7 @@ class UsuarioModel {
             stmt.run(id);
 
             // 2. Tenta remover no site (MySQL)
+            // OFFLINE-FIRST: Não retornamos erro se a API falhar, pois a exclusão local foi sucesso.
             try {
                 // Certifique-se de que a rota de exclusão no PHP aceite o ID enviado
                 const res = await this.api.post(`usuarios/excluir/${id}`);
@@ -127,11 +176,12 @@ class UsuarioModel {
                     // Vamos manter soft delete sincronizado.
                     db.prepare('UPDATE usuario SET sincronizado = 1 WHERE id_usuario = ?').run(id);
                 }
-                return res;
             } catch (apiErr) {
                 console.warn("Offline: Removido apenas localmente (marcado para sync).");
-                return { success: true, offline: true };
             }
+
+            // Sempre retorna sucesso se rodou o update local
+            return { success: true };
         } catch (error) {
             console.error("Erro ao excluir:", error.message);
             return { success: false, erro: error.message };
@@ -244,27 +294,39 @@ class UsuarioModel {
 
             const transacaoPull = db.transaction((dados) => {
                 for (const u of dados) {
+                    const uEmail = (u.email_usuario || '').trim().toLowerCase();
+
                     // 1. UNIFICAÇÃO: Verifica colisão de email (Local ID != Server ID)
                     // Busca quem tem esse email localmente
-                    const local = checkEmailStmt.get(u.email_usuario);
+                    const localPorEmail = checkEmailStmt.get(uEmail);
 
-                    if (local && local.id_usuario.toString() !== u.id_usuario.toString()) {
-                        console.log(`Unificando usuário por email: Local(${local.id_usuario}) -> Server(${u.id_usuario})`);
+                    if (localPorEmail && localPorEmail.id_usuario.toString() !== u.id_usuario.toString()) {
+                        console.log(`Unificando usuário por email: Local(${localPorEmail.id_usuario}) -> Server(${u.id_usuario})`);
 
                         try {
-                            // Verifica se o ID de destino (Server ID) JÁ existe no banco (ocupado por outro usuário/stale)
+                            // Verifica se o ID de destino (Server ID) JÁ existe no banco e não é o mesmo usuario
                             const obstrucao = checkIdStmt.get(u.id_usuario.toString());
                             if (obstrucao) {
-                                console.warn(`Conflito de ID detectado! Removendo registro obsoleto/conflitante ID ${u.id_usuario} para liberar espaço.`);
-                                // Deletamos o registro que está ocupando o ID do servidor (Server Authority)
+                                // Se existir, mas não for o mesmo registro (o que é obvio já que o ID é diferente do localPorEmail), 
+                                // deletamos o obsoleto para dar lugar.
                                 deleteStmt.run(u.id_usuario.toString());
                             }
 
                             // Agora o caminho está livre para renomear o ID local
-                            updateIdStmt.run(u.id_usuario.toString(), local.id_usuario);
+                            updateIdStmt.run(u.id_usuario.toString(), localPorEmail.id_usuario);
                         } catch (e) {
                             console.error("Erro crítico ao unificar IDs:", e.message);
-                            // Se falhar aqui, o UPSERT abaixo provavelmente vai falhar por Email Unique
+                        }
+                    }
+
+                    // 1.5 ANTI-RESURRECTION (Evita recriar usuário que deletamos localmente mas server não aceitou ainda)
+                    const localExistente = checkIdStmt.get(u.id_usuario.toString());
+                    if (localExistente) {
+                        // Verifica se está marcado como excluído e pendente de sync
+                        const localFull = db.prepare('SELECT * FROM usuario WHERE id_usuario = ?').get(u.id_usuario.toString());
+                        if (localFull && localFull.excluido_em && localFull.sincronizado === 0) {
+                            console.log(`Ignorando update do servidor para usuário ${u.id_usuario} (Exclusão local pendente).`);
+                            continue; // Pula este usuário, matando a ressurreição
                         }
                     }
 
@@ -278,9 +340,7 @@ class UsuarioModel {
                         if (senhaVindaDaApi.startsWith('$2')) {
                             senhaHash = senhaVindaDaApi.replace(/^\$2y\$/, '$2a$'); // Converte para formato do Node
                         } else {
-                            // Se vier senha plana (não deveria, mas...), gera hash
-                            // senhaHash = bcrypt.hashSync(senhaVindaDaApi, 10);
-                            // Melhor não assumir senha plana na sync por segurança, mantém o hash se vier, ou placeholder.
+                            // Se vier senha plana, idealmente deveriamos hashear, mas cuidado com re-hash
                         }
                     }
 
@@ -288,7 +348,7 @@ class UsuarioModel {
                     stmtUpsert.run({
                         id: u.id_usuario.toString(),
                         nome: u.nome_usuario,
-                        email: u.email_usuario,
+                        email: uEmail,
                         senha: senhaHash,
                         tipo: u.tipo_usuario || u.tipo,
                         cpf: u.cpf || '000.000.000-00'

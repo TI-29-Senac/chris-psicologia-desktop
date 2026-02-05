@@ -23,7 +23,16 @@ class FetchAPI {
 
         if (accessToken) {
             headers['Authorization'] = `Bearer ${accessToken}`;
+        } else if (process.env.API_TOKEN) {
+            console.log("Usando API_TOKEN fixo do .env:", process.env.API_TOKEN.substring(0, 10) + "...");
+            // Fallback para Token Fixo (Seed/Admin Sync)
+            headers['Authorization'] = `Bearer ${process.env.API_TOKEN}`;
+        } else {
+            console.warn("Nenhum token encontrado (nem AccessToken nem API_TOKEN).");
         }
+
+        // console.log("Headers gerados:", headers); // Descomente se precisar ver tudo
+        return headers;
 
         return headers;
     }
@@ -115,9 +124,9 @@ class FetchAPI {
             console.error(`Erro na requisição ${endpoint}:`, error);
             // Verifica se é erro de rede
             if (error.cause && error.cause.code === 'ECONNREFUSED') {
-                return { success: false, erro: "Servidor indisponível.", networkError: true };
+                return { success: false, erro: "Servidor indisponível.", networkError: true, offline: true };
             }
-            return { success: false, erro: "Erro de conexão.", networkError: true };
+            return { success: false, erro: "Erro de conexão.", networkError: true, offline: true };
         }
     }
 

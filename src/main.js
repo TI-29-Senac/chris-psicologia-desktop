@@ -1,6 +1,9 @@
 import { app, BrowserWindow } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 // Controladores
 import UsuarioController from './Main/Controllers/UsuarioController.js';
@@ -22,8 +25,8 @@ const createWindow = () => {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       // Configurações recomendadas para segurança
-      contextIsolation: true, 
-      nodeIntegration: false 
+      contextIsolation: true,
+      nodeIntegration: false
     },
   });
 

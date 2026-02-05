@@ -214,6 +214,12 @@
 .btn-primary:hover { background-color: #4a5854; }
 .btn-primary:disabled { background-color: #ccc; cursor: not-allowed; }
 
+.btn-secondary { width: 100%; padding: 14px; background-color: #f0f2f5; color: #666; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 15px; }
+.btn-secondary:hover { background-color: #e4e6eb; }
+
+.btn-danger { width: 100%; padding: 14px; background-color: #e74c3c; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 15px; }
+.btn-danger:hover { background-color: #c0392b; }
+
 /* --- Grupo de Busca (Lado Direito) --- */
 .search-group {
     display: flex;
