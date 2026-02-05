@@ -1,130 +1,304 @@
 /* src/index.css */
+@import url('https://fonts.googleapis.com/css2?family=Questrial&display=swap');
+
+:root {
+  --primary-color: #5D6D68;
+  /* Verde do cliente */
+  --primary-dark: #4a5854;
+  --secondary-color: #7A8F89;
+  --bg-color: #FDFBF7;
+  /* Creme suave */
+  --text-main: #333;
+  --text-muted: #666;
+  --white: #ffffff;
+  --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.08);
+  --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.05);
+  --border-radius: 12px;
+}
+
 body {
   font-family: 'Questrial', sans-serif;
   margin: 0;
   padding: 0;
-  background-color: #EBF1F0;
-  /* Fundo suave esverdeado */
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  background-color: var(--bg-color);
   height: 100vh;
+  overflow: hidden;
+}
+
+/* --- Layout Split --- */
+.login-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* Lado Esquerdo - Hero (Imagem e Frase) */
+.login-hero {
+  flex: 1;
+  /* Ocupa o espaço disponível (aprox 50-60%) */
+  background-color: var(--primary-color);
+  background-image: url('../img/banner_1.png');
+  /* Caminho relativo para src/index.css é subir um e ir para img? Verificar a estrutura de build.
+                                                   Normalmente em Vite assets estáticos ficam na raiz ou referenciados com import.
+                                                   Vou assumir que ../img/ resolve se estiver em src. Mas a img está na raiz do projeto.
+                                                   Tentando caminho relativo à raiz do site servido: /img/banner_1.png */
+  background-image: url('/img/banner_1.png');
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 60px;
+  color: white;
+}
+
+/* Overlay para dar leitura no texto sobre imagem */
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(93, 109, 104, 0.4);
+  /* Filtro verde suave */
+  z-index: 1;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 600px;
+  animation: fadeIn 1.2s ease-out;
+}
+
+.hero-title {
+  font-size: 3.5rem;
+  line-height: 1.2;
+  margin-bottom: 20px;
+  font-weight: 400;
+  /* Questrial é naturalmente boldish/clean */
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.hero-subtitle {
+  font-size: 1.25rem;
+  line-height: 1.6;
+  opacity: 0.95;
+  font-weight: 300;
+}
+
+/* Lado Direito - Form */
+.login-form-wrapper {
+  flex: 0 0 450px;
+  /* Largura fixa ou max */
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  position: relative;
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.05);
+  /* Sombra suave separando os painéis */
+  z-index: 10;
 }
 
 .login-card {
-  background: white;
-  padding: 3rem 2.5rem;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(93, 109, 104, 0.1);
   width: 100%;
-  max-width: 380px;
-  text-align: center;
-  transition: transform 0.3s;
+  max-width: 360px;
 }
 
-/* Logo Styling */
+/* Branding */
 .brand-login {
-  font-size: 2rem;
-  color: #5D6D68;
-  line-height: 1;
   display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  color: var(--primary-color);
   justify-content: center;
-  gap: 5px;
-  align-items: baseline;
+  /* Centralizado no form */
+}
+
+.brand-login i {
+  font-size: 1.8rem;
 }
 
 .logo-text-bold {
   font-weight: 900;
+  font-size: 1.8rem;
   letter-spacing: -1px;
 }
 
 .logo-text-light {
   font-weight: 300;
+  font-size: 1.8rem;
 }
 
 .subtitle {
-  color: #7A8F89;
-  margin-bottom: 2rem;
-  font-size: 0.95rem;
-  margin-top: -20px;
-  /* Aproxima do logo */
+  text-align: center;
+  color: var(--secondary-color);
+  margin-bottom: 35px;
+  font-size: 1rem;
+}
+
+.mb-4 {
+  margin-bottom: 1.5rem;
 }
 
 /* Form Styles */
 .input-group {
-  text-align: left;
-  margin-bottom: 1.2rem;
+  margin-bottom: 20px;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-main);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.input-wrapper {
   position: relative;
 }
 
-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  color: #5D6D68;
-  font-weight: 600;
-  font-size: 0.9rem;
+.input-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #aaa;
+  transition: color 0.3s;
 }
 
 input {
   width: 100%;
-  padding: 12px 15px;
-  border: 2px solid #e0e0e0;
+  padding: 14px 15px 14px 45px;
+  /* Espaço para o ícone */
+  border: 1px solid #e0e0e0;
   border-radius: 8px;
   font-size: 1rem;
   font-family: inherit;
-  color: #444;
+  color: var(--text-main);
   box-sizing: border-box;
-  transition: all 0.3s;
-  background-color: #f8f9fa;
+  background-color: #f9f9f9;
+  transition: all 0.3s ease;
 }
 
 input:focus {
-  border-color: #5D6D68;
+  border-color: var(--primary-color);
   background-color: #fff;
   outline: none;
-  box-shadow: 0 0 0 3px rgba(93, 109, 104, 0.1);
+  box-shadow: 0 0 0 4px rgba(93, 109, 104, 0.1);
 }
 
-input::placeholder {
-  color: #bbb;
+input:focus+.input-icon,
+.input-wrapper:focus-within .input-icon {
+  color: var(--primary-color);
 }
 
-button {
+/* Button */
+.btn-primary-lg {
   width: 100%;
-  padding: 14px;
-  background-color: #5D6D68;
+  padding: 16px;
+  background-color: var(--primary-color);
   color: white;
   border: none;
   border-radius: 8px;
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
-  margin-top: 1rem;
-  box-shadow: 0 4px 6px rgba(93, 109, 104, 0.2);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  margin-top: 25px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 15px rgba(93, 109, 104, 0.3);
 }
 
-button:hover {
-  background-color: #4a5854;
+.btn-primary-lg:hover {
+  background-color: var(--primary-dark);
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(93, 109, 104, 0.3);
+  box-shadow: 0 8px 20px rgba(93, 109, 104, 0.4);
 }
 
-button:active {
+.btn-primary-lg:active {
   transform: translateY(0);
 }
 
-button:disabled {
-  background-color: #ccc;
-  cursor: wait;
-  transform: none;
-  box-shadow: none;
+.btn-primary-lg i {
+  transition: transform 0.3s;
 }
 
+.btn-primary-lg:hover i {
+  transform: translateX(4px);
+}
+
+/* Error Msg */
 .error-msg {
   color: #e74c3c;
   margin-top: 1.5rem;
   font-size: 0.9rem;
-  min-height: 1.2em;
-  font-weight: 500;
+  text-align: center;
+  min-height: 1.2rem;
+}
+
+/* Footer */
+.login-footer {
+  margin-top: 40px;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #aaa;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsividade */
+@media (max-width: 900px) {
+  .login-container {
+    flex-direction: column;
+  }
+
+  .login-hero {
+    display: none;
+    /* Em mobile, foca no login. Ou poderia ser reduzido para um header */
+  }
+
+  .login-form-wrapper {
+    flex: 1;
+    width: 100%;
+  }
+
+  .login-card {
+    max-width: 100%;
+    padding: 0 20px;
+  }
 }

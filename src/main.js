@@ -22,6 +22,7 @@ const createWindow = () => {
   const mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
+    show: false, // Oculta ao criar para maximizar antes de mostrar
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       // Configurações recomendadas para segurança
@@ -29,6 +30,10 @@ const createWindow = () => {
       nodeIntegration: false
     },
   });
+
+  // Maximiza a janela
+  mainWindow.maximize();
+  mainWindow.show();
 
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
