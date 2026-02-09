@@ -26,6 +26,14 @@ class UsuarioModel {
             const emailNormalizado = dados.email_usuario.trim().toLowerCase();
             const usuarioExistente = db.prepare('SELECT * FROM usuario WHERE LOWER(email_usuario) = ?').get(emailNormalizado);
 
+            // 0.1 Verifica se o CPF já existe
+            if (dados.cpf && dados.cpf !== '000.000.000-00') {
+                const cpfExistente = db.prepare('SELECT id_usuario FROM usuario WHERE cpf = ? AND excluido_em IS NULL').get(dados.cpf);
+                if (cpfExistente) {
+                    return { success: false, erro: "CPF já cadastrado." };
+                }
+            }
+
             if (usuarioExistente) {
                 if (!usuarioExistente.excluido_em) {
                     // Cenário A: Usuário existe e está ativo
@@ -124,6 +132,14 @@ class UsuarioModel {
 
     async editar(dados) {
         try {
+            // VERIFICAÇÃO DE DUPLICIDADE DE CPF NA EDIÇÃO
+            if (dados.cpf && dados.cpf !== '000.000.000-00') {
+                const cpfExistente = db.prepare('SELECT id_usuario FROM usuario WHERE cpf = ? AND id_usuario != ? AND excluido_em IS NULL').get(dados.cpf, dados.id_usuario);
+                if (cpfExistente) {
+                    return { success: false, erro: "CPF já cadastrado para outro usuário." };
+                }
+            }
+
             const stmt = db.prepare(`
                 UPDATE usuario 
                 SET nome_usuario = ?, 
