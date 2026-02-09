@@ -261,6 +261,26 @@ async function salvarUsuario() {
 
     if (!nome || !email || (!idEdicao && !senha)) return mostrarAviso("Campos Obrigatórios", "Preencha todos os campos obrigatórios.", "info");
 
+    // --- VALIDAÇÃO DE EMAIL ---
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+        return mostrarAviso("Email Inválido", "Por favor, insira um email válido (ex: nome@dominio.com).", "info");
+    }
+
+    const dominiosPermitidos = [
+        'gmail.com',
+        'hotmail.com', 'hotmail.com.br',
+        'outlook.com', 'outlook.com.br',
+        'yahoo.com', 'yahoo.com.br',
+        'live.com',
+        'icloud.com'
+    ];
+
+    const dominioEmail = email.split('@')[1];
+    if (!dominiosPermitidos.includes(dominioEmail)) {
+        return mostrarAviso("Domínio não Aceito", `O domínio @${dominioEmail} não é aceito. Use: Gmail, Hotmail, Outlook, Yahoo, Live ou iCloud.`, "info");
+    }
+
     // O 'tipo_usuario' será definido pela aba ativa no modal (tipoCadastroAtual)
     const dados = {
         id_usuario: idEdicao,
