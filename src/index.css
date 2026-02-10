@@ -3,58 +3,183 @@ body {
   font-family: 'Questrial', sans-serif;
   margin: 0;
   padding: 0;
-  background-color: #EBF1F0;
-  /* Fundo suave esverdeado */
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.login-wrapper {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+
+/* Container Visual (Esquerda - 66%~75%) */
+.visual-container {
+  flex: 2.5;
+  background: #111816;
+  /* Fallback color */
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10rem 5rem;
+}
+
+.bg-carousel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.bg-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center 20%;
+  /* Foca na parte superior onde o rosto deve estar */
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: opacity 1.5s ease-in-out;
+  /* Removed zoom animation */
+}
+
+.bg-image.active {
+  opacity: 1;
+}
+
+.visual-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(93, 109, 104, 0.7) 0%, rgba(17, 24, 22, 0.9) 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+
+
+/* Noise Texture Overlay - REMOVIDO */
+.visual-container::before {
+  display: none;
+}
+
+
+
+.visual-text-content {
+  text-align: center;
+  color: white;
+  z-index: 10;
+  padding: 0 2rem;
+  max-width: 600px;
+  /* Animação suave */
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  cursor: default;
+}
+
+.visual-text-content:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+.visual-title {
+  font-size: 3rem;
+  /* Maior destaque */
+  font-weight: 800;
+  margin: 0 0 0.8rem 0;
+  letter-spacing: -1px;
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  line-height: 1.1;
+}
+
+.visual-subtitle {
+  font-size: 1.25rem;
+  /* Levemente maior */
+  font-weight: 400;
+  /* Mais peso que o light anterior */
+  margin: 0;
+  opacity: 0.95;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.glass-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.25);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.brand-display {
+  /* Removemos o padding interno pois o card já tem */
+  padding: 0;
+}
+
+
+
+.brand-tagline {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.1rem;
+  font-weight: 300;
+  letter-spacing: 0.5px;
+  margin: 0;
+  max-width: 400px;
+  line-height: 1.5;
+}
+
+/* Container Login (Direita) */
+.login-container {
+  flex: 1;
+  min-width: 400px;
+  /* Garante largura mínima legível */
+  background: #fbfbf8;
+  /* Warm off-white */
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  padding: 2rem;
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.05);
+  position: relative;
+  z-index: 20;
 }
 
-.login-card {
-  background: white;
-  padding: 3rem 2.5rem;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(93, 109, 104, 0.1);
+.login-content {
   width: 100%;
-  max-width: 380px;
+  max-width: 340px;
   text-align: center;
-  transition: transform 0.3s;
 }
 
-/* Logo Styling */
-.brand-login {
-  font-size: 2rem;
-  color: #5D6D68;
-  line-height: 1;
-  display: flex;
-  justify-content: center;
-  gap: 5px;
-  align-items: baseline;
+.login-title {
+  color: #3a4a46;
+  /* Tom mais escuro */
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
 }
 
-.logo-text-bold {
-  font-weight: 900;
-  letter-spacing: -1px;
-}
-
-.logo-text-light {
-  font-weight: 300;
-}
-
-.subtitle {
+.login-subtitle {
   color: #7A8F89;
-  margin-bottom: 2rem;
   font-size: 0.95rem;
-  margin-top: -20px;
-  /* Aproxima do logo */
+  margin-bottom: 2.5rem;
+  margin-top: 0;
+  font-weight: 500;
 }
 
 /* Form Styles */
 .input-group {
   text-align: left;
-  margin-bottom: 1.2rem;
-  position: relative;
+  margin-bottom: 1.5rem;
 }
 
 label {
@@ -63,68 +188,164 @@ label {
   color: #5D6D68;
   font-weight: 600;
   font-size: 0.9rem;
+  padding-left: 2px;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 15px;
+  color: #9aa8a4;
+  font-size: 1rem;
+  pointer-events: none;
+  transition: color 0.3s;
 }
 
 input {
   width: 100%;
-  padding: 12px 15px;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
+  padding: 14px 15px 14px 45px;
+  /* Espaço para o ícone */
+  border: 1.5px solid #e0e0e0;
+  border-radius: 12px;
+  /* Borda mais suave */
   font-size: 1rem;
   font-family: inherit;
   color: #444;
   box-sizing: border-box;
-  transition: all 0.3s;
-  background-color: #f8f9fa;
+  transition: all 0.3s ease;
+  background-color: white;
 }
 
+/* Focus State com cor da marca */
 input:focus {
   border-color: #5D6D68;
-  background-color: #fff;
   outline: none;
-  box-shadow: 0 0 0 3px rgba(93, 109, 104, 0.1);
+  box-shadow: 0 0 0 4px rgba(93, 109, 104, 0.1);
+}
+
+input:focus+.input-icon,
+.input-wrapper:focus-within .input-icon {
+  color: #5D6D68;
 }
 
 input::placeholder {
   color: #bbb;
+  font-weight: 400;
 }
 
 button {
   width: 100%;
-  padding: 14px;
-  background-color: #5D6D68;
+  padding: 16px;
+  background: linear-gradient(135deg, #5D6D68 0%, #4a5854 100%);
+  /* Gradiente sutil */
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
   font-size: 1.05rem;
   font-weight: 600;
+  /* Semibold */
   cursor: pointer;
-  transition: all 0.2s;
-  margin-top: 1rem;
-  box-shadow: 0 4px 6px rgba(93, 109, 104, 0.2);
+  transition: all 0.3s ease;
+  margin-top: 1.5rem;
+  box-shadow: 0 4px 15px rgba(93, 109, 104, 0.25);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
 }
 
 button:hover {
-  background-color: #4a5854;
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(93, 109, 104, 0.3);
+  /* Elevação suave */
+  box-shadow: 0 8px 20px rgba(93, 109, 104, 0.35);
+  background: linear-gradient(135deg, #667873 0%, #51605c 100%);
 }
 
 button:active {
   transform: translateY(0);
+  box-shadow: 0 2px 5px rgba(93, 109, 104, 0.2);
+}
+
+.button-icon {
+  font-size: 0.9em;
 }
 
 button:disabled {
-  background-color: #ccc;
+  background: #ccc;
   cursor: wait;
-  transform: none;
   box-shadow: none;
+  transform: none;
 }
 
 .error-msg {
   color: #e74c3c;
-  margin-top: 1.5rem;
-  font-size: 0.9rem;
+  margin-top: 1rem;
+  font-size: 0.85rem;
   min-height: 1.2em;
   font-weight: 500;
+}
+
+.security-msg {
+  margin-top: 1.5rem;
+  color: #9aa8a4;
+  font-size: 0.8rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+
+/* Responsividade */
+@media (max-width: 900px) {
+  .visual-container {
+    flex: 1.5;
+  }
+
+  .glass-card {
+    padding: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .login-wrapper {
+    flex-direction: column;
+  }
+
+  .visual-container {
+    flex: 1;
+    min-height: 30vh;
+    border-radius: 0 0 30px 30px;
+    /* Curva na parte inferior */
+    z-index: 30;
+  }
+
+  .glass-card {
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: none;
+    box-shadow: none;
+    padding: 1rem;
+  }
+
+  .brand-tagline {
+    font-size: 0.9rem;
+    display: none;
+    /* Simplifica no mobile */
+  }
+
+  .login-container {
+    flex: 2;
+    min-width: auto;
+    border-radius: 30px 30px 0 0;
+    margin-top: -20px;
+    /* Sobreposição leve */
+    padding-top: 3rem;
+  }
 }

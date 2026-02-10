@@ -2,6 +2,34 @@ import './index.css';
 
 console.log('Renderer process started');
 
+// Carousel Logic
+const startCarousel = () => {
+    const images = document.querySelectorAll('.bg-image');
+    if (images.length === 0) return;
+
+    let currentIndex = 0;
+
+    // Ensure only the first one is active initially (handled by HTML class but good to be safe)
+    images.forEach((img, index) => {
+        if (index !== 0) img.classList.remove('active');
+        else img.classList.add('active');
+    });
+
+    setInterval(() => {
+        // Remove active from current
+        images[currentIndex].classList.remove('active');
+
+        // Move to next
+        currentIndex = (currentIndex + 1) % images.length;
+
+        // Add active to next
+        images[currentIndex].classList.add('active');
+    }, 5000); // 5 seconds
+};
+
+// Start carousel when DOM is ready
+document.addEventListener('DOMContentLoaded', startCarousel);
+
 const loginForm = document.getElementById('login-form');
 const msgErro = document.getElementById('mensagem-erro');
 const btnLogin = document.getElementById('btn-login');
