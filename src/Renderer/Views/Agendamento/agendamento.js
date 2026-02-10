@@ -31,6 +31,44 @@ async function init() {
             window.location.href = '../../../../index.html';
         });
     }
+
+    // Botão Sincronizar
+    const btnSync = document.getElementById('btn-sync');
+    if (btnSync) {
+        btnSync.addEventListener('click', async () => {
+            btnSync.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sincronizando...';
+            btnSync.disabled = true;
+            try {
+                const res = await window.electronAPI.sincronizarAgendamentos();
+                await carregarTabela();
+
+                if (res.success) {
+                    if (res.falhas > 0) {
+                        alert(`Sincronização concluída com AVISOS:\n${res.enviados} enviados.\n${res.falhas} falhas.\n\nErros:\n${res.erros.join('\n')}`);
+                    } else {
+                        alert(`Sincronização concluída!\n${res.enviados || 0} dados enviados.`);
+                    }
+                } else {
+                    alert("Erro na sincronização: " + res.erro);
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Erro ao sincronizar.");
+            } finally {
+                btnSync.innerHTML = '<i class="fas fa-sync"></i> Sincronizar com Nuvem';
+                btnSync.disabled = false;
+            }
+        });
+    }
+
+    // Auto-Sync ao abrir
+    setTimeout(() => {
+        if (window.electronAPI.sincronizarAgendamentos) {
+            window.electronAPI.sincronizarAgendamentos()
+                .then(() => carregarTabela())
+                .catch(console.error);
+        }
+    }, 1000); // Delay pequeno para não travar render inicial
 }
 
 // --- FUNÇÕES DE CARREGAMENTO ---
@@ -48,42 +86,114 @@ async function carregarSelects() {
     } catch (e) { console.error(e); }
 }
 
+// --- FILTRAGEM ---
+const selectFiltroTipo = document.getElementById('select-filtro-tipo');
+const inputBusca = document.getElementById('input-busca');
+const inputBuscaData = document.getElementById('input-busca-data');
+const containerBuscaTexto = document.getElementById('container-busca-texto');
+const containerBuscaData = document.getElementById('container-busca-data');
+
+// Alterna entre busca de texto e data
+selectFiltroTipo.addEventListener('change', () => {
+    inputBusca.value = '';
+    inputBuscaData.value = '';
+    filtrarAgendamentos();
+
+    if (selectFiltroTipo.value === 'data') {
+        containerBuscaTexto.style.display = 'none';
+        containerBuscaData.style.display = 'flex';
+    } else {
+        containerBuscaTexto.style.display = 'flex';
+        containerBuscaData.style.display = 'none';
+    }
+});
+
+// Eventos de Input
+inputBusca.addEventListener('input', filtrarAgendamentos);
+inputBuscaData.addEventListener('change', filtrarAgendamentos);
+
+let todosAgendamentos = []; // Armazena a lista completa
+
 async function carregarTabela() {
     try {
-        const agendamentos = await window.electronAPI.listarAgendamentos();
-
-        if (agendamentos.length === 0) {
-            listaEl.innerHTML = "<tr><td colspan='5' class='text-center' style='padding:30px'>Nenhum agendamento encontrado.</td></tr>";
-            return;
+        todosAgendamentos = await window.electronAPI.listarAgendamentos();
+        if (!Array.isArray(todosAgendamentos)) {
+            todosAgendamentos = [];
         }
-
-        listaEl.innerHTML = agendamentos.map(a => {
-            const isCancelado = a.status_consulta === 'Cancelado';
-            const badgeClass = isCancelado ? 'status-cancelado' : 'status-agendado';
-
-            const dataObj = new Date(a.data_agendamento);
-            const dataStr = dataObj.toLocaleDateString('pt-BR');
-            const horaStr = dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-
-            return `
-            <tr>
-                <td><strong>${dataStr}</strong><br><span class="small-text">${horaStr}</span></td>
-                <td>${a.nome_paciente || '---'}</td>
-                <td>${a.nome_profissional || '---'}</td>
-                <td class="text-center"><span class="status-badge ${badgeClass}">${a.status_consulta}</span></td>
-                <td class="text-center" style="white-space: nowrap;">
-                    ${!isCancelado ? `
-                        <button class="action-btn btn-edit" data-id="${a.id_agendamento}" title="Editar">✏️</button>
-                        <button class="action-btn btn-cancel" data-id="${a.id_agendamento}" title="Desmarcar">🚫</button>
-                    ` : ''}
-                    <button class="action-btn btn-delete" data-id="${a.id_agendamento}" title="Excluir">🗑️</button>
-                </td>
-            </tr>
-        `}).join('');
-
-        adicionarEventosLista();
+        filtrarAgendamentos(); // Renderiza já aplicando (ou não) filtros
     } catch (erro) { console.error(erro); }
 }
+
+function filtrarAgendamentos() {
+    const tipo = selectFiltroTipo.value;
+    const termo = inputBusca.value.toLowerCase().trim();
+    const dataFiltro = inputBuscaData.value;
+
+    const filtrados = todosAgendamentos.filter(a => {
+        if (tipo === 'data') {
+            if (!dataFiltro) return true;
+            // a.data_agendamento vem como 'YYYY-MM-DD HH:mm:ss' ou similar
+            return a.data_agendamento && a.data_agendamento.startsWith(dataFiltro);
+        } else if (tipo === 'paciente') {
+            return (a.nome_paciente || '').toLowerCase().includes(termo);
+        } else if (tipo === 'profissional') {
+            return (a.nome_profissional || '').toLowerCase().includes(termo);
+        }
+        return true;
+    });
+
+    renderizarTabela(filtrados);
+}
+
+function renderizarTabela(lista) {
+    if (lista.length === 0) {
+        listaEl.innerHTML = "<tr><td colspan='5' class='text-center' style='padding:30px'>Nenhum agendamento encontrado.</td></tr>";
+        return;
+    }
+
+    listaEl.innerHTML = lista.map(a => {
+        const status = (a.status_consulta || '').toLowerCase();
+
+        let badgeClass = 'status-agendado'; // Default (Agendado/Confirmada)
+        if (status === 'cancelado' || status === 'cancelada') {
+            badgeClass = 'status-cancelado';
+        } else if (status === 'pendente') {
+            badgeClass = 'status-pending';
+        }
+
+        const isCancelado = (status === 'cancelado' || status === 'cancelada');
+
+        const dataObj = new Date(a.data_agendamento);
+        const dataStr = dataObj.toLocaleDateString('pt-BR');
+        const horaStr = dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+        return `
+        <tr>
+            <td><strong>${dataStr}</strong><br><span class="small-text">${horaStr}</span></td>
+            <td>${a.nome_paciente || '---'}</td>
+            <td>${a.nome_profissional || '---'}</td>
+            <td class="text-center"><span class="status-badge ${badgeClass}">${a.status_consulta}</span></td>
+            <td class="text-center" style="white-space: nowrap;">
+                ${!isCancelado ? `
+                    <button class="action-btn btn-edit" data-id="${a.id_agendamento}" title="Editar">✏️</button>
+                    <button class="action-btn btn-cancel" data-id="${a.id_agendamento}" title="Desmarcar">🚫</button>
+                ` : ''}
+                <button class="action-btn btn-delete" data-id="${a.id_agendamento}" title="Excluir">🗑️</button>
+            </td>
+        </tr>
+    `}).join('');
+
+    adicionarEventosLista();
+}
+
+// ... Restante do código (Eventos da lista, Formulário, Init) permanece igual, 
+// apenas removendo a antiga função carregarTabela pois foi substituída acima.
+
+// --- FUNÇÕES DE CARREGAMENTO OTIMIZADAS ---
+// (Mantendo carregarSelects, Events, etc)
+
+// Inicia
+init();
 
 // --- EVENTOS DA LISTA ---
 function adicionarEventosLista() {

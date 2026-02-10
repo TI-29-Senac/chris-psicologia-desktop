@@ -1,10 +1,11 @@
-import FetchAPI from '../Service/FetchAPI.js';
 import db from '../Database/db.js';
 import { v4 as uuidv4 } from 'uuid';
+import mysqlService from '../Service/MySQLService.js';
+import UsuarioModel from './Usuario.js';
 
 class AgendamentoModel {
     constructor() {
-        this.api = new FetchAPI();
+        this.mysql = mysqlService;
     }
 
     async listar() {
@@ -55,18 +56,11 @@ class AgendamentoModel {
                 dados.id_usuario,
                 dados.id_profissional,
                 dados.data_agendamento,
-                'Agendado'
+                'pendente'
             );
 
-            // 2. Tenta Sync API
-            try {
-                const dadosApi = { ...dados, id_agendamento: novoId };
-                // Rota: POST /api/agendamentos/salvar (API JSON)
-                await this.api.post('api/agendamentos/salvar', dadosApi);
-                db.prepare('UPDATE agendamento SET sincronizado = 1 WHERE id_agendamento = ?').run(novoId);
-            } catch (e) {
-                console.warn("Agendamento salvo offline (Sync pendente).");
-            }
+            // 2. Tenta Sync Imediato (MySQL Direto)
+            this.sincronizacaoBidirecional().catch(e => console.warn("Sync automático pós-cadastro falhou (será tentado depois):", e.message));
 
             return { success: true, id: novoId };
         } catch (error) {
@@ -81,20 +75,14 @@ class AgendamentoModel {
             db.prepare(`
                 UPDATE agendamento SET 
                     data_agendamento = ?, 
+                    id_profissional = ?,
                     sincronizado = 0,
                     atualizado_em = CURRENT_TIMESTAMP
                 WHERE id_agendamento = ?
-            `).run(dados.data_agendamento, dados.id_agendamento);
+            `).run(dados.data_agendamento, dados.id_profissional || dados.id_profissional_antigo, dados.id_agendamento);
 
-            // 2. Tenta Sync
-            try {
-                // Rota: POST /api/agendamentos/salvar (API JSON assumindo Upsert ou fallback)
-                // Se a API não suportar atualização por aqui, será necessário criar rota específica no back.
-                await this.api.post(`api/agendamentos/salvar`, dados);
-                db.prepare('UPDATE agendamento SET sincronizado = 1 WHERE id_agendamento = ?').run(dados.id_agendamento);
-            } catch (e) {
-                console.warn("Edição salva offline (Sync pendente).");
-            }
+            // 2. Tenta Sync Imediato
+            this.sincronizacaoBidirecional().catch(e => console.warn("Sync automático pós-edição falhou:", e.message));
 
             return { success: true };
         } catch (error) {
@@ -108,14 +96,8 @@ class AgendamentoModel {
             // Soft Delete Local
             db.prepare('UPDATE agendamento SET excluido_em = CURRENT_TIMESTAMP, sincronizado = 0 WHERE id_agendamento = ?').run(id);
 
-            try {
-                // Rota: POST /agendamentos/deletar/{id} (Web Controller - Form Data)
-                // Usamos postForm pois é controller Web
-                await this.api.postForm(`agendamentos/deletar/${id}`, {});
-                db.prepare('UPDATE agendamento SET sincronizado = 1 WHERE id_agendamento = ?').run(id);
-            } catch (e) {
-                console.warn("Remoção salva offline (Sync pendente).");
-            }
+            // 2. Tenta Sync Imediato
+            this.sincronizacaoBidirecional().catch(e => console.warn("Sync automático pós-remoção falhou:", e.message));
 
             return { success: true };
         } catch (error) {
@@ -126,20 +108,10 @@ class AgendamentoModel {
     async cancelar(id) {
         try {
             // Atualiza status local
-            db.prepare("UPDATE agendamento SET status_consulta = 'Cancelado', sincronizado = 0 WHERE id_agendamento = ?").run(id);
+            db.prepare("UPDATE agendamento SET status_consulta = 'cancelada', sincronizado = 0 WHERE id_agendamento = ?").run(id);
 
-            try {
-                // AVISO: Não existe rota de cancelar explícita no backend.
-                // Tentaremos 'deletar' ou 'salvar' com status novo dependendo da lógica.
-                // Como não tem 'cancelar' na lista, vou enviar como update (salvar) com status.
-                const agendamento = db.prepare('SELECT * FROM agendamento WHERE id_agendamento = ?').get(id);
-                if (agendamento) {
-                    await this.api.post('api/agendamentos/salvar', agendamento);
-                    db.prepare('UPDATE agendamento SET sincronizado = 1 WHERE id_agendamento = ?').run(id);
-                }
-            } catch (e) {
-                console.warn("Cancelamento salvo offline (Sync pendente).");
-            }
+            // 2. Tenta Sync Imediato
+            this.sincronizacaoBidirecional().catch(e => console.warn("Sync automático pós-cancelamento falhou:", e.message));
 
             return { success: true };
         } catch (error) {
@@ -166,47 +138,119 @@ class AgendamentoModel {
 
     async sincronizacaoBidirecional() {
         try {
-            // --- PUSH (Local -> API) ---
+            console.log("Iniciando Sincronização Geral (Usuários -> Agendamentos)...");
+
+            // 1. Sincroniza Usuários Antes (Garante Integridade Referencial - FKs)
+            try {
+                const usuarioModel = new UsuarioModel();
+                const resUser = await usuarioModel.sincronizacaoBidirecional();
+                if (!resUser.success) {
+                    console.warn("Aviso: Sincronização de usuários falhou ou ficou incompleta. Continuando com agendamentos...");
+                }
+            } catch (errUser) {
+                console.error("Erro Crítico ao Sincronizar Usuários (Pré-req Agendamento):", errUser);
+            }
+
+            console.log("Iniciando Sincronização Direta de Agendamentos (MySQL)...");
+
+            let enviados = 0;
+            let falhas = 0;
+            let erros = [];
+
+            // --- PUSH (Local -> Remoto) ---
             const pendentes = db.prepare('SELECT * FROM agendamento WHERE sincronizado = 0').all();
+            console.log(`[SYNC AGENDAMENTO] Itens pendentes de envio: ${pendentes.length}`);
 
             for (const item of pendentes) {
                 try {
-                    let res;
-                    if (item.excluido_em) {
-                        // Deletar via Controller Web (Form)
-                        res = await this.api.postForm(`agendamentos/deletar/${item.id_agendamento}`, {});
-                    } else if (item.status_consulta === 'Cancelado') {
-                        // Cancelar via Save (JSON)
-                        res = await this.api.post('api/agendamentos/salvar', item);
-                    } else {
-                        // Salvar/Editar (JSON)
-                        res = await this.api.post('api/agendamentos/salvar', item);
+                    // Mapeamento de Status (Local -> Remoto) para evitar Data Truncated
+                    const mapaStatus = {
+                        'Agendado': 'pendente',
+                        'Cancelado': 'cancelada',
+                        'Realizado': 'realizada'
+                    };
+                    // Normaliza para capturar variações de Case e Espaços
+                    const statusLocal = (item.status_consulta || '').trim();
+                    // Tenta mapear direto ou via lowercase
+                    let statusEnvio = mapaStatus[statusLocal]
+                        || mapaStatus[statusLocal.charAt(0).toUpperCase() + statusLocal.slice(1).toLowerCase()]
+                        || statusLocal.toLowerCase(); // Fallback final para lowercase
+
+                    // Garante que é um dos valores válidos do ENUM MySQL, senão força 'pendente'
+                    const validos = ['pendente', 'confirmada', 'cancelada', 'realizada'];
+                    if (!validos.includes(statusEnvio)) {
+                        console.warn(`[SYNC WARNING] Status '${item.status_consulta}' desconhecido. Forçando 'pendente'.`);
+                        statusEnvio = 'pendente';
                     }
 
-                    // Verificações padrão
-                    if (res && res.sessionExpired) return { success: false, erro: "Sessão expirada", sessionExpired: true };
-                    if (res && res.offline) return { success: false, erro: "Offline", offline: true };
+                    // Verifica se é UUID (novo localmente) ou ID Numérico (já existente no server)
+                    const isUuid = item.id_agendamento.toString().length > 15; // UUID tem 36
+                    console.log(`[SYNC] Processando item ${item.id_agendamento} (Status: ${item.status_consulta} -> ${statusEnvio})`);
 
-                    if (res && (res.success || res.offline)) { // Aceita offline se a API retornar flag
+                    if (item.excluido_em) {
+                        console.log(`[SYNC] Excluindo item ${item.id_agendamento} no remoto`);
+                        // REMOÇÃO
+                        if (!isUuid) { // Só faz sentido deletar no server se ele já conhece o ID
+                            await this.mysql.query(
+                                'UPDATE agendamento SET excluido_em = NOW() WHERE id_agendamento = ?',
+                                [item.id_agendamento]
+                            );
+                        }
                         db.prepare('UPDATE agendamento SET sincronizado = 1 WHERE id_agendamento = ?').run(item.id_agendamento);
+                        enviados++;
+
+                    } else if (isUuid) {
+                        // CADASTRO (INSERT)
+                        // Não enviamos o ID (UUID), deixamos o Auto-Increment do MySQL gerar
+                        console.log(`[SYNC] Inserindo novo item ${item.id_agendamento} no MySQL...`);
+                        const result = await this.mysql.query(
+                            `INSERT INTO agendamento (id_usuario, id_profissional, data_agendamento, status_consulta) 
+                             VALUES (?, ?, ?, ?)`,
+                            [item.id_usuario, item.id_profissional, item.data_agendamento, statusEnvio]
+                        );
+
+                        // Pega o ID gerado pelo MySQL
+                        const insertId = result.insertId;
+                        console.log(`[SYNC] Sucesso! ID Gerado no MySQL: ${insertId}`);
+
+                        if (insertId) {
+                            console.log(`Atualizando ID Local (Agendamento): UUID(${item.id_agendamento}) -> MySQL(${insertId})`);
+                            db.prepare('UPDATE agendamento SET id_agendamento = ?, sincronizado = 1 WHERE id_agendamento = ?')
+                                .run(insertId.toString(), item.id_agendamento);
+                        }
+                        enviados++;
+
+                    } else {
+                        // EDIÇÃO (UPDATE)
+                        // Se já tem ID numérico, atualiza lá
+                        console.log(`[SYNC] Atualizando item ${item.id_agendamento} no MySQL...`);
+                        await this.mysql.query(
+                            `UPDATE agendamento SET 
+                                id_usuario = ?, 
+                                id_profissional = ?, 
+                                data_agendamento = ?, 
+                                status_consulta = ?
+                             WHERE id_agendamento = ?`,
+                            [item.id_usuario, item.id_profissional, item.data_agendamento, statusEnvio, item.id_agendamento]
+                        );
+
+                        db.prepare('UPDATE agendamento SET sincronizado = 1 WHERE id_agendamento = ?').run(item.id_agendamento);
+                        enviados++;
                     }
                 } catch (errItem) {
-                    console.error(`Erro sync agendamento ${item.id_agendamento}:`, errItem);
+                    console.error(`[SYNC ERROR] Falha ao sincronizar item ${item.id_agendamento}:`, errItem.message);
+                    falhas++;
+                    erros.push(`Item ${item.id_agendamento}: ${errItem.message}`);
                 }
             }
 
-            // --- PULL (API -> Local) ---
-            const apiData = await this.api.get('api/agendamentos'); // Rota JSON
+            // --- PULL (Remoto -> Local) ---
+            const rows = await this.mysql.query('SELECT * FROM agendamento');
 
-            if (apiData && apiData.sessionExpired) return { success: false, sessionExpired: true };
-            if (apiData && apiData.offline) return { success: false, offline: true };
-
-            const lista = Array.isArray(apiData) ? apiData : (apiData.data || []);
-
-            if (lista.length > 0) {
+            if (rows && rows.length > 0) {
                 const stmtUpsert = db.prepare(`
                     INSERT INTO agendamento (id_agendamento, id_usuario, id_profissional, data_agendamento, status_consulta, observacoes, sincronizado, excluido_em)
-                    VALUES (@id, @id_user, @id_prof, @data, @status, @obs, 1, NULL)
+                    VALUES (@id, @id_user, @id_prof, @data, @status, @obs, 1, @excluido)
                     ON CONFLICT(id_agendamento) DO UPDATE SET
                         id_usuario = excluded.id_usuario,
                         id_profissional = excluded.id_profissional,
@@ -214,28 +258,43 @@ class AgendamentoModel {
                         status_consulta = excluded.status_consulta,
                         observacoes = excluded.observacoes,
                         sincronizado = 1,
-                        excluido_em = NULL
+                        excluido_em = excluded.excluido_em
                 `);
 
-                const transacao = db.transaction((dados) => {
-                    for (const d of dados) {
+                const checkStmt = db.prepare('SELECT * FROM agendamento WHERE id_agendamento = ?');
+
+                const transacao = db.transaction((lista) => {
+                    for (const r of lista) {
+                        // Anti-Ressurreição
+                        const local = checkStmt.get(r.id_agendamento.toString());
+                        if (local && local.sincronizado === 0 && local.excluido_em) {
+                            continue;
+                        }
+
                         stmtUpsert.run({
-                            id: d.id_agendamento,
-                            id_user: d.id_usuario,
-                            id_prof: d.id_profissional,
-                            data: d.data_agendamento,
-                            status: d.status_consulta,
-                            obs: d.observacoes
+                            id: r.id_agendamento.toString(),
+                            id_user: Math.floor(r.id_usuario).toString(),
+                            id_prof: Math.floor(r.id_profissional).toString(),
+                            data: r.data_agendamento,
+                            status: r.status_consulta,
+                            obs: r.observacoes || '',
+                            excluido: r.excluido_em || null
                         });
                     }
                 });
-                transacao(lista);
+
+                try {
+                    db.pragma('foreign_keys = OFF');
+                    transacao(rows);
+                } finally {
+                    db.pragma('foreign_keys = ON');
+                }
             }
 
-            return { success: true };
+            return { success: true, enviados, falhas, erros };
 
         } catch (error) {
-            console.error("Erro Sync Agendamentos:", error);
+            console.error("Erro Sync Direto Agendamentos:", error);
             return { success: false, erro: error.message };
         }
     }

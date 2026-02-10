@@ -2,7 +2,7 @@ import { ipcMain } from 'electron';
 import AgendamentoModel from '../Models/Agendamento.js';
 
 class AgendamentoController {
-    
+
     constructor() {
         this.model = new AgendamentoModel();
     }
@@ -15,6 +15,7 @@ class AgendamentoController {
         ipcMain.handle('agendamentos:buscarPorId', async (event, id) => this.model.buscarPorId(id));
         ipcMain.handle('agendamentos:editar', async (event, data) => this.model.editar(data));
         ipcMain.handle('agendamentos:cancelar', async (event, id) => this.model.cancelar(id));
+        ipcMain.handle('agendamentos:sincronizar', async () => this.model.sincronizacaoBidirecional());
     }
 }
 

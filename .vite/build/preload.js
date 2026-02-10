@@ -25,5 +25,6 @@ electron.contextBridge.exposeInMainWorld("electronAPI", {
   removerAgendamento: (id) => electron.ipcRenderer.invoke("agendamentos:remover", id),
   buscarAgendamentoPorId: (id) => electron.ipcRenderer.invoke("agendamentos:buscarPorId", id),
   editarAgendamento: (dados) => electron.ipcRenderer.invoke("agendamentos:editar", dados),
-  cancelarAgendamento: (id) => electron.ipcRenderer.invoke("agendamentos:cancelar", id)
+  cancelarAgendamento: (id) => electron.ipcRenderer.invoke("agendamentos:cancelar", id),
+  sincronizarAgendamentos: () => electron.ipcRenderer.invoke("agendamentos:sincronizar")
 });

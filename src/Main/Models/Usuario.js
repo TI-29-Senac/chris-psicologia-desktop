@@ -1,12 +1,12 @@
-import FetchAPI from '../Service/FetchAPI.js';
-// ALTERAÇÃO AQUI: Importe o 'db' (padrão) em vez de { configurarDB }
 import db from '../Database/db.js';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
+import mysqlService from '../Service/MySQLService.js';
 
 class UsuarioModel {
     constructor() {
-        this.api = new FetchAPI();
+        this.api = null; // Deprecated for sync
+        this.mysql = mysqlService;
     }
 
     async listar() {
@@ -360,96 +360,82 @@ class UsuarioModel {
 
     async sincronizacaoBidirecional() {
         try {
+            console.log("Iniciando Sincronização Direta de Usuários (MySQL)...");
+
             // --- FLUXO 1: PUSH (Local -> Servidor) ---
-            // Busca alterações locais (sincronizado = 0)
             const pendentesLocais = db.prepare('SELECT * FROM usuario WHERE sincronizado = 0').all();
 
             for (const user of pendentesLocais) {
                 try {
-                    // Se tiver excluido_em preenchido, manda excluir na API
+                    const isUuid = user.id_usuario.toString().length > 15;
+
                     if (user.excluido_em) {
                         try {
-                            const res = await this.api.post('usuarios/salvar', user);
-
-                            // SE A SESSÃO EXPIROU, PARE TUDO IMEDIATAMENTE
-                            if (res && res.sessionExpired) {
-                                return { success: false, erro: "Sessão expirada.", sessionExpired: true };
+                            if (!isUuid) {
+                                await this.mysql.query(
+                                    'UPDATE usuario SET excluido_em = NOW() WHERE id_usuario = ?',
+                                    [user.id_usuario]
+                                );
                             }
-
-                            // SE ESTIVER OFFLINE, PARE TUDO PARA EVITAR FLOOD
-                            if (res && res.offline) {
-                                console.warn("Sincronização interrompida: Modo Offline.");
-                                return { success: false, erro: "Modo Offline.", offline: true };
-                            }
-
-                            // Se sucesso (ou se já não existe), marcamos como sincronizado
-                            if (res && (res.success || res.offline)) {
-                                db.prepare('UPDATE usuario SET sincronizado = 1 WHERE id_usuario = ?').run(user.id_usuario);
-                            }
+                            db.prepare('UPDATE usuario SET sincronizado = 1 WHERE id_usuario = ?').run(user.id_usuario);
                         } catch (e) {
-                            console.warn(`Erro ao sincronizar exclusão do usuário ${user.id_usuario} na API:`, e);
+                            console.warn(`Erro sync exclusão usuario ${user.id_usuario}:`, e.message);
                         }
                     } else {
                         // Cadastro ou Edição
-                        console.log("Tentando sincronizar item (PUSH):", dadosParaEnvio); // DEBUG
-                        const res = await this.api.post('usuarios/salvar', dadosParaEnvio);
-                        console.log("Resposta da API (PUSH):", res); // DEBUG
+                        if (isUuid) {
+                            // INSERT
+                            // Senha: Se for hash local ($2a), mantemos ou tentamos 'un-hash'? 
+                            // O server espera hash BCrypt ($2y ou $2a). 
+                            // O ideal é enviar o hash.
+                            const res = await this.mysql.query(
+                                `INSERT INTO usuario (nome_usuario, email_usuario, senha_usuario, tipo_usuario, cpf, status_usuario)
+                                 VALUES (?, ?, ?, ?, ?, ?)`,
+                                [user.nome_usuario, user.email_usuario, user.senha_usuario, user.tipo_usuario, user.cpf, 'ativo']
+                            );
 
-                        // SE A SESSÃO EXPIROU, PARE TUDO IMEDIATAMENTE
-                        if (res && res.sessionExpired) {
-                            console.error("Sincronização abortada: Sessão expirada.");
-                            return { success: false, erro: "Sessão expirada.", sessionExpired: true };
-                        }
-
-                        // SE ESTIVER OFFLINE, PARE TUDO
-                        if (res && res.offline) {
-                            console.warn("Sincronização interrompida: Modo Offline.");
-                            return { success: false, erro: "Modo Offline.", offline: true };
-                        }
-
-                        if (res && res.success) {
-                            // Se o servidor gerou um ID novo e é diferente do local
-                            const novoId = res.id_gerado || user.id_usuario;
-
-                            // Atualiza ID local (Cascata do DB cuida das referências) e marca sync=1
-                            if (novoId.toString() !== user.id_usuario.toString()) {
+                            const newId = res.insertId;
+                            if (newId) {
+                                console.log(`Sync Usuario: UUID(${user.id_usuario}) -> MySQL(${newId})`);
                                 db.prepare('UPDATE usuario SET id_usuario = ?, sincronizado = 1 WHERE id_usuario = ?')
-                                    .run(novoId.toString(), user.id_usuario);
-                            } else {
-                                db.prepare('UPDATE usuario SET sincronizado = 1 WHERE id_usuario = ?')
-                                    .run(user.id_usuario);
+                                    .run(newId.toString(), user.id_usuario);
+
+                                // ATUALIZA REFERÊNCIAS NA TABELA DE AGENDAMENTOS E PROFISISONAL
+                                // SQLite ON UPDATE CASCADE deve cuidar disso se FKs estiverem OK.
+                                // Caso contrário, precisariamos scripts manuais.
                             }
-                            console.log("Item sincronizado com sucesso:", user.id_usuario); // DEBUG
                         } else {
-                            console.error("Falha ao sincronizar item:", user.id_usuario, res); // DEBUG
+                            // UPDATE
+                            await this.mysql.query(
+                                `UPDATE usuario SET 
+                                    nome_usuario = ?, email_usuario = ?, tipo_usuario = ?, cpf = ?
+                                    ${user.senha_usuario ? ', senha_usuario = ?' : ''}
+                                 WHERE id_usuario = ?`,
+                                user.senha_usuario
+                                    ? [user.nome_usuario, user.email_usuario, user.tipo_usuario, user.cpf, user.senha_usuario, user.id_usuario]
+                                    : [user.nome_usuario, user.email_usuario, user.tipo_usuario, user.cpf, user.id_usuario]
+                            );
+                            db.prepare('UPDATE usuario SET sincronizado = 1 WHERE id_usuario = ?').run(user.id_usuario);
                         }
                     }
                 } catch (errItem) {
-                    console.error(`Erro ao sincronizar item ${user.id_usuario}:`, errItem);
+                    console.error(`Erro sync usuario ${user.id_usuario}:`, errItem.message);
                 }
             }
 
             // --- FLUXO 2: PULL (Servidor -> Local) ---
-            // Busca todos os usuários do MySQL
-            const usuariosSite = await this.api.get('usuarios');
+            const usuariosSite = await this.mysql.query('SELECT * FROM usuario');
+            // Busca também profissionais para popular a tabela 'profissional' local, se existir no remoto
+            // Assumindo existência de tabela 'profissional' no remoto.
+            let profissionaisSite = [];
+            try {
+                profissionaisSite = await this.mysql.query('SELECT * FROM profissional');
+            } catch (e) { console.warn("Tabela profissional remota não encontrada ou erro:", e.message); }
 
-            if (usuariosSite && usuariosSite.sessionExpired) {
-                return { success: false, erro: "Sessão expirada durante Pull.", sessionExpired: true };
-            }
-
-            if (usuariosSite && usuariosSite.offline) {
-                return { success: false, erro: "Modo Offline durante Pull.", offline: true };
-            }
-
-            const listaOficial = Array.isArray(usuariosSite) ? usuariosSite : (usuariosSite.data || []);
-
-            if (listaOficial.length > 0) {
-                console.log("Exemplo de usuário vindo da API:", listaOficial[0]); // Debug
-            }
 
             const stmtUpsert = db.prepare(`
                 INSERT INTO usuario (id_usuario, nome_usuario, email_usuario, senha_usuario, tipo_usuario, cpf, sincronizado, excluido_em)
-                VALUES (@id, @nome, @email, @senha, @tipo, @cpf, 1, NULL)
+                VALUES (@id, @nome, @email, @senha, @tipo, @cpf, 1, @excluido)
                 ON CONFLICT(id_usuario) DO UPDATE SET
                     nome_usuario = excluded.nome_usuario,
                     email_usuario = excluded.email_usuario,
@@ -457,8 +443,19 @@ class UsuarioModel {
                     tipo_usuario = excluded.tipo_usuario,
                     cpf = excluded.cpf,
                     sincronizado = 1,
-                    excluido_em = NULL
+                    excluido_em = excluded.excluido_em
             `);
+
+            // Upsert Profissional
+            const stmtUpsertProf = db.prepare(`
+                INSERT INTO profissional (id_profissional, id_usuario, especialidade, valor_consulta, sinal_consulta)
+                VALUES (@id_prof, @id_user, @espec, @valor, @sinal)
+                ON CONFLICT(id_profissional) DO UPDATE SET
+                    id_usuario = excluded.id_usuario,
+                    especialidade = excluded.especialidade,
+                    valor_consulta = excluded.valor_consulta,
+                    sinal_consulta = excluded.sinal_consulta
+             `);
 
             const checkEmailStmt = db.prepare('SELECT id_usuario FROM usuario WHERE email_usuario = ?');
             const checkIdStmt = db.prepare('SELECT id_usuario FROM usuario WHERE id_usuario = ?');
@@ -470,73 +467,93 @@ class UsuarioModel {
                     const uEmail = (u.email_usuario || '').trim().toLowerCase();
 
                     // 1. UNIFICAÇÃO: Verifica colisão de email (Local ID != Server ID)
-                    // Busca quem tem esse email localmente
                     const localPorEmail = checkEmailStmt.get(uEmail);
 
                     if (localPorEmail && localPorEmail.id_usuario.toString() !== u.id_usuario.toString()) {
                         console.log(`Unificando usuário por email: Local(${localPorEmail.id_usuario}) -> Server(${u.id_usuario})`);
-
+                        // Lógica de unificação mantida
                         try {
-                            // Verifica se o ID de destino (Server ID) JÁ existe no banco e não é o mesmo usuario
                             const obstrucao = checkIdStmt.get(u.id_usuario.toString());
-                            if (obstrucao) {
-                                // Se existir, mas não for o mesmo registro (o que é obvio já que o ID é diferente do localPorEmail), 
-                                // deletamos o obsoleto para dar lugar.
-                                deleteStmt.run(u.id_usuario.toString());
-                            }
+                            if (obstrucao) deleteStmt.run(u.id_usuario.toString());
 
-                            // Agora o caminho está livre para renomear o ID local
-                            updateIdStmt.run(u.id_usuario.toString(), localPorEmail.id_usuario);
+
+                            try {
+                                updateIdStmt.run(u.id_usuario.toString(), localPorEmail.id_usuario);
+                                db.prepare('UPDATE agendamento SET id_usuario = ? WHERE id_usuario = ?').run(u.id_usuario.toString(), localPorEmail.id_usuario);
+                                db.prepare('UPDATE agendamento SET id_profissional = ? WHERE id_profissional = ?').run(u.id_usuario.toString(), localPorEmail.id_usuario);
+                                db.prepare('UPDATE profissional SET id_usuario = ? WHERE id_usuario = ?').run(u.id_usuario.toString(), localPorEmail.id_usuario);
+                            } catch (e) {
+                                throw e; // Propaga erro
+                            }
                         } catch (e) {
-                            console.error("Erro crítico ao unificar IDs:", e.message);
+                            console.error("Erro unificar IDs:", e.message);
                         }
                     }
 
-                    // 1.5 ANTI-RESURRECTION (Evita recriar usuário que deletamos localmente mas server não aceitou ainda)
+                    // 1.5 ANTI-RESURRECTION
                     const localExistente = checkIdStmt.get(u.id_usuario.toString());
                     if (localExistente) {
-                        // Verifica se está marcado como excluído e pendente de sync
                         const localFull = db.prepare('SELECT * FROM usuario WHERE id_usuario = ?').get(u.id_usuario.toString());
                         if (localFull && localFull.excluido_em && localFull.sincronizado === 0) {
-                            console.log(`Ignorando update do servidor para usuário ${u.id_usuario} (Exclusão local pendente).`);
-                            continue; // Pula este usuário, matando a ressurreição
+                            continue;
                         }
                     }
 
-                    // 2. PREPARAÇÃO: Tratamento de Senha (Compatibilidade PHP -> Node)
-                    // O PHP usa $2y$, o bcryptjs do Node prefere $2a$. São compatíveis, basta trocar o prefixo.
-                    let senhaHash = '$2a$10$NotSyncedxxxxxxxxxxxxxxxxxxxxxx'; // Default
-
+                    // 2. SENHAS
+                    let senhaHash = '$2a$10$NotSyncedxxxxxxxxxxxxxxxxxxxxxx';
                     const senhaVindaDaApi = u.senha_usuario || u.senha;
                     if (senhaVindaDaApi) {
-                        // Se parece ser um hash bcrypt (começa com $2)
                         if (senhaVindaDaApi.startsWith('$2')) {
-                            senhaHash = senhaVindaDaApi.replace(/^\$2y\$/, '$2a$'); // Converte para formato do Node
-                        } else {
-                            // Se vier senha plana, idealmente deveriamos hashear, mas cuidado com re-hash
+                            senhaHash = senhaVindaDaApi.replace(/^\$2y\$/, '$2a$');
                         }
                     }
 
-                    // 3. UPSERT
+                    // 3. UPSERT USUARIO
                     stmtUpsert.run({
                         id: u.id_usuario.toString(),
                         nome: u.nome_usuario,
                         email: uEmail,
                         senha: senhaHash,
                         tipo: u.tipo_usuario || u.tipo,
-                        cpf: u.cpf || '000.000.000-00'
+                        cpf: u.cpf || '000.000.000-00',
+                        excluido: u.excluido_em || null
                     });
                 }
             });
 
-            if (listaOficial.length > 0) {
-                transacaoPull(listaOficial);
+            if (usuariosSite.length > 0) {
+                try {
+                    db.pragma('foreign_keys = OFF');
+                    transacaoPull(usuariosSite);
+                } finally {
+                    db.pragma('foreign_keys = ON');
+                }
+            }
+
+            // Sync Profissionais
+            if (profissionaisSite.length > 0) {
+                const transacaoProf = db.transaction((profs) => {
+                    for (const p of profs) {
+                        // Verifica se o usuario dono existe localmente (integridade)
+                        const userExists = checkIdStmt.get(p.id_usuario.toString());
+                        if (userExists) {
+                            stmtUpsertProf.run({
+                                id_prof: p.id_profissional ? p.id_profissional.toString() : uuidv4(), // Se nao tiver ID (?), gera
+                                id_user: p.id_usuario.toString(),
+                                espec: p.especialidade || '',
+                                valor: p.valor_consulta || 0,
+                                sinal: p.sinal_consulta || 0
+                            });
+                        }
+                    }
+                });
+                transacaoProf(profissionaisSite);
             }
 
             return { success: true, message: "Sincronização bidirecional concluída." };
 
         } catch (error) {
-            console.error("Erro na sincronização bidirecional:", error);
+            console.error("Erro na sincronização bidirecional (MySQL):", error);
             return { success: false, erro: error.message };
         }
     }

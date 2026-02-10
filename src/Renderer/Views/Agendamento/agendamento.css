@@ -7,13 +7,13 @@
     /* Cores herdadas ou específicas desta view */
     --color-text-dark: #444444;
     --color-text-muted: #888888;
-    
+
     --color-danger: #e57373;
     --color-success: #81c784;
     --color-edit: #64b5f6;
-    
+
     --border-radius: 12px;
-    --box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    --box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
 /* IMPORTANTE: Não estilize o 'body' aqui. 
@@ -21,16 +21,18 @@
 */
 
 h2 {
-    color: var(--color-dark-green); /* Usa variável do dashboard.css */
+    color: var(--color-dark-green);
+    /* Usa variável do dashboard.css */
     margin-bottom: 30px;
     font-weight: 700;
 }
 
 h3 {
-    color: var(--color-text-dark);
+    color: var(--color-dark-green);
     font-weight: 600;
     margin-bottom: 20px;
     font-size: 1.2rem;
+    font-family: 'Questrial', sans-serif;
 }
 
 /* =========================================
@@ -42,7 +44,7 @@ h3 {
     box-shadow: var(--box-shadow);
     padding: 30px;
     margin-bottom: 30px;
-    border: 1px solid rgba(0,0,0,0.02);
+    border: 1px solid rgba(0, 0, 0, 0.02);
 }
 
 /* =========================================
@@ -123,6 +125,7 @@ h3 {
     background-color: var(--color-dark-green);
     color: white;
 }
+
 .btn-primary:hover {
     opacity: 0.9;
 }
@@ -131,6 +134,7 @@ h3 {
     background-color: #e0e0e0;
     color: #333;
 }
+
 .btn-secondary:hover {
     background-color: #d0d0d0;
 }
@@ -143,6 +147,7 @@ h3 {
     font-weight: bold;
     transition: 0.2s;
 }
+
 .confirm-btn:hover {
     opacity: 0.9;
     transform: translateY(-2px);
@@ -166,8 +171,13 @@ h3 {
     font-size: 0.95rem;
 }
 
-.table th:first-child { border-top-left-radius: var(--border-radius); }
-.table th:last-child { border-top-right-radius: var(--border-radius); }
+.table th:first-child {
+    border-top-left-radius: var(--border-radius);
+}
+
+.table th:last-child {
+    border-top-right-radius: var(--border-radius);
+}
 
 .table td {
     padding: 15px;
@@ -189,14 +199,17 @@ h3 {
     font-weight: 700;
     text-transform: uppercase;
 }
+
 .status-agendado {
     background-color: rgba(129, 199, 132, 0.2);
     color: #2e7d32;
 }
+
 .status-cancelado {
     background-color: rgba(229, 115, 115, 0.2);
     color: #c62828;
 }
+
 .status-pending {
     background-color: #fff3cd;
     color: #856404;
@@ -213,12 +226,117 @@ h3 {
     margin: 0 2px;
     transition: background-color 0.2s;
 }
+
 .action-btn:hover {
     background-color: #f5f5f5;
 }
 
-.btn-edit { color: var(--color-edit); }
-.btn-cancel { color: orange; }
-.btn-delete { color: var(--color-danger); }
+.btn-edit {
+    color: var(--color-edit);
+}
 
-.text-center { text-align: center; }
+.btn-cancel {
+    color: orange;
+}
+
+.btn-delete {
+    color: var(--color-danger);
+}
+
+.text-center {
+    text-align: center;
+}
+
+/* Botão Sincronizar (Igual ao de Usuários) */
+.btn-sync {
+    background-color: #5D6D68;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 6px rgba(93, 109, 104, 0.2);
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+.btn-sync:hover {
+    background-color: #4a5854;
+    transform: translateY(-2px);
+}
+
+.btn-sync:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* --- Grupo de Busca (Copiado de usuarios.css) --- */
+.search-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    padding: 5px;
+    border-radius: 30px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    border: 1px solid #ddd;
+}
+
+.search-select {
+    border: none;
+    background: transparent;
+    padding: 8px 10px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: #5D6D68;
+    font-weight: 600;
+    cursor: pointer;
+    border-right: 1px solid #eee;
+    outline: none;
+}
+
+.search-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-input-container i {
+    color: #7C8F88;
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+#input-busca {
+    border: none;
+    outline: none;
+    padding: 8px;
+    font-size: 0.9rem;
+    width: 200px;
+    color: #444;
+}
+
+#input-busca-data {
+    border: none;
+    outline: none;
+    padding: 8px;
+    font-size: 0.9rem;
+    width: 130px;
+    color: #444;
+}
+
+@media (max-width: 900px) {
+    .search-group {
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    #input-busca {
+        width: 100%;
+    }
+}
