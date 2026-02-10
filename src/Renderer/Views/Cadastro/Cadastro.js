@@ -11,7 +11,7 @@ let tipoAtual = 'cliente';
 // --- FUNÇÃO PARA TROCAR ABAS ---
 function mudarTipo(tipo) {
     tipoAtual = tipo;
-    
+
     const btnCliente = document.getElementById('btn-cliente');
     const btnProf = document.getElementById('btn-profissional');
     const areaProf = document.getElementById('area-profissional');
@@ -33,8 +33,28 @@ document.getElementById('btn-salvar').addEventListener('click', async () => {
     const email = document.getElementById('email').value;
     const senha = document.getElementById('senha').value;
 
-    if(!nome || !email || !senha) {
+    if (!nome || !email || !senha) {
         return alert("Por favor, preencha nome, email e senha.");
+    }
+
+    // --- VALIDAÇÃO DE EMAIL ---
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+        return alert("Por favor, insira um email válido (ex: nome@dominio.com).");
+    }
+
+    const dominiosPermitidos = [
+        'gmail.com',
+        'hotmail.com', 'hotmail.com.br',
+        'outlook.com', 'outlook.com.br',
+        'yahoo.com', 'yahoo.com.br',
+        'live.com',
+        'icloud.com'
+    ];
+
+    const dominioEmail = email.split('@')[1];
+    if (!dominiosPermitidos.includes(dominioEmail)) {
+        return alert(`O domínio @${dominioEmail} não é aceito. Use um dos seguintes: Gmail, Hotmail, Outlook, Yahoo, Live ou iCloud.`);
     }
 
     // OBJETO PADRONIZADO COM O BACKEND
@@ -71,7 +91,7 @@ document.getElementById('btn-salvar').addEventListener('click', async () => {
 const consulta = document.getElementById("valorConsulta");
 const sinal = document.getElementById("valorSinal");
 
-if(consulta && sinal) {
+if (consulta && sinal) {
     consulta.addEventListener("input", () => {
         const v = parseFloat(consulta.value) || 0;
         sinal.value = (v * 0.20).toFixed(2);

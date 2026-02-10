@@ -26,6 +26,14 @@ class UsuarioModel {
             const emailNormalizado = dados.email_usuario.trim().toLowerCase();
             const usuarioExistente = db.prepare('SELECT * FROM usuario WHERE LOWER(email_usuario) = ?').get(emailNormalizado);
 
+            // 0.1 Verifica se o CPF já existe
+            if (dados.cpf && dados.cpf !== '000.000.000-00') {
+                const cpfExistente = db.prepare('SELECT id_usuario FROM usuario WHERE cpf = ? AND excluido_em IS NULL').get(dados.cpf);
+                if (cpfExistente) {
+                    return { success: false, erro: "CPF já cadastrado." };
+                }
+            }
+
             if (usuarioExistente) {
                 if (!usuarioExistente.excluido_em) {
                     // Cenário A: Usuário existe e está ativo
@@ -100,19 +108,53 @@ class UsuarioModel {
                 0
             );
 
+            // 1.1 Se for Profissional, salva na tabela de detalhes
+            if (dados.tipo_usuario === 'profissional') {
+                db.prepare(`
+                    INSERT INTO profissional (id_profissional, id_usuario, especialidade, valor_consulta, sinal_consulta)
+                    VALUES (?, ?, ?, ?, ?)
+                `).run(
+                    uuidv4(),
+                    novoId,
+                    dados.especialidade || 'Clínica Geral',
+                    dados.valor_consulta || 0,
+                    dados.sinal_consulta || 0
+                );
+            }
+
             // 2. Tenta enviar para o MySQL (API)
             try {
                 // Garante que o ID gerado vá para a API também
                 const dadosParaAPI = { ...dados, id_usuario: novoId };
-                // REVERTIDO: APIUsuarioController espera JSON
+
+                // FIX: Adiciona 'id' como alias para evitar problemas no backend
+                dadosParaAPI.id = novoId;
+
                 const apiRes = await this.api.post('usuarios/salvar', dadosParaAPI);
 
                 if (apiRes && apiRes.success) {
-                    db.prepare('UPDATE usuario SET sincronizado = 1 WHERE id_usuario = ?').run(novoId);
-                    return { success: true, id: novoId, sincronizado: true };
+                    // FIX CRÍTICO: Se o servidor retornou um ID novo (sequencial/int), PRECISAS ATUALIZAR O LOCAL
+                    // Se não fizermos isso, o local fica com UUID e o server com ID 10, causando duplicidade na próxima edição.
+
+                    const idServidor = apiRes.id_gerado || apiRes.id || apiRes.data?.id;
+
+                    if (idServidor && idServidor.toString() !== novoId.toString()) {
+                        console.log(`Atualizando ID Local (Cadastro): UUID(${novoId}) -> Server(${idServidor})`);
+                        db.prepare('UPDATE usuario SET id_usuario = ?, sincronizado = 1 WHERE id_usuario = ?')
+                            .run(idServidor.toString(), novoId);
+
+                        // Atualiza também referências na tabela Profissional (Cascade geralmente cuida, mas por segurança...)
+                        // SQLite com FK correta faz cascade. Se não, precisaríamos update manual. 
+                        // Assumindo Cascade ou update pelo ID antigo acima (se FK on update cascade).
+
+                        return { success: true, id: idServidor, sincronizado: true };
+                    } else {
+                        db.prepare('UPDATE usuario SET sincronizado = 1 WHERE id_usuario = ?').run(novoId);
+                        return { success: true, id: novoId, sincronizado: true };
+                    }
                 }
             } catch (apiError) {
-                console.warn("API Offline. O registro ficou apenas no SQLite.");
+                console.warn("API Offline. O registro ficou apenas no SQLite.", apiError);
             }
 
             return { success: true, id: novoId, sincronizado: false };
@@ -124,37 +166,164 @@ class UsuarioModel {
 
     async editar(dados) {
         try {
-            const stmt = db.prepare(`
-                UPDATE usuario 
-                SET nome_usuario = ?, 
-                    email_usuario = ?, 
-                    tipo_usuario = ?, -- Recebe: 'cliente', 'profissional', 'recepcionista' ou 'admin'
-                    cpf = ?, 
-                    sincronizado = 0, 
-                    atualizado_em = CURRENT_TIMESTAMP
-                WHERE id_usuario = ?
-            `);
+            // VERIFICAÇÃO DE DUPLICIDADE DE CPF NA EDIÇÃO
+            if (dados.cpf && dados.cpf !== '000.000.000-00') {
+                const cpfExistente = db.prepare('SELECT id_usuario FROM usuario WHERE cpf = ? AND id_usuario != ? AND excluido_em IS NULL').get(dados.cpf, dados.id_usuario);
+                if (cpfExistente) {
+                    return { success: false, erro: "CPF já cadastrado para outro usuário." };
+                }
+            }
 
-            stmt.run(
-                dados.nome_usuario,
-                dados.email_usuario,
-                dados.tipo_usuario,
-                dados.cpf,
-                dados.id_usuario
-            );
+            // LÓGICA DE SENHA: Só atualiza se o usuário digitou algo
+            let atualizarSenha = false;
+            let senhaHashLocal = null;
+
+            if (dados.senha_usuario && dados.senha_usuario.trim() !== '') {
+                atualizarSenha = true;
+                const salt = bcrypt.genSaltSync(10);
+                senhaHashLocal = bcrypt.hashSync(dados.senha_usuario, salt);
+            }
+
+            if (atualizarSenha) {
+                // UPDATE COM SENHA
+                db.prepare(`
+                    UPDATE usuario 
+                    SET nome_usuario = ?, 
+                        email_usuario = ?, 
+                        tipo_usuario = ?, 
+                        cpf = ?, 
+                        senha_usuario = ?,
+                        sincronizado = 0, 
+                        atualizado_em = CURRENT_TIMESTAMP
+                    WHERE id_usuario = ?
+                `).run(
+                    dados.nome_usuario,
+                    dados.email_usuario,
+                    dados.tipo_usuario,
+                    dados.cpf,
+                    senhaHashLocal,
+                    dados.id_usuario
+                );
+            } else {
+                // UPDATE SEM SENHA (MANTÉM A ANTIGA)
+                db.prepare(`
+                    UPDATE usuario 
+                    SET nome_usuario = ?, 
+                        email_usuario = ?, 
+                        tipo_usuario = ?, 
+                        cpf = ?, 
+                        sincronizado = 0, 
+                        atualizado_em = CURRENT_TIMESTAMP
+                    WHERE id_usuario = ?
+                `).run(
+                    dados.nome_usuario,
+                    dados.email_usuario,
+                    dados.tipo_usuario,
+                    dados.cpf,
+                    dados.id_usuario
+                );
+            }
+
+            // ATUALIZAÇÃO DA TABELA PROFISSIONAL
+            if (dados.tipo_usuario === 'profissional') {
+                const profExistente = db.prepare('SELECT id_profissional FROM profissional WHERE id_usuario = ?').get(dados.id_usuario);
+
+                if (profExistente) {
+                    db.prepare(`
+                        UPDATE profissional 
+                        SET especialidade = ?, 
+                            valor_consulta = ?, 
+                            sinal_consulta = ?
+                        WHERE id_usuario = ?
+                    `).run(
+                        dados.especialidade,
+                        dados.valor_consulta,
+                        dados.sinal_consulta,
+                        dados.id_usuario
+                    );
+                } else {
+                    // Caso o usuário tenha virado profissional agora
+                    db.prepare(`
+                        INSERT INTO profissional (id_profissional, id_usuario, especialidade, valor_consulta, sinal_consulta)
+                        VALUES (?, ?, ?, ?, ?)
+                    `).run(
+                        uuidv4(),
+                        dados.id_usuario,
+                        dados.especialidade || '',
+                        dados.valor_consulta || 0,
+                        dados.sinal_consulta || 0
+                    );
+                }
+            }
 
             // Tenta avisar o site da mudança
             try {
-                // REVERTIDO: API espera JSON
-                await this.api.post('usuarios/salvar', dados);
-                db.prepare('UPDATE usuario SET sincronizado = 1 WHERE id_usuario = ?')
-                    .run(dados.id_usuario);
+                // AUTO-CORREÇÃO DE ID (UUID -> Server ID) ANTES DA EDIÇÃO
+                let idParaEnvio = dados.id_usuario;
+
+                if (idParaEnvio && idParaEnvio.toString().length > 10) {
+                    console.log("ID Local parece ser UUID. Buscando correspondência no servidor antes de editar...");
+                    try {
+                        const usersRemotos = await this.api.get('usuarios');
+                        if (usersRemotos && Array.isArray(usersRemotos.data || usersRemotos)) {
+                            const lista = usersRemotos.data || usersRemotos;
+                            const emailAlvo = dados.email_usuario.toLowerCase();
+                            const match = lista.find(u => u.email_usuario && u.email_usuario.toLowerCase() === emailAlvo);
+
+                            if (match && match.id_usuario && match.id_usuario.toString() !== idParaEnvio.toString()) {
+                                console.log(`Correspondência encontrada! Atualizando ID Local: ${idParaEnvio} -> ${match.id_usuario}`);
+
+                                // Atualiza BD Local
+                                db.prepare('UPDATE usuario SET id_usuario = ?, sincronizado = 0 WHERE id_usuario = ?')
+                                    .run(match.id_usuario.toString(), idParaEnvio);
+
+                                idParaEnvio = match.id_usuario;
+                                dados.id_usuario = match.id_usuario;
+                            }
+                        }
+                    } catch (errBusca) {
+                        console.warn("Falha na busca pré-edição:", errBusca);
+                    }
+                }
+
+                // PREPARA PAYLOAD LIMPO PARA API
+                const dadosParaAPI = { ...dados };
+
+                // Usa o ID (possivelmente corrigido)
+                dadosParaAPI.id_usuario = idParaEnvio;
+                dadosParaAPI.id = idParaEnvio; // Alias
+
+                // Se a senha estiver vazia, removemos do objeto para não apagar a senha no servidor
+                if (!dados.senha_usuario || dados.senha_usuario.trim() === '') {
+                    delete dadosParaAPI.senha_usuario;
+                }
+
+                console.log("Tentando editar na API (Payload Ajustado):", dadosParaAPI); // DEBUG
+                const apiRes = await this.api.post('usuarios/salvar', dadosParaAPI);
+                console.log("Resposta da API (Edição):", apiRes); // DEBUG
+
+                if (apiRes && apiRes.success) {
+                    // FIX: Se o servidor retornou um ID diferente do nosso (ex: corrigindo UUID -> Int), aceitamos.
+                    const idServidor = apiRes.id_gerado || apiRes.id || apiRes.data?.id;
+
+                    if (idServidor && idServidor.toString() !== idParaEnvio.toString()) {
+                        console.log(`Atualizando ID Local (Edição - Resposta): ${idParaEnvio} -> ${idServidor}`);
+                        db.prepare('UPDATE usuario SET id_usuario = ?, sincronizado = 1 WHERE id_usuario = ?')
+                            .run(idServidor.toString(), idParaEnvio);
+                    } else {
+                        db.prepare('UPDATE usuario SET sincronizado = 1 WHERE id_usuario = ?')
+                            .run(idParaEnvio);
+                    }
+                } else {
+                    console.warn("API retornou erro ou insucesso na edição:", apiRes); // DEBUG
+                }
             } catch (e) {
-                console.warn("Mudança de tipo gravada apenas localmente.");
+                console.warn("Mudança de edição gravada apenas localmente (Offline ou Erro API).", e);
             }
 
             return { success: true };
         } catch (error) {
+            console.error("Erro ao editar usuário:", error);
             return { success: false, erro: error.message };
         }
     }
@@ -197,8 +366,7 @@ class UsuarioModel {
 
             for (const user of pendentesLocais) {
                 try {
-                    // Se tiver excluido_em preenchido, manda SALVAR na API (Soft Delete)
-                    // Anteriormente chamava 'excluir', agora chama 'salvar' para persistir o timestamp
+                    // Se tiver excluido_em preenchido, manda excluir na API
                     if (user.excluido_em) {
                         try {
                             const res = await this.api.post('usuarios/salvar', user);
@@ -223,8 +391,9 @@ class UsuarioModel {
                         }
                     } else {
                         // Cadastro ou Edição
-                        // REVERTIDO: API espera JSON
-                        const res = await this.api.post('usuarios/salvar', user);
+                        console.log("Tentando sincronizar item (PUSH):", dadosParaEnvio); // DEBUG
+                        const res = await this.api.post('usuarios/salvar', dadosParaEnvio);
+                        console.log("Resposta da API (PUSH):", res); // DEBUG
 
                         // SE A SESSÃO EXPIROU, PARE TUDO IMEDIATAMENTE
                         if (res && res.sessionExpired) {
@@ -250,6 +419,9 @@ class UsuarioModel {
                                 db.prepare('UPDATE usuario SET sincronizado = 1 WHERE id_usuario = ?')
                                     .run(user.id_usuario);
                             }
+                            console.log("Item sincronizado com sucesso:", user.id_usuario); // DEBUG
+                        } else {
+                            console.error("Falha ao sincronizar item:", user.id_usuario, res); // DEBUG
                         }
                     }
                 } catch (errItem) {
