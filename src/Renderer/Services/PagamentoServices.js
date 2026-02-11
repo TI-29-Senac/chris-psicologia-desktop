@@ -41,8 +41,17 @@ const PagamentoServices = (() => {
 
       resultado.data.forEach(item => {
         const row = document.createElement('tr');
+        // Formata Data e Hora
+        const dataObj = new Date(item.data);
+        const dia = String(dataObj.getDate()).padStart(2, '0');
+        const mes = String(dataObj.getMonth() + 1).padStart(2, '0');
+        const ano = dataObj.getFullYear();
+        const dataFormatada = `${dia}/${mes}/${ano}`;
+        const horaFormatada = String(dataObj.getHours()).padStart(2, '0') + ':' + String(dataObj.getMinutes()).padStart(2, '0');
+
         row.innerHTML = `
-          <td>${item.data}</td>
+          <td>${dataFormatada}</td>
+          <td>${horaFormatada}</td>
           <td><small style="opacity: 0.7">${item.id}</small></td>
           <td>${item.email}</td>
           <td style="text-transform: capitalize;">${item.metodo}</td>
