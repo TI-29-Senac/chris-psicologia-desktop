@@ -245,18 +245,27 @@ class AgendamentoModel {
             }
 
             // --- PULL (Remoto -> Local) ---
-            const rows = await this.mysql.query('SELECT * FROM agendamento');
+            // CORREÇÃO BASEADA NO PHP: O valor vem da tabela profissional (valor_consulta)
+            const rows = await this.mysql.query(`
+                SELECT a.*, p.valor_consulta 
+                FROM agendamento a 
+                LEFT JOIN profissional p ON a.id_profissional = p.id_profissional
+            `);
+
+            console.log(`[SYNC AGENDAMENTO] ${rows ? rows.length : 0} agendamentos encontrados no MySQL.`);
 
             if (rows && rows.length > 0) {
                 const stmtUpsert = db.prepare(`
-                    INSERT INTO agendamento (id_agendamento, id_usuario, id_profissional, data_agendamento, status_consulta, observacoes, sincronizado, excluido_em)
-                    VALUES (@id, @id_user, @id_prof, @data, @status, @obs, 1, @excluido)
+                    INSERT INTO agendamento (id_agendamento, id_usuario, id_profissional, data_agendamento, status_consulta, observacoes, valor_agendamento, status_pagamento, sincronizado, excluido_em)
+                    VALUES (@id, @id_user, @id_prof, @data, @status, @obs, @valor, @pgto, 1, @excluido)
                     ON CONFLICT(id_agendamento) DO UPDATE SET
                         id_usuario = excluded.id_usuario,
                         id_profissional = excluded.id_profissional,
                         data_agendamento = excluded.data_agendamento,
                         status_consulta = excluded.status_consulta,
                         observacoes = excluded.observacoes,
+                        valor_agendamento = excluded.valor_agendamento,
+                        status_pagamento = excluded.status_pagamento,
                         sincronizado = 1,
                         excluido_em = excluded.excluido_em
                 `);
@@ -265,21 +274,39 @@ class AgendamentoModel {
 
                 const transacao = db.transaction((lista) => {
                     for (const r of lista) {
-                        // Anti-Ressurreição
-                        const local = checkStmt.get(r.id_agendamento.toString());
-                        if (local && local.sincronizado === 0 && local.excluido_em) {
-                            continue;
-                        }
+                        try {
+                            // Anti-Ressurreição
+                            const local = checkStmt.get(r.id_agendamento.toString());
+                            if (local && local.sincronizado === 0 && local.excluido_em) {
+                                console.log(`[SYNC SKIP] Agendamento ${r.id_agendamento} ignorado (excluído localmente).`);
+                                continue;
+                            }
 
-                        stmtUpsert.run({
-                            id: r.id_agendamento.toString(),
-                            id_user: Math.floor(r.id_usuario).toString(),
-                            id_prof: Math.floor(r.id_profissional).toString(),
-                            data: r.data_agendamento,
-                            status: r.status_consulta,
-                            obs: r.observacoes || '',
-                            excluido: r.excluido_em || null
-                        });
+                            const idUser = r.id_usuario ? Math.floor(r.id_usuario).toString() : null;
+                            const idProf = r.id_profissional ? Math.floor(r.id_profissional).toString() : null;
+                            const dtAgendamento = r.data_agendamento;
+
+                            // Validação Básica
+                            if (!idUser || !idProf || !dtAgendamento) {
+                                console.warn(`[SYNC SKIP] Dados inválidos para agendamento ${r.id_agendamento}: User=${idUser}, Prof=${idProf}, Data=${dtAgendamento}`);
+                                continue;
+                            }
+
+                            stmtUpsert.run({
+                                id: r.id_agendamento.toString(),
+                                id_user: idUser,
+                                id_prof: idProf,
+                                data: dtAgendamento,
+                                status: r.status_consulta || 'pendente',
+                                obs: r.observacoes || '',
+                                valor: r.valor_consulta || 0, // Pega do JOIN com profissional
+                                pgto: r.status_pagamento || 'pendente',
+                                excluido: r.excluido_em || null
+                            });
+                            // console.log(`[SYNC OK] Agendamento ${r.id_agendamento} inserido/atualizado.`);
+                        } catch (errLoop) {
+                            console.error(`[SYNC FAIL] Erro ao inserir agendamento ${r.id_agendamento}:`, errLoop);
+                        }
                     }
                 });
 

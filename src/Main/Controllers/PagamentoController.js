@@ -9,6 +9,7 @@ class PagamentoController {
     init() {
         ipcMain.handle('pagamento:listar', async () => this.model.listar());
         ipcMain.handle('pagamento:processar', async (event, dados) => this.model.processar(dados));
+        ipcMain.handle('pagamento:total-mes', async () => this.model.obterTotalMes());
     }
 }
 

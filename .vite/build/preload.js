@@ -18,6 +18,7 @@ electron.contextBridge.exposeInMainWorld("electronAPI", {
   // Pagamentos
   processarPagamento: (dados) => electron.ipcRenderer.invoke("pagamento:processar", dados),
   listarPagamentos: () => electron.ipcRenderer.invoke("pagamento:listar"),
+  obterTotalMes: () => electron.ipcRenderer.invoke("pagamento:total-mes"),
   // Agendamentos
   getDadosFormulario: () => electron.ipcRenderer.invoke("agendamentos:get-form-data"),
   cadastrarAgendamento: (dados) => electron.ipcRenderer.invoke("agendamentos:cadastrar", dados),

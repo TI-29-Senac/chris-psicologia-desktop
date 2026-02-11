@@ -33,42 +33,45 @@ async function init() {
     }
 
     // Botão Sincronizar
+    // Botão Sincronizar (Agora Global)
     const btnSync = document.getElementById('btn-sync');
     if (btnSync) {
         btnSync.addEventListener('click', async () => {
-            btnSync.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sincronizando...';
+            const originalText = btnSync.innerHTML;
+            btnSync.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sincronizando Tudo...';
             btnSync.disabled = true;
             try {
-                const res = await window.electronAPI.sincronizarAgendamentos();
+                // ALTERAÇÃO: Usa a sincronização global que inclui Pagamentos e Usuários
+                const res = await window.electronAPI.sincronizarBidirecional();
                 await carregarTabela();
 
                 if (res.success) {
-                    if (res.falhas > 0) {
-                        alert(`Sincronização concluída com AVISOS:\n${res.enviados} enviados.\n${res.falhas} falhas.\n\nErros:\n${res.erros.join('\n')}`);
-                    } else {
-                        alert(`Sincronização concluída!\n${res.enviados || 0} dados enviados.`);
-                    }
+                    alert(res.message || "Sincronização concluída com sucesso!");
                 } else {
-                    alert("Erro na sincronização: " + res.erro);
+                    alert("Erro na sincronização: " + (res.erro || "Erro desconhecido"));
                 }
             } catch (e) {
                 console.error(e);
                 alert("Erro ao sincronizar.");
             } finally {
-                btnSync.innerHTML = '<i class="fas fa-sync"></i> Sincronizar com Nuvem';
+                btnSync.innerHTML = originalText;
                 btnSync.disabled = false;
             }
         });
     }
 
-    // Auto-Sync ao abrir
+    // Auto-Sync ao abrir (Global)
     setTimeout(() => {
-        if (window.electronAPI.sincronizarAgendamentos) {
-            window.electronAPI.sincronizarAgendamentos()
-                .then(() => carregarTabela())
+        if (window.electronAPI.sincronizarBidirecional) {
+            console.log("Auto-sync iniciado...");
+            window.electronAPI.sincronizarBidirecional()
+                .then((res) => {
+                    console.log("Auto-sync resultado:", res);
+                    carregarTabela();
+                })
                 .catch(console.error);
         }
-    }, 1000); // Delay pequeno para não travar render inicial
+    }, 1000);
 }
 
 // --- FUNÇÕES DE CARREGAMENTO ---

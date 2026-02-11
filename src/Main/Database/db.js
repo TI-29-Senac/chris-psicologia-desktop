@@ -87,6 +87,7 @@ export function initDatabase() {
                 id_forma_pagamento INTEGER NOT NULL,
                 valor REAL,
                 criado_em TEXT DEFAULT CURRENT_TIMESTAMP,
+                atualizado_em TEXT DEFAULT CURRENT_TIMESTAMP,
                 excluido_em TEXT DEFAULT NULL,
                 FOREIGN KEY(id_forma_pagamento) REFERENCES formas_pagamento(id_forma_pagamento)
             )
@@ -94,6 +95,24 @@ export function initDatabase() {
     });
 
     createTables();
+
+    // 3.1 Migração: Colunas de financeiro em agendamento
+    try {
+        db.prepare("ALTER TABLE agendamento ADD COLUMN valor_agendamento REAL DEFAULT 0").run();
+        console.log("Coluna 'valor_agendamento' adicionada.");
+    } catch (e) { /* Coluna já existe */ }
+
+    try {
+        db.prepare("ALTER TABLE agendamento ADD COLUMN status_pagamento TEXT DEFAULT 'pendente'").run();
+        console.log("Coluna 'status_pagamento' adicionada.");
+    } catch (e) { /* Coluna já existe */ }
+
+    // 3.2 Migração: Coluna atualizado_em em pagamento (Fix erro sync)
+    try {
+        db.prepare("ALTER TABLE pagamento ADD COLUMN atualizado_em TEXT DEFAULT CURRENT_TIMESTAMP").run();
+        console.log("Coluna 'atualizado_em' adicionada em 'pagamento'.");
+    } catch (e) { /* Coluna já existe */ }
+
 
     // 4. Inserção de Dados Iniciais (Seed)
     const count = db.prepare('SELECT count(*) as total FROM formas_pagamento').get();

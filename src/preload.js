@@ -22,6 +22,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Pagamentos
   processarPagamento: (dados) => ipcRenderer.invoke('pagamento:processar', dados),
   listarPagamentos: () => ipcRenderer.invoke('pagamento:listar'),
+  obterTotalMes: () => ipcRenderer.invoke('pagamento:total-mes'),
 
   // Agendamentos
   getDadosFormulario: () => ipcRenderer.invoke('agendamentos:get-form-data'),
