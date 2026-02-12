@@ -82,11 +82,7 @@ class DashboardController {
             const financeLabels = [];
             const financeData = [];
 
-            // Hardcode meses em PT-BR para mapear
-            const mesesPt = {
-                '01': 'Jan', '02': 'Fev', '03': 'Mar', '04': 'Abr', '05': 'Mai', '06': 'Jun',
-                '07': 'Jul', '08': 'Ago', '09': 'Set', '10': 'Out', '11': 'Nov', '12': 'Dez'
-            };
+
 
             // Preenche array invertido
             for (let i = financeRows.length - 1; i >= 0; i--) {
