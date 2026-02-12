@@ -9,7 +9,8 @@
 
 /* Botão de Cadastro (Estilo renovado) */
 .btn-novo {
-    background-color: #5D6D68; /* Verde do tema */
+    background-color: #5D6D68;
+    /* Verde do tema */
     color: white;
     border: none;
     padding: 12px 24px;
@@ -37,27 +38,31 @@
 .table-card {
     background: #ffffff;
     border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
     padding: 20px;
-    overflow: hidden; /* Garante bordas arredondadas */
+    overflow: hidden;
+    /* Garante bordas arredondadas */
 }
 
 /* --- CABEÇALHO DA TABELA (Título + Botão Sync) --- */
 #titulo-lista {
     display: flex;
-    justify-content: space-between; /* Joga o botão para a direita */
+    justify-content: space-between;
+    /* Joga o botão para a direita */
     align-items: center;
     color: #5D6D68;
     border-bottom: 2px solid #eee;
     padding-bottom: 10px;
     margin-bottom: 20px;
-    font-size: 1.17em; /* Mantém tamanho de H3 padrão */
+    font-size: 1.17em;
+    /* Mantém tamanho de H3 padrão */
     margin-top: 0;
 }
 
 /* Botão Sincronizar (Estilo igual ao Novo Cadastro) */
 .btn-sync {
-    background-color: #5D6D68; /* Mesma cor do botão novo */
+    background-color: #5D6D68;
+    /* Mesma cor do botão novo */
     color: white;
     border: none;
     padding: 10px 20px;
@@ -93,7 +98,8 @@
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    min-width: 800px; /* Evita quebra em telas pequenas */
+    min-width: 800px;
+    /* Evita quebra em telas pequenas */
 }
 
 .table thead th {
@@ -125,9 +131,21 @@
 }
 
 /* Colunas Específicas */
-.col-id { width: 60px; color: #888; font-weight: bold; }
-.col-nome { font-weight: 600; color: #333; }
-.col-actions { text-align: center; width: 120px; }
+.col-id {
+    width: 60px;
+    color: #888;
+    font-weight: bold;
+}
+
+.col-nome {
+    font-weight: 600;
+    color: #333;
+}
+
+.col-actions {
+    text-align: center;
+    width: 120px;
+}
 
 /* Badges (Etiquetas de Tipo) */
 .badge-tipo {
@@ -139,10 +157,26 @@
     display: inline-block;
 }
 
-.badge-admin { background-color: #e3f2fd; color: #1976d2; }
-.badge-profissional { background-color: #e8f5e9; color: #2e7d32; }
-.badge-cliente { background-color: #fff3e0; color: #ef6c00; }
-.badge-recepcionista { background-color: #f3e5f5; color: #8e24aa; }
+.badge-admin {
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+.badge-profissional {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.badge-cliente,
+.badge-paciente {
+    background-color: #fff3e0;
+    color: #ef6c00;
+}
+
+.badge-recepcionista {
+    background-color: #f3e5f5;
+    color: #8e24aa;
+}
 
 /* Botões de Ação na Tabela */
 .action-btn {
@@ -160,18 +194,35 @@
     font-size: 1rem;
 }
 
-.btn-edit { color: #64b5f6; background-color: rgba(100, 181, 246, 0.1); }
-.btn-edit:hover { background-color: #64b5f6; color: white; }
+.btn-edit {
+    color: #64b5f6;
+    background-color: rgba(100, 181, 246, 0.1);
+}
 
-.btn-delete { color: #e57373; background-color: rgba(229, 115, 115, 0.1); }
-.btn-delete:hover { background-color: #e57373; color: white; }
+.btn-edit:hover {
+    background-color: #64b5f6;
+    color: white;
+}
+
+.btn-delete {
+    color: #e57373;
+    background-color: rgba(229, 115, 115, 0.1);
+}
+
+.btn-delete:hover {
+    background-color: #e57373;
+    color: white;
+}
 
 
 /* --- Estilos do Modal (Mantidos e Ajustados) --- */
 .modal-overlay {
     display: none;
     position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
     z-index: 1000;
     justify-content: center;
@@ -179,7 +230,11 @@
     opacity: 0;
     transition: opacity 0.3s ease;
 }
-.modal-overlay.active { display: flex; opacity: 1; }
+
+.modal-overlay.active {
+    display: flex;
+    opacity: 1;
+}
 
 .modal-content {
     background-color: #fff;
@@ -187,38 +242,145 @@
     border-radius: 12px;
     width: 100%;
     max-width: 500px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     transform: translateY(-20px);
     transition: transform 0.3s ease;
 }
-.modal-overlay.active .modal-content { transform: translateY(0); }
+
+.modal-overlay.active .modal-content {
+    transform: translateY(0);
+}
 
 .modal-header {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
 }
-.close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999; }
-.close-btn:hover { color: #e74c3c; }
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #999;
+}
+
+.close-btn:hover {
+    color: #e74c3c;
+}
 
 /* Formulário do Modal */
-.tipo-selector { display: flex; background: #f0f2f5; padding: 4px; border-radius: 8px; margin-bottom: 20px; }
-.tipo-btn { flex: 1; padding: 10px; border: none; background: transparent; cursor: pointer; border-radius: 6px; font-weight: 600; color: #666; transition: 0.3s; }
-.tipo-btn.active { background-color: #5D6D68; color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+.tipo-selector {
+    display: flex;
+    background: #f0f2f5;
+    padding: 4px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
 
-.form-group { margin-bottom: 15px; }
-.form-group label { display: block; margin-bottom: 6px; font-size: 0.9rem; font-weight: 600; color: #5D6D68; }
-.form-control { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
-.form-control:focus { outline: none; border-color: #5D6D68; background-color: #fff; }
+.tipo-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 6px;
+    font-weight: 600;
+    color: #666;
+    transition: 0.3s;
+}
 
-.btn-primary { width: 100%; padding: 14px; background-color: #5D6D68; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 15px; }
-.btn-primary:hover { background-color: #4a5854; }
-.btn-primary:disabled { background-color: #ccc; cursor: not-allowed; }
+.tipo-btn.active {
+    background-color: #5D6D68;
+    color: white;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
 
-.btn-secondary { width: 100%; padding: 14px; background-color: #f0f2f5; color: #666; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 15px; }
-.btn-secondary:hover { background-color: #e4e6eb; }
+.form-group {
+    margin-bottom: 15px;
+}
 
-.btn-danger { width: 100%; padding: 14px; background-color: #e74c3c; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 15px; }
-.btn-danger:hover { background-color: #c0392b; }
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #5D6D68;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #5D6D68;
+    background-color: #fff;
+}
+
+.btn-primary {
+    width: 100%;
+    padding: 14px;
+    background-color: #5D6D68;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 15px;
+}
+
+.btn-primary:hover {
+    background-color: #4a5854;
+}
+
+.btn-primary:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    width: 100%;
+    padding: 14px;
+    background-color: #f0f2f5;
+    color: #666;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 15px;
+}
+
+.btn-secondary:hover {
+    background-color: #e4e6eb;
+}
+
+.btn-danger {
+    width: 100%;
+    padding: 14px;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 15px;
+}
+
+.btn-danger:hover {
+    background-color: #c0392b;
+}
 
 /* --- Grupo de Busca (Lado Direito) --- */
 .search-group {
@@ -227,8 +389,9 @@
     gap: 10px;
     background: #fff;
     padding: 5px;
-    border-radius: 30px; /* Borda arredondada externa */
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    border-radius: 30px;
+    /* Borda arredondada externa */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
     border: 1px solid #ddd;
 }
 
@@ -241,7 +404,8 @@
     color: #5D6D68;
     font-weight: 600;
     cursor: pointer;
-    border-right: 1px solid #eee; /* Divisória visual */
+    border-right: 1px solid #eee;
+    /* Divisória visual */
     outline: none;
 }
 
@@ -273,10 +437,48 @@
         align-items: flex-start;
         gap: 15px;
     }
+
     .search-group {
         width: 100%;
     }
+
     #input-busca {
         width: 100%;
     }
+}
+
+/* --- Paginação (Copiado de Pagamentos) --- */
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.page-btn {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #5D6D68;
+    font-family: 'Questrial', sans-serif;
+    transition: all 0.2s;
+    font-weight: 600;
+}
+
+.page-btn:hover {
+    background: #f0f0f0;
+}
+
+.page-btn.active {
+    background: #5D6D68;
+    color: white;
+    border-color: #5D6D68;
+}
+
+.page-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }

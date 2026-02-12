@@ -20,8 +20,8 @@ initDatabase();
 
 const createWindow = () => {
   const mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: 1366,
+    height: 768,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       // Configurações recomendadas para segurança
