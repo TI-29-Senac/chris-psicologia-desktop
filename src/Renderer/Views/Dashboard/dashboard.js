@@ -62,7 +62,7 @@ if (!sessao) {
 // -------------------------------------------------------------
 // GRÁFICOS (CHART.JS)
 // -------------------------------------------------------------
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     // Verifica se o Chart.js foi carregado
     if (typeof Chart === 'undefined') return;
 
@@ -73,6 +73,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const colorSecondary = '#7A8F89';
     const colorAccent = '#d6e3d6';
 
+    // BUSCA DADOS DO BACKEND
+    let dbData = null;
+    if (window.electronAPI && window.electronAPI.getDashboardData) {
+        try {
+            dbData = await window.electronAPI.getDashboardData();
+            console.log("Dados Dashboard Recebidos:", dbData);
+        } catch (err) {
+            console.error("Erro ao carregar dados do dashboard:", err);
+        }
+    }
+
+    // FALLBACK SE DADOS FALHAREM OU AINDA NÃO EXISTIREM
+    const chartAgendamentosData = dbData?.chartAgendamentos || {
+        labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
+        data: [0, 0, 0, 0, 0, 0, 0]
+    };
+
+    const chartUsuariosData = dbData?.chartUsuarios || {
+        data: [0, 0, 0] // Ativos, Inativos, Novos
+    };
+
+    const chartFinanceiroData = dbData?.chartFinanceiro || {
+        labels: [],
+        data: []
+    };
+
     /* --- 1. Gráfico de Agendamentos (Linha) --- */
     const canvasAppt = document.getElementById('appointmentsChart');
     if (canvasAppt) {
@@ -80,11 +106,11 @@ document.addEventListener('DOMContentLoaded', () => {
         new Chart(ctxAppt, {
             type: 'line',
             data: {
-                labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
+                labels: chartAgendamentosData.labels,
                 datasets: [
                     {
-                        label: 'Semana 1',
-                        data: [12, 19, 15, 25, 22, 10],
+                        label: 'Agendamentos',
+                        data: chartAgendamentosData.data,
                         borderColor: colorPrimary,
                         backgroundColor: 'rgba(93, 109, 104, 0.1)',
                         fill: true,
@@ -98,9 +124,13 @@ document.addEventListener('DOMContentLoaded', () => {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: true } },
+                plugins: { legend: { display: false } },
                 scales: {
-                    y: { beginAtZero: true, grid: { color: '#f0f0f0' } },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#f0f0f0' },
+                        ticks: { stepSize: 1 }
+                    },
                     x: { grid: { display: false } }
                 }
             }
@@ -114,9 +144,9 @@ document.addEventListener('DOMContentLoaded', () => {
         new Chart(ctxUsers, {
             type: 'doughnut',
             data: {
-                labels: ['Ativos', 'Inativos', 'Novos'],
+                labels: ['Ativos', 'Inativos', 'Novos (30d)'],
                 datasets: [{
-                    data: [300, 50, 100],
+                    data: chartUsuariosData.data,
                     backgroundColor: [colorPrimary, colorAccent, '#E8D5B5'],
                     borderWidth: 0,
                     hoverOffset: 4
@@ -138,10 +168,10 @@ document.addEventListener('DOMContentLoaded', () => {
         new Chart(ctxFinance, {
             type: 'bar',
             data: {
-                labels: ['Jan', 'Fev', 'Mar', 'Abr'],
+                labels: chartFinanceiroData.labels,
                 datasets: [{
                     label: 'Receita (R$)',
-                    data: [4500, 5200, 4800, 6100],
+                    data: chartFinanceiroData.data,
                     backgroundColor: colorSecondary,
                     borderRadius: 6
                 }]

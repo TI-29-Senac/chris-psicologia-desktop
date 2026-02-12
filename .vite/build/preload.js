@@ -27,5 +27,7 @@ electron.contextBridge.exposeInMainWorld("electronAPI", {
   buscarAgendamentoPorId: (id) => electron.ipcRenderer.invoke("agendamentos:buscarPorId", id),
   editarAgendamento: (dados) => electron.ipcRenderer.invoke("agendamentos:editar", dados),
   cancelarAgendamento: (id) => electron.ipcRenderer.invoke("agendamentos:cancelar", id),
-  sincronizarAgendamentos: () => electron.ipcRenderer.invoke("agendamentos:sincronizar")
+  sincronizarAgendamentos: () => electron.ipcRenderer.invoke("agendamentos:sincronizar"),
+  // Dashboard
+  getDashboardData: () => electron.ipcRenderer.invoke("dashboard:getData")
 });

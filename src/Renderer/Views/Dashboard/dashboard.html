@@ -1,100 +1,111 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Dashboard - Chris Psicologia</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Questrial&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <link rel="stylesheet" href="dashboard.css">
-    
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  </head>
-  <body>
-    
-    <div class="app-layout">
-      
-      <aside class="sidebar">
-        <div class="brand">
-          <div class="logo-symbol">Ψ</div>
-          <div class="logo-text"><h1>CHRIS</h1><span>PSICOLOGIA</span></div>
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Dashboard - Chris Psicologia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Questrial&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+  <link rel="stylesheet" href="dashboard.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+  <div class="app-layout">
+
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo-symbol">Ψ</div>
+        <div class="logo-text">
+          <h1>CHRIS</h1><span>PSICOLOGIA</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="#" class="menu-item active">
+          <i class="fa-solid fa-chart-pie"></i><span>Visão Geral</span>
+        </a>
+        <a href="../Usuario/usuarios.html" class="menu-item">
+          <i class="fa-solid fa-users"></i><span>Usuários</span>
+        </a>
+        <a href="../Agendamento/agendamento.html" class="menu-item">
+          <i class="fa-solid fa-calendar-days"></i><span>Agendamentos</span>
+        </a>
+        <a href="../Pagamento/pagamento.html" class="menu-item">
+          <i class="fa-solid fa-hand-holding-dollar"></i><span>Pagamentos</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="#" id="btn-logout" class="logout-btn">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i> Sair
+        </a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-bar">
+        <div class="page-title">
+          <h2>Dashboard Administrativo</h2>
+          <p>Bem-vindo de volta!</p>
         </div>
 
-        <nav class="sidebar-nav">
-          <a href="#" class="menu-item active">
-            <i class="fa-solid fa-chart-pie"></i><span>Visão Geral</span>
-          </a>
-          <a href="../Usuario/usuarios.html" class="menu-item">
-            <i class="fa-solid fa-users"></i><span>Usuários</span>
-          </a>
-          <a href="../Agendamento/agendamento.html" class="menu-item">
-            <i class="fa-solid fa-calendar-days"></i><span>Agendamentos</span>
-          </a>
-          <a href="../Pagamento/pagamento.html" class="menu-item">
-            <i class="fa-solid fa-hand-holding-dollar"></i><span>Pagamentos</span>
-          </a>
-        </nav>
-
-        <div class="sidebar-footer">
-          <a href="#" id="btn-logout" class="logout-btn">
-            <i class="fa-solid fa-arrow-right-from-bracket"></i> Sair
-          </a>
+        <div class="user-profile">
+          <div style="display: flex; flex-direction: column; align-items: flex-end; margin-right: 12px;">
+            <span class="user-name" style="font-weight: 700; color: #5D6D68; line-height: 1.2;">Carregando...</span>
+            <span class="user-type" style="font-size: 0.85rem; color: #7A8F89; font-weight: 500;">---</span>
+          </div>
+          <div class="avatar"><i class="fa-regular fa-circle-user"></i></div>
         </div>
-      </aside>
 
-      <main class="main-content">
-        <header class="top-bar">
-          <div class="page-title">
-            <h2>Dashboard Administrativo</h2>
-            <p>Bem-vindo de volta!</p>
-          </div>
-          
-          <div class="user-profile">
-            <div style="display: flex; flex-direction: column; align-items: flex-end; margin-right: 12px;">
-                <span class="user-name" style="font-weight: 700; color: #5D6D68; line-height: 1.2;">Carregando...</span>
-                <span class="user-type" style="font-size: 0.85rem; color: #7A8F89; font-weight: 500;">---</span>
-            </div>
-            <div class="avatar"><i class="fa-regular fa-circle-user"></i></div>
-          </div>
+      </header>
 
-        </header>
-
-        <div class="charts-grid">
-          <div class="chart-card large">
-            <div class="chart-header">
-              <h3>Fluxo de Agendamentos</h3>
-              <select class="chart-filter"><option>Esta Semana</option></select>
-            </div>
-            <div class="canvas-container"><canvas id="appointmentsChart"></canvas></div>
+      <div class="charts-grid">
+        <div class="chart-card large">
+          <div class="chart-header">
+            <h3>Fluxo de Agendamentos</h3>
+            <select class="chart-filter">
+              <option>Próximos 6 Meses</option>
+            </select>
           </div>
-          <div class="chart-card">
-            <div class="chart-header"><h3>Status dos Pacientes</h3></div>
-            <div class="canvas-container"><canvas id="usersChart"></canvas></div>
-          </div>
-          <div class="chart-card">
-            <div class="chart-header"><h3>Receita Mensal</h3></div>
-            <div class="canvas-container"><canvas id="financeChart"></canvas></div>
-          </div>
+          <div class="canvas-container"><canvas id="appointmentsChart"></canvas></div>
         </div>
-      </main>
-    </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>Status dos Pacientes</h3>
+          </div>
+          <div class="canvas-container"><canvas id="usersChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>Receita Mensal</h3>
+          </div>
+          <div class="canvas-container"><canvas id="financeChart"></canvas></div>
+        </div>
+      </div>
+    </main>
+  </div>
 
-    <script src="../../Services/Auth.js"></script>
-    <script>
-        const CAMINHO_RAIZ = '../../../../';
-        if (window.Auth && window.Auth.check(CAMINHO_RAIZ)) {
-            // Nota: Removemos o window.Auth.updateProfileUI() daqui pois faremos manualmente no dashboard.js
-            // para ter controle total sobre onde o nome e o tipo aparecem.
-            
-            document.getElementById('btn-logout').addEventListener('click', (e) => {
-                e.preventDefault();
-                window.Auth.logout(CAMINHO_RAIZ);
-            });
-        }
-    </script>
+  <script src="../../Services/Auth.js"></script>
+  <script>
+    const CAMINHO_RAIZ = '../../../../';
+    if (window.Auth && window.Auth.check(CAMINHO_RAIZ)) {
+      // Nota: Removemos o window.Auth.updateProfileUI() daqui pois faremos manualmente no dashboard.js
+      // para ter controle total sobre onde o nome e o tipo aparecem.
 
-    <script type="module" src="dashboard.js"></script> 
-  </body>
+      document.getElementById('btn-logout').addEventListener('click', (e) => {
+        e.preventDefault();
+        window.Auth.logout(CAMINHO_RAIZ);
+      });
+    }
+  </script>
+
+  <script type="module" src="dashboard.js"></script>
+</body>
+
 </html>
