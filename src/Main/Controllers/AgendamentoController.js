@@ -15,6 +15,7 @@ class AgendamentoController {
         ipcMain.handle('agendamentos:buscarPorId', async (event, id) => this.model.buscarPorId(id));
         ipcMain.handle('agendamentos:editar', async (event, data) => this.model.editar(data));
         ipcMain.handle('agendamentos:cancelar', async (event, id) => this.model.cancelar(id));
+        ipcMain.handle('agendamentos:alterar-status', async (event, id, status) => this.model.alterarStatus(id, status));
         ipcMain.handle('agendamentos:sincronizar', async () => this.model.sincronizacaoBidirecional());
     }
 }

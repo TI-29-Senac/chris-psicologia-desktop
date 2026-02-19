@@ -82,5 +82,16 @@ class AuthModel {
 
         return { success: false, erro: "Credenciais inválidas ou sem conexão." };
     }
+    async recoverPassword(email) {
+        try {
+            console.log(`[AuthModel] Tentando recuperar senha para: ${email}`);
+            // Rota da API externa
+            const resultado = await this.api.post('desktop/recuperar-senha', { email_usuario: email });
+            return resultado;
+        } catch (error) {
+            console.error("[AuthModel] Erro ao recuperar senha:", error);
+            return { success: false, erro: "Erro de conexão ao tentar recuperar senha." };
+        }
+    }
 }
 export default AuthModel;

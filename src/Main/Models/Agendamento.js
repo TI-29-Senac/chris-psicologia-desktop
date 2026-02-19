@@ -119,6 +119,26 @@ class AgendamentoModel {
         }
     }
 
+    async alterarStatus(id, status) {
+        try {
+            const validos = ['pendente', 'confirmada', 'cancelada', 'realizada'];
+            if (!validos.includes(status)) {
+                return { success: false, erro: `Status inválido: ${status}` };
+            }
+
+            db.prepare("UPDATE agendamento SET status_consulta = ?, sincronizado = 0, atualizado_em = CURRENT_TIMESTAMP WHERE id_agendamento = ?")
+                .run(status, id);
+
+            // Tenta Sync Imediato
+            this.sincronizacaoBidirecional().catch(e => console.warn("Sync automático pós-alteração de status falhou:", e.message));
+
+            return { success: true };
+        } catch (error) {
+            console.error("Erro ao alterar status:", error);
+            return { success: false, erro: error.message };
+        }
+    }
+
     // Busca dados para preencher os selects (Pacientes e Profissionais)
     async getDadosFormulario() {
         try {

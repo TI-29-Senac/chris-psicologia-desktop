@@ -154,17 +154,26 @@ function renderizarTabela(lista) {
         return;
     }
 
+    const statusOpcoes = [
+        { value: 'pendente', label: 'Pendente' },
+        { value: 'confirmada', label: 'Confirmado' },
+        { value: 'cancelada', label: 'Cancelado' },
+        { value: 'realizada', label: 'Realizado' },
+    ];
+
+    function classePorStatus(s) {
+        if (!s) return 'st-pendente';
+        const m = { pendente: 'st-pendente', confirmada: 'st-confirmada', cancelada: 'st-cancelada', realizada: 'st-realizada' };
+        return m[s.toLowerCase()] || 'st-pendente';
+    }
+
     listaEl.innerHTML = lista.map(a => {
-        const status = (a.status_consulta || '').toLowerCase();
+        const statusAtual = (a.status_consulta || 'pendente').toLowerCase();
+        const cssClasse = classePorStatus(statusAtual);
 
-        let badgeClass = 'status-agendado'; // Default (Agendado/Confirmada)
-        if (status === 'cancelado' || status === 'cancelada') {
-            badgeClass = 'status-cancelado';
-        } else if (status === 'pendente') {
-            badgeClass = 'status-pending';
-        }
-
-        const isCancelado = (status === 'cancelado' || status === 'cancelada');
+        const opcoesHtml = statusOpcoes.map(op =>
+            `<option value="${op.value}" ${statusAtual === op.value ? 'selected' : ''}>${op.label}</option>`
+        ).join('');
 
         const dataObj = new Date(a.data_agendamento);
         const dataStr = dataObj.toLocaleDateString('pt-BR');
@@ -175,12 +184,13 @@ function renderizarTabela(lista) {
             <td><strong>${dataStr}</strong><br><span class="small-text">${horaStr}</span></td>
             <td>${a.nome_paciente || '---'}</td>
             <td>${a.nome_profissional || '---'}</td>
-            <td class="text-center"><span class="status-badge ${badgeClass}">${a.status_consulta}</span></td>
+            <td class="text-center">
+                <select class="select-status-inline ${cssClasse}" data-id="${a.id_agendamento}">
+                    ${opcoesHtml}
+                </select>
+            </td>
             <td class="text-center" style="white-space: nowrap;">
-                ${!isCancelado ? `
-                    <button class="action-btn btn-edit" data-id="${a.id_agendamento}" title="Editar">✏️</button>
-                    <button class="action-btn btn-cancel" data-id="${a.id_agendamento}" title="Desmarcar">🚫</button>
-                ` : ''}
+                <button class="action-btn btn-edit" data-id="${a.id_agendamento}" title="Editar">✏️</button>
                 <button class="action-btn btn-delete" data-id="${a.id_agendamento}" title="Excluir">🗑️</button>
             </td>
         </tr>
@@ -189,30 +199,11 @@ function renderizarTabela(lista) {
     adicionarEventosLista();
 }
 
-// ... Restante do código (Eventos da lista, Formulário, Init) permanece igual, 
-// apenas removendo a antiga função carregarTabela pois foi substituída acima.
-
-// --- FUNÇÕES DE CARREGAMENTO OTIMIZADAS ---
-// (Mantendo carregarSelects, Events, etc)
-
-// Inicia
-init();
-
 // --- EVENTOS DA LISTA ---
 function adicionarEventosLista() {
     // Editar
     document.querySelectorAll('.btn-edit').forEach(btn => {
         btn.addEventListener('click', (e) => preencherEdicao(e.target.closest('button').dataset.id));
-    });
-    // Cancelar
-    document.querySelectorAll('.btn-cancel').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            const id = e.target.closest('button').dataset.id;
-            if (confirm('Deseja desmarcar esta consulta?')) {
-                await window.electronAPI.cancelarAgendamento(id);
-                carregarTabela();
-            }
-        });
     });
     // Excluir
     document.querySelectorAll('.btn-delete').forEach(btn => {
@@ -220,6 +211,27 @@ function adicionarEventosLista() {
             const id = e.target.closest('button').dataset.id;
             if (confirm('Tem certeza que deseja apagar?')) {
                 await window.electronAPI.removerAgendamento(id);
+                carregarTabela();
+            }
+        });
+    });
+    // Alterar Status (Select Inline)
+    document.querySelectorAll('.select-status-inline').forEach(sel => {
+        sel.addEventListener('change', async (e) => {
+            const select = e.target;
+            const id = select.dataset.id;
+            const novoStatus = select.value;
+
+            select.disabled = true;
+            const res = await window.electronAPI.alterarStatusAgendamento(id, novoStatus);
+            select.disabled = false;
+
+            if (res.success) {
+                // Atualiza a classe de cor sem recarregar a tabela inteira
+                select.className = `select-status-inline st-${novoStatus}`;
+            } else {
+                alert('Erro ao alterar status: ' + res.erro);
+                // Reverte visualmente
                 carregarTabela();
             }
         });
