@@ -255,14 +255,6 @@ function renderizarTabela(lista) {
             </td>
             <td class="text-center" style="white-space: nowrap;">
                 <button class="action-btn btn-edit" data-id="${a.id_agendamento}" title="Editar">✏️</button>
-                ${!isCancelado ? `
-                    <button class="action-btn btn-edit" data-id="${a.id_agendamento}" title="Editar">✏️</button>
-                    <button class="action-btn btn-cancel" data-id="${a.id_agendamento}" title="Desmarcar">🚫</button>
-                ` : `
-                    <!-- Placeholders invisíveis para manter o alinhamento -->
-                    <button class="action-btn" style="visibility: hidden; pointer-events: none;">✏️</button>
-                    <button class="action-btn" style="visibility: hidden; pointer-events: none;">🚫</button>
-                `}
                 <button class="action-btn btn-delete" data-id="${a.id_agendamento}" title="Excluir">🗑️</button>
             </td>
         </tr>
