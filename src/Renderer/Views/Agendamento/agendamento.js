@@ -116,6 +116,9 @@ inputBusca.addEventListener('input', filtrarAgendamentos);
 inputBuscaData.addEventListener('change', filtrarAgendamentos);
 
 let todosAgendamentos = []; // Armazena a lista completa
+let agendamentosFiltrados = []; // Armazena a lista filtrada
+const ITEMS_PER_PAGE = 10;
+let paginaAtual = 1;
 
 async function carregarTabela() {
     try {
@@ -132,7 +135,7 @@ function filtrarAgendamentos() {
     const termo = inputBusca.value.toLowerCase().trim();
     const dataFiltro = inputBuscaData.value;
 
-    const filtrados = todosAgendamentos.filter(a => {
+    agendamentosFiltrados = todosAgendamentos.filter(a => {
         if (tipo === 'data') {
             if (!dataFiltro) return true;
             // a.data_agendamento vem como 'YYYY-MM-DD HH:mm:ss' ou similar
@@ -145,11 +148,72 @@ function filtrarAgendamentos() {
         return true;
     });
 
-    renderizarTabela(filtrados);
+    renderizarPagina(1);
+
+    // Atualiza Contador
+    const contadorEl = document.getElementById('contador-agendamentos');
+    if (contadorEl) {
+        contadorEl.textContent = `Total: ${agendamentosFiltrados.length} agendamentos`;
+    }
 }
 
+function renderizarPagina(pagina) {
+    paginaAtual = pagina;
+
+    if (agendamentosFiltrados.length === 0) {
+        listaEl.innerHTML = "<tr><td colspan='5' class='text-center' style='padding:30px'>Nenhum agendamento encontrado.</td></tr>";
+        document.getElementById('paginacao-container').innerHTML = '';
+        return;
+    }
+
+    const inicio = (pagina - 1) * ITEMS_PER_PAGE;
+    const fim = inicio + ITEMS_PER_PAGE;
+    const dadosPagina = agendamentosFiltrados.slice(inicio, fim);
+
+    renderizarTabela(dadosPagina);
+    renderizarControles();
+}
+
+function renderizarControles() {
+    const container = document.getElementById('paginacao-container');
+    if (!container) return;
+
+    const totalPaginas = Math.ceil(agendamentosFiltrados.length / ITEMS_PER_PAGE);
+
+    // Se tiver apenas 1 página, mostra contador simples ou nada
+    if (totalPaginas <= 1) {
+        container.innerHTML = `<span style="font-size: 12px; color: #888;">Mostrando ${agendamentosFiltrados.length} registros</span>`;
+        return; // Opcional: retornar se não quiser botões
+    }
+
+    let html = '';
+
+    // Botão Anterior
+    html += `<button class="page-btn" ${paginaAtual === 1 ? 'disabled' : ''} onclick="mudarPagina(${paginaAtual - 1})"><i class="fa-solid fa-chevron-left"></i></button>`;
+
+    // Paginas
+    for (let i = 1; i <= totalPaginas; i++) {
+        if (i === 1 || i === totalPaginas || (i >= paginaAtual - 2 && i <= paginaAtual + 2)) {
+            const activeClass = i === paginaAtual ? 'active' : '';
+            html += `<button class="page-btn ${activeClass}" onclick="mudarPagina(${i})">${i}</button>`;
+        } else if (i === paginaAtual - 3 || i === paginaAtual + 3) {
+            html += `<span style="padding: 0 5px;">...</span>`;
+        }
+    }
+
+    // Botão Próximo
+    html += `<button class="page-btn" ${paginaAtual === totalPaginas ? 'disabled' : ''} onclick="mudarPagina(${paginaAtual + 1})"><i class="fa-solid fa-chevron-right"></i></button>`;
+
+    container.innerHTML = html;
+}
+
+// Torna global para o HTML acessar
+window.mudarPagina = (p) => renderizarPagina(p);
+
+
 function renderizarTabela(lista) {
-    if (lista.length === 0) {
+    // A lista já vem paginada de renderizarPagina, então apenas checamos se está vazia
+    if (!lista || lista.length === 0) {
         listaEl.innerHTML = "<tr><td colspan='5' class='text-center' style='padding:30px'>Nenhum agendamento encontrado.</td></tr>";
         return;
     }
@@ -191,6 +255,14 @@ function renderizarTabela(lista) {
             </td>
             <td class="text-center" style="white-space: nowrap;">
                 <button class="action-btn btn-edit" data-id="${a.id_agendamento}" title="Editar">✏️</button>
+                ${!isCancelado ? `
+                    <button class="action-btn btn-edit" data-id="${a.id_agendamento}" title="Editar">✏️</button>
+                    <button class="action-btn btn-cancel" data-id="${a.id_agendamento}" title="Desmarcar">🚫</button>
+                ` : `
+                    <!-- Placeholders invisíveis para manter o alinhamento -->
+                    <button class="action-btn" style="visibility: hidden; pointer-events: none;">✏️</button>
+                    <button class="action-btn" style="visibility: hidden; pointer-events: none;">🚫</button>
+                `}
                 <button class="action-btn btn-delete" data-id="${a.id_agendamento}" title="Excluir">🗑️</button>
             </td>
         </tr>

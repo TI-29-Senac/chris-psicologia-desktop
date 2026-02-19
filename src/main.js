@@ -10,6 +10,7 @@ import UsuarioController from './Main/Controllers/UsuarioController.js';
 import AgendamentoController from './Main/Controllers/AgendamentoController.js';
 import PagamentoController from './Main/Controllers/PagamentoController.js';
 import AuthController from './Main/Controllers/AuthController.js';
+import DashboardController from './Main/Controllers/DashboardController.js';
 import { initDatabase } from './Main/Database/db.js';
 
 if (started) { app.quit(); }
@@ -20,8 +21,8 @@ initDatabase();
 
 const createWindow = () => {
   const mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: 1366,
+    height: 768,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       // Configurações recomendadas para segurança
@@ -43,6 +44,7 @@ app.whenReady().then(() => {
   controllers.usuario = new UsuarioController();
   controllers.agendamento = new AgendamentoController();
   controllers.pagamento = new PagamentoController();
+  controllers.dashboard = new DashboardController();
 
   // Ativa os listeners de cada um
   Object.values(controllers).forEach(controller => {

@@ -30,8 +30,12 @@ const inputCpf = document.getElementById('cad-cpf');
 
 // Estado da Aplicação
 let todosUsuarios = [];
+let usuariosFiltrados = []; // Lista filtrada para paginação
 let tipoCadastroAtual = 'cliente';
 let tabAtiva = 'cliente';
+
+const ITEMS_PER_PAGE = 10;
+let paginaAtual = 1;
 
 async function init() {
     if (!window.electronAPI) {
@@ -115,7 +119,16 @@ function aplicarFiltros() {
     const termo = inputBusca.value.toLowerCase();
     const colunaFiltro = selectFiltroTipo.value;
 
-    let filtrados = todosUsuarios.filter(u => u.tipo_usuario === tabAtiva);
+    let filtrados = todosUsuarios.filter(u => {
+        const tipo = (u.tipo_usuario || '').toLowerCase().trim();
+        if (tabAtiva === 'cliente') {
+            return tipo === 'cliente' || tipo === 'paciente';
+        }
+        if (tabAtiva === 'admin') {
+            return tipo === 'admin' || tipo === 'administrador' || tipo === 'administrador(a)';
+        }
+        return tipo === tabAtiva;
+    });
 
     if (termo) {
         filtrados = filtrados.filter(u => {
@@ -130,8 +143,69 @@ function aplicarFiltros() {
         });
     }
 
-    renderizarTabela(filtrados);
+    usuariosFiltrados = filtrados;
+
+    // ATUALIZA CONTADOR
+    const contadorEl = document.getElementById('titulo-contador');
+    if (contadorEl) {
+        contadorEl.textContent = `(${usuariosFiltrados.length} registros)`;
+    }
+
+    renderizarPagina(1);
 }
+
+function renderizarPagina(pagina) {
+    paginaAtual = pagina;
+
+    if (usuariosFiltrados.length === 0) {
+        // Se não tem ninguém, manda lista vazia para renderizarTabela mostrar msg "Nenhum registro"
+        renderizarTabela([]);
+        document.getElementById('paginacao-container').innerHTML = '';
+        return;
+    }
+
+    const inicio = (pagina - 1) * ITEMS_PER_PAGE;
+    const fim = inicio + ITEMS_PER_PAGE;
+    const dadosPagina = usuariosFiltrados.slice(inicio, fim); // Pega a fatia
+
+    renderizarTabela(dadosPagina);
+    renderizarControles();
+}
+
+function renderizarControles() {
+    const container = document.getElementById('paginacao-container');
+    if (!container) return;
+
+    const totalPaginas = Math.ceil(usuariosFiltrados.length / ITEMS_PER_PAGE);
+
+    if (totalPaginas <= 1) {
+        container.innerHTML = `<span style="font-size: 12px; color: #888;">Mostrando ${usuariosFiltrados.length} registros</span>`;
+        return;
+    }
+
+    let html = '';
+
+    // Botão Anterior
+    html += `<button class="page-btn" ${paginaAtual === 1 ? 'disabled' : ''} onclick="mudarPagina(${paginaAtual - 1})"><i class="fa-solid fa-chevron-left"></i></button>`;
+
+    // Paginas
+    for (let i = 1; i <= totalPaginas; i++) {
+        if (i === 1 || i === totalPaginas || (i >= paginaAtual - 2 && i <= paginaAtual + 2)) {
+            const activeClass = i === paginaAtual ? 'active' : '';
+            html += `<button class="page-btn ${activeClass}" onclick="mudarPagina(${i})">${i}</button>`;
+        } else if (i === paginaAtual - 3 || i === paginaAtual + 3) {
+            html += `<span style="padding: 0 5px;">...</span>`;
+        }
+    }
+
+    // Botão Próximo
+    html += `<button class="page-btn" ${paginaAtual === totalPaginas ? 'disabled' : ''} onclick="mudarPagina(${paginaAtual + 1})"><i class="fa-solid fa-chevron-right"></i></button>`;
+
+    container.innerHTML = html;
+}
+
+// Global
+window.mudarPagina = (p) => renderizarPagina(p);
 
 function renderizarTabela(dados) {
     let htmlHeader = `
@@ -156,7 +230,11 @@ function renderizarTabela(dados) {
     }
 
     listaEl.innerHTML = dados.map(u => {
-        const tipoClass = `badge-${u.tipo_usuario ? u.tipo_usuario.toLowerCase() : 'cliente'}`;
+        let tipoDisplay = u.tipo_usuario ? u.tipo_usuario.toLowerCase().trim() : 'cliente';
+        // Normaliza para classe CSS
+        let tipoClass = `badge-${tipoDisplay}`;
+        if (tipoDisplay === 'paciente') tipoClass = 'badge-cliente';
+        if (tipoDisplay === 'administrador') tipoClass = 'badge-admin';
         const tipoLabel = u.tipo_usuario ? u.tipo_usuario.charAt(0).toUpperCase() + u.tipo_usuario.slice(1) : 'Cliente';
 
         // ÍCONE DE SINCRONIZAÇÃO

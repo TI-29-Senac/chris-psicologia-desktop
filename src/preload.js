@@ -35,4 +35,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   cancelarAgendamento: (id) => ipcRenderer.invoke('agendamentos:cancelar', id),
   alterarStatusAgendamento: (id, status) => ipcRenderer.invoke('agendamentos:alterar-status', id, status),
   sincronizarAgendamentos: () => ipcRenderer.invoke('agendamentos:sincronizar'),
+
+  // Dashboard
+  getDashboardData: () => ipcRenderer.invoke('dashboard:getData'),
 });

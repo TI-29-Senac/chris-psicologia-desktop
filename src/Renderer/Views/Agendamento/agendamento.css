@@ -398,3 +398,39 @@ h3 {
         width: 100%;
     }
 }
+
+/* --- Paginação (Copiado de Pagamentos) --- */
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.page-btn {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #5D6D68;
+    font-family: 'Questrial', sans-serif;
+    transition: all 0.2s;
+    font-weight: 600;
+}
+
+.page-btn:hover {
+    background: #f0f0f0;
+}
+
+.page-btn.active {
+    background: #5D6D68;
+    color: white;
+    border-color: #5D6D68;
+}
+
+.page-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

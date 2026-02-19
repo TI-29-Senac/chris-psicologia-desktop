@@ -1,4 +1,6 @@
 import db from '../Database/db.js';
+
+import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
 import mysqlService from '../Service/MySQLService.js';
@@ -12,7 +14,6 @@ class UsuarioModel {
     async listar() {
         try {
             // OFFLINE-FIRST: Listar sempre do banco local para garantir velocidade e consistência
-            // A sincronização de fundo cuida de atualizar esses dados.
             return db.prepare('SELECT * FROM usuario WHERE excluido_em IS NULL').all();
         } catch (error) {
             console.error("Erro ao listar usuários localmente:", error);
@@ -362,6 +363,7 @@ class UsuarioModel {
         try {
             console.log("Iniciando Sincronização Direta de Usuários (MySQL)...");
 
+
             // --- FLUXO 1: PUSH (Local -> Servidor) ---
             const pendentesLocais = db.prepare('SELECT * FROM usuario WHERE sincronizado = 0').all();
 
@@ -425,6 +427,7 @@ class UsuarioModel {
 
             // --- FLUXO 2: PULL (Servidor -> Local) ---
             const usuariosSite = await this.mysql.query('SELECT * FROM usuario');
+
             // Busca também profissionais para popular a tabela 'profissional' local, se existir no remoto
             // Assumindo existência de tabela 'profissional' no remoto.
             let profissionaisSite = [];
@@ -509,15 +512,21 @@ class UsuarioModel {
                     }
 
                     // 3. UPSERT USUARIO
-                    stmtUpsert.run({
-                        id: u.id_usuario.toString(),
-                        nome: u.nome_usuario,
-                        email: uEmail,
-                        senha: senhaHash,
-                        tipo: u.tipo_usuario || u.tipo,
-                        cpf: u.cpf || '000.000.000-00',
-                        excluido: u.excluido_em || null
-                    });
+                    try {
+                        stmtUpsert.run({
+                            id: u.id_usuario.toString(),
+                            nome: u.nome_usuario,
+                            email: uEmail,
+                            senha: senhaHash,
+                            tipo: u.tipo_usuario || u.tipo,
+                            cpf: u.cpf || '000.000.000-00',
+                            // CORREÇÃO CRÍTICA: Se o status for 'ativo', ignoramos data de exclusão antiga
+                            excluido: (u.status_usuario === 'ativo') ? null : (u.excluido_em || null)
+                        });
+                        // log(`Upsert OK: ${u.id_usuario}`);
+                    } catch (errUpsert) {
+                        console.error(`ERRO Upsert ID ${u.id_usuario}: ${errUpsert.message}`);
+                    }
                 }
             });
 
