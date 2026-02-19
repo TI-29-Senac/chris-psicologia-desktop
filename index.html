@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Questrial&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="./src/Renderer/modal.css">
 </head>
 
 <body>
@@ -53,13 +54,35 @@
             </div>
           </div>
 
-          <button type="submit" id="btn-login">
-            <i class="fa-solid fa-lock button-icon"></i> ENTRAR
-          </button>
+          <div class="login-actions">
+            <button type="submit" id="btn-login">
+              <i class="fa-solid fa-lock button-icon"></i> ENTRAR
+            </button>
+            <a href="#" id="link-forgot-password" class="forgot-password-link">Esqueci minha senha</a>
+          </div>
         </form>
 
         <p class="security-msg"><i class="fa-solid fa-shield-halved"></i> Ambiente seguro e confidencial</p>
         <p id="mensagem-erro" class="error-msg"></p>
+      </div>
+    </div>
+
+    <!-- Modal Recuperação de Senha -->
+    <div id="modal-forgot-password" class="modal-overlay">
+      <div class="modal-content">
+        <h3>Recuperar Senha</h3>
+        <p>Digite seu e-mail para receber as instruções de recuperação.</p>
+        <div class="input-group">
+          <div class="input-wrapper">
+            <i class="fa-solid fa-envelope input-icon"></i>
+            <input type="email" id="email-recovery" placeholder="seu@email.com">
+          </div>
+        </div>
+        <p id="msg-recovery" class="status-msg"></p>
+        <div class="modal-actions">
+          <button id="btn-cancel-recovery" class="btn-secondary">Cancelar</button>
+          <button id="btn-send-recovery" class="btn-primary">Enviar</button>
+        </div>
       </div>
     </div>
   </div>

@@ -79,6 +79,8 @@ async function buscarDados() {
     try {
         listaEl.innerHTML = "<tr><td colspan='7' class='text-center'>Carregando...</td></tr>";
         todosUsuarios = await window.electronAPI.listarUsuarios();
+        // Ordena por ID numérico crescente
+        todosUsuarios.sort((a, b) => Number(a.id_usuario) - Number(b.id_usuario));
         aplicarFiltros();
     } catch (error) {
         console.error("Erro ao buscar usuários:", error);
@@ -240,8 +242,8 @@ function renderizarTabela(dados) {
         // ÍCONE DE SINCRONIZAÇÃO
         const isPendente = u.sincronizado === 0;
         const statusIcon = isPendente
-            ? '<i class="fa-solid fa-cloud-arrow-up" title="Pendente de Sincronização" style="color: #f39c12; margin-right: 5px;"></i>'
-            : '<i class="fa-solid fa-cloud" title="Sincronizado" style="color: #27ae60; margin-right: 5px;"></i>';
+            ? '<i class="fa-solid fa-cloud-arrow-up" title="Pendente de Sincronização" style="color: #f39c12;"></i>'
+            : '<i class="fa-solid fa-cloud" title="Sincronizado" style="color: #27ae60;"></i>';
 
         // EXIBIÇÃO DO ID (Encurta se for UUID)
         const displayId = u.id_usuario.toString().length > 10
@@ -250,7 +252,7 @@ function renderizarTabela(dados) {
 
         return `
         <tr>
-            <td class="col-id">${statusIcon}#${displayId}</td>
+            <td class="col-id" style="display:flex; align-items:center; gap:5px; white-space:nowrap;">${statusIcon}<span>${displayId}</span></td>
             <td class="col-nome"><strong>${u.nome_usuario}</strong></td>
             <td>${u.cpf || '---'}</td>
             <td>${u.email_usuario}</td>

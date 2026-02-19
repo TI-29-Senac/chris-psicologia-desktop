@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Autenticação
   login: (credenciais) => ipcRenderer.invoke('auth:login', credenciais),
   logout: () => ipcRenderer.invoke('auth:logout'),
+  resetPassword: (email) => ipcRenderer.invoke('auth:reset-password', email),
   onSessionExpired: (callback) => ipcRenderer.on('auth:session-expired', (_event, value) => callback(value)),
 
   // Usuários
@@ -32,6 +33,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   buscarAgendamentoPorId: (id) => ipcRenderer.invoke('agendamentos:buscarPorId', id),
   editarAgendamento: (dados) => ipcRenderer.invoke('agendamentos:editar', dados),
   cancelarAgendamento: (id) => ipcRenderer.invoke('agendamentos:cancelar', id),
+  alterarStatusAgendamento: (id, status) => ipcRenderer.invoke('agendamentos:alterar-status', id, status),
   sincronizarAgendamentos: () => ipcRenderer.invoke('agendamentos:sincronizar'),
 
   // Dashboard

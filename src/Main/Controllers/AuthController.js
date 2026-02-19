@@ -25,6 +25,11 @@ class AuthController {
         ipcMain.handle('auth:logout', async () => {
             return await this.logout();
         });
+
+        // Recuperar Senha
+        ipcMain.handle('auth:reset-password', async (event, email) => {
+            return await this.authModel.recoverPassword(email);
+        });
     }
 
     async login(dados) {
