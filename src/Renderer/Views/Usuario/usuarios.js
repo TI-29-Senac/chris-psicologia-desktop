@@ -345,18 +345,21 @@ async function salvarUsuario() {
         return mostrarAviso("Email Inválido", "Por favor, insira um email válido (ex: nome@dominio.com).", "info");
     }
 
-    const dominiosPermitidos = [
-        'gmail.com',
-        'hotmail.com', 'hotmail.com.br',
-        'outlook.com', 'outlook.com.br',
-        'yahoo.com', 'yahoo.com.br',
-        'live.com',
-        'icloud.com'
-    ];
+    // Validação de domínios permitidos (APENAS PARA PACIENTES/CLIENTES)
+    if (tipoCadastroAtual === 'cliente' || tipoCadastroAtual === 'paciente') {
+        const dominiosPermitidos = [
+            'gmail.com',
+            'hotmail.com', 'hotmail.com.br',
+            'outlook.com', 'outlook.com.br',
+            'yahoo.com', 'yahoo.com.br',
+            'live.com',
+            'icloud.com'
+        ];
 
-    const dominioEmail = email.split('@')[1];
-    if (!dominiosPermitidos.includes(dominioEmail)) {
-        return mostrarAviso("Domínio não Aceito", `O domínio @${dominioEmail} não é aceito. Use: Gmail, Hotmail, Outlook, Yahoo, Live ou iCloud.`, "info");
+        const dominioEmail = email.split('@')[1];
+        if (!dominiosPermitidos.includes(dominioEmail)) {
+            return mostrarAviso("Domínio não Aceito", `O domínio @${dominioEmail} não é aceito. Use: Gmail, Hotmail, Outlook, Yahoo, Live ou iCloud.`, "info");
+        }
     }
 
     // O 'tipo_usuario' será definido pela aba ativa no modal (tipoCadastroAtual)

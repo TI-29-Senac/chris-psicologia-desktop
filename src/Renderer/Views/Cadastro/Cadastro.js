@@ -43,18 +43,21 @@ document.getElementById('btn-salvar').addEventListener('click', async () => {
         return alert("Por favor, insira um email válido (ex: nome@dominio.com).");
     }
 
-    const dominiosPermitidos = [
-        'gmail.com',
-        'hotmail.com', 'hotmail.com.br',
-        'outlook.com', 'outlook.com.br',
-        'yahoo.com', 'yahoo.com.br',
-        'live.com',
-        'icloud.com'
-    ];
+    // Validação de domínios permitidos (APENAS PARA PACIENTES/CLIENTES)
+    if (tipoAtual === 'cliente' || tipoAtual === 'paciente') {
+        const dominiosPermitidos = [
+            'gmail.com',
+            'hotmail.com', 'hotmail.com.br',
+            'outlook.com', 'outlook.com.br',
+            'yahoo.com', 'yahoo.com.br',
+            'live.com',
+            'icloud.com'
+        ];
 
-    const dominioEmail = email.split('@')[1];
-    if (!dominiosPermitidos.includes(dominioEmail)) {
-        return alert(`O domínio @${dominioEmail} não é aceito. Use um dos seguintes: Gmail, Hotmail, Outlook, Yahoo, Live ou iCloud.`);
+        const dominioEmail = email.split('@')[1];
+        if (!dominiosPermitidos.includes(dominioEmail)) {
+            return alert(`O domínio @${dominioEmail} não é aceito. Use um dos seguintes: Gmail, Hotmail, Outlook, Yahoo, Live ou iCloud.`);
+        }
     }
 
     // OBJETO PADRONIZADO COM O BACKEND
